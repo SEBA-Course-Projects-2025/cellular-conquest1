@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+﻿﻿using UnityEngine;
 using NativeWebSocket;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
@@ -196,39 +196,42 @@ public class WebSocketClient : MonoBehaviour
             return;
         }
 
-        // clear objects before rerendering
-        foreach (var foodObj in foodObjects.Values)
-        {
-            Destroy(foodObj);
-        }
-        foreach (var cellObj in playerCellObjects.Values)
-        {
-            Destroy(cellObj);
-        }
-        foodObjects.Clear();
-        playerCellObjects.Clear();
+        var existingFoodKeys = new HashSet<string>(foodObjects.Keys);
+        var existingCellKeys = new HashSet<string>(playerCellObjects.Keys);
 
         // canvas dimentions into pixels
-        RectTransform canvasRect = canvas.GetComponent<RectTransform>();
         Vector2 canvasSize = canvasRect.sizeDelta;
         float canvasWidth = canvasSize.x;
         float canvasHeight = canvasSize.y;
 
-        // rerender food
+        // add new food
         if (visibleFood != null)
         {
             for (int i = 0; i < visibleFood.Count; i++)
             {
                 var food = visibleFood[i];
-                string foodKey = $"food_{i}";
-                GameObject newFood = Instantiate(foodPrefab, canvas.transform);
-                FoodCell foodComponent = newFood.GetComponent<FoodCell>();
-                foodComponent.SetPositionAndRadius(MapWorldToCanvas(food.x, food.y, canvasWidth, canvasHeight), food.radius, food.color);
-                foodObjects[foodKey] = newFood;
+                // using x and y as key
+                string foodKey = $"food_{food.x:F2}_{food.y:F2}";
+
+                if (!foodObjects.ContainsKey(foodKey))
+                {
+                    GameObject newFood = Instantiate(foodPrefab, canvas.transform);
+                    FoodCell foodComponent = newFood.GetComponent<FoodCell>();
+                    foodComponent.SetPositionAndRadius(MapWorldToCanvas(food.x, food.y, canvasWidth, canvasHeight), food.radius, food.color);
+                    foodObjects[foodKey] = newFood;
+                }
+                existingFoodKeys.Remove(foodKey); // later i destroy objects from this list, so i delete it from here if the food should stay
             }
         }
+        
+        // delete eaten
+        foreach (var key in existingFoodKeys)
+        {
+            Destroy(foodObjects[key]);
+            foodObjects.Remove(key);
+        }
 
-        // rerender players
+        // update and create player cells
         if (visiblePlayers != null)
         {
             foreach (var player in visiblePlayers)
@@ -237,16 +240,33 @@ public class WebSocketClient : MonoBehaviour
                 {
                     var cell = player.cells[i];
                     string cellKey = $"{player.id}_{i}";
-                    GameObject newCell = Instantiate(playerCellPrefab, canvas.transform);
-                    PlayerCell cellComponent = newCell.GetComponent<PlayerCell>();
-                    cellComponent.SetPositionAndRadius(MapWorldToCanvas(cell.x, cell.y, canvasWidth, canvasHeight), cell.radius, cell.color, player.nickname);
-                    playerCellObjects[cellKey] = newCell;
+
+                    if (playerCellObjects.TryGetValue(cellKey, out GameObject cellObj))
+                    {
+                        PlayerCell cellComponent = cellObj.GetComponent<PlayerCell>();
+                        cellComponent.SetPositionAndRadius(MapWorldToCanvas(cell.x, cell.y, canvasWidth, canvasHeight), cell.radius, cell.color, player.nickname);
+                        existingCellKeys.Remove(cellKey); // remove if want to keep this cell, cause this list will be destroyed
+                    }
+                    else //spawn newly added
+                    {
+                        GameObject newCell = Instantiate(playerCellPrefab, canvas.transform);
+                        PlayerCell cellComponent = newCell.GetComponent<PlayerCell>();
+                        cellComponent.SetPositionAndRadius(MapWorldToCanvas(cell.x, cell.y, canvasWidth, canvasHeight), cell.radius, cell.color, player.nickname);
+                        playerCellObjects[cellKey] = newCell;
+                    }
                 }
+                // update score
                 if (player.id == playerId.ToString())
                 {
                     scoreText.text = $"Score: {player.score}";
                 }
             }
+        }
+        //deleting players that are no longer in gamestate
+        foreach (var key in existingCellKeys)
+        {
+            Destroy(playerCellObjects[key]);
+            playerCellObjects.Remove(key);
         }
     }
 
