@@ -43,6 +43,16 @@ public partial class Game {
                 }
             }
 
+            // move antibodys
+            if (antibodys.TryGetValue(roomId, out var roomAntibodies)) {
+                foreach (var antibody in roomAntibodies.ToList())
+                {
+                    antibody.Position += antibody.Velocity * deltaTime;
+                    antibody.Position = Vector2.Clamp(antibody.Position, Vector2.Zero, new Vector2(WorldWidth, WorldHeight));
+                    antibody.Velocity *= 0.9f; 
+                }
+            }
+
 
             //eaten food by cells
             foreach (var player in players.Values)
@@ -177,13 +187,22 @@ public partial class Game {
                 }
             }
 
-            var visibleFood = foodItems.Select(f => new
-            {
+            var visibleFood = foodItems.Select(f => new {
                 x = f.Position.X,
                 y = f.Position.Y,
                 radius = f.Radius,
                 color = f.Color
             }).ToList();
+
+            // add antibodys 
+            if (antibodys.TryGetValue(roomId, out var antibodyList)) {
+                visibleFood.AddRange(antibodyList.Select(a => new {
+                    x = a.Position.X,
+                    y = a.Position.Y,
+                    radius = a.Radius,
+                    color = a.Color
+                }));
+            }
 
             var visiblePlayersList = players.Values.Select(p => new
             {

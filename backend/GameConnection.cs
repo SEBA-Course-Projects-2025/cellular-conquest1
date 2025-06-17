@@ -12,6 +12,10 @@ using System.Threading.Tasks;
 
 public partial class Game
 {
+    private Cell GetBiggestCell(Player player) {
+        return player.Cells.OrderByDescending(cell => cell.Radius).First();
+    }
+
     private async Task HandleConnection(HttpListenerContext context) {
         WebSocket webSocket = (await context.AcceptWebSocketAsync(null)).WebSocket;
         Console.WriteLine("New connection");
@@ -151,6 +155,32 @@ public partial class Game
                         }
                         break;
                         
+                    case "feed":
+                        if (player != null && player.Cells.Count() > 0) {
+                            Console.WriteLine($"Feed boost");
+                            var bigCell = GetBiggestCell(player);
+                            if (bigCell.Radius > 10f) {
+                                float antiRadius = bigCell.Radius * 0.1f;
+                                bigCell.Radius *= 0.9f;
+
+                                Vector2 direction = Vector2.Normalize(player.Direction == Vector2.Zero ? new Vector2(1, 0) : player.Direction);
+                                Vector2 offset = direction * (bigCell.Radius + antiRadius + 5); 
+                                Vector2 spawnPos = bigCell.Position + offset;
+
+                                var newAntibody = new AntiBody {
+                                    Position = spawnPos,
+                                    Velocity = direction * 150f,
+                                    Radius = antiRadius
+                                };
+
+                                var roomAntiList = antibodys.GetOrAdd(player.RoomId, _ => new List<AntiBody>());
+                                lock (roomAntiList)
+                                {
+                                    roomAntiList.Add(newAntibody);
+                                }
+                            } 
+                        }
+                        break;
 
                     case "leave":
                         if (player != null)

@@ -13,6 +13,7 @@ public partial class Game
 {
     private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<Guid, Player>> rooms = new();
     private readonly ConcurrentDictionary<Guid, List<Food>> roomFood = new();
+    private readonly ConcurrentDictionary<Guid, List<AntiBody>> antibodys = new();
     private readonly Guid PublicRoomId = Guid.Empty; 
     
     private HttpListener httpListener = new();
