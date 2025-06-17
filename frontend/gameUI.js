@@ -2,6 +2,7 @@ import {
   sendInput,
   sendSplitMessage,
   sendSpeedup,
+  sendFeedMessage,
 } from "./gameCommunication.js";
 import gameState from "./gameState.js";
 
@@ -17,6 +18,30 @@ export const confirmExitBtn = document.getElementById("confirmExit");
 
 const deathPopup = document.getElementById("deathPopup");
 const finalScoreSpan = document.getElementById("finalScore");
+const skinImageCache = new Map();
+
+function getSkinImage(playerId) {
+  const skinEntry = gameState.playersSkins.find((p) => p.id === playerId);
+  if (!skinEntry) return null;
+  let base64;
+  if (typeof skinEntry.skin === "number") {
+    const available = gameState.availableSkins.find(
+      (s) => s.id === skinEntry.skin
+    );
+    base64 = available?.skin;
+  } else {
+    base64 = skinEntry.skin;
+  }
+
+  if (!base64) return null;
+
+  if (skinImageCache.has(base64)) return skinImageCache.get(base64);
+
+  const img = new Image();
+  img.src = base64;
+  skinImageCache.set(base64, img);
+  return img;
+}
 
 window.addEventListener("keydown", (e) => {
   if (e.key === "Shift" && !gameState.speedupActive) {
@@ -25,6 +50,8 @@ window.addEventListener("keydown", (e) => {
     setTimeout(() => {
       gameState.speedupActive = false;
     }, 1000);
+  } else if (e.key == "w") {
+    sendFeedMessage();
   }
 });
 
@@ -78,20 +105,36 @@ export const render = () => {
   drawGrid();
 
   for (const food of gameState.food) {
-    drawCircle(food.x, food.y, food.radius, food.color);
+    drawCircle(food.x, food.y, food.radius, food.color, food.visibility ?? 100);
   }
 
   for (const player of gameState.players) {
     for (const cell of player.cells) {
-      drawWavyBlob(
-        cell.x,
-        cell.y,
-        cell.radius,
-        cell.color,
-        Date.now(),
-        player.id,
-        gameState.speedupActive && player.id === gameState.playerId
-      );
+      const skinImg = getSkinImage(player.id);
+      if (skinImg?.complete && skinImg.naturalWidth) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(cell.x, cell.y, cell.radius, 0, Math.PI * 2);
+        ctx.clip();
+        ctx.drawImage(
+          skinImg,
+          cell.x - cell.radius,
+          cell.y - cell.radius,
+          cell.radius * 2,
+          cell.radius * 2
+        );
+        ctx.restore();
+      } else {
+        drawWavyBlob(
+          cell.x,
+          cell.y,
+          cell.radius,
+          cell.color,
+          Date.now(),
+          player.id,
+          gameState.speedupActive && player.id === gameState.playerId
+        );
+      }
 
       drawText(player.nickname, cell.x, cell.y, cell.radius, "white");
     }
@@ -100,13 +143,18 @@ export const render = () => {
   ctx.restore();
 };
 
-const drawCircle = (x, y, radius, fillColor, borderColor) => {
+const drawCircle = (x, y, radius, fillColor, visibility = 100, borderColor) => {
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, Math.min(visibility, 100)) / 100;
+
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.fillStyle = fillColor;
-  ctx.strokeStyle = borderColor;
+  if (borderColor) ctx.strokeStyle = borderColor;
   ctx.fill();
   ctx.stroke();
+
+  ctx.restore();
 };
 
 function drawRoundedRect(x, y, width, height, radius, fillStyle) {
@@ -295,15 +343,13 @@ function drawWavyBlob(x, y, radius, color, timestamp, blobId, isSpeeding) {
       const size = radius * (0.5 + t * 0.5);
       const offset = (i / trailLength) * radius * 1.5;
 
-      ctx.save();
-      ctx.globalAlpha = alpha;
       drawCircle(
         x + directionX * offset,
         y + directionY * offset,
         size,
-        color
+        color,
+        100 * alpha
       );
-      ctx.restore();
     }
   }
 
