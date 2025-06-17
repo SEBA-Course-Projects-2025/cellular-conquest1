@@ -19,6 +19,8 @@ public partial class Game {
 
             if (!roomFood.TryGetValue(roomId, out var foodItems))
                 continue;
+            if (!antibodys.TryGetValue(roomId, out var antibodyItems))
+                antibodyItems = new List<AntiBody>();
             var deltaTime = 1f / 60f;
             var eatenCells = new List<(Player victim, Cell cell)>();
 
@@ -44,20 +46,21 @@ public partial class Game {
             }
 
             // move antibodys
-            if (antibodys.TryGetValue(roomId, out var roomAntibodies)) {
-                foreach (var antibody in roomAntibodies.ToList())
-                {
-                    antibody.Position += antibody.Velocity * deltaTime;
-                    antibody.Position = Vector2.Clamp(antibody.Position, Vector2.Zero, new Vector2(WorldWidth, WorldHeight));
-                    antibody.Velocity *= 0.9f; 
-                }
+            foreach (var antibody in antibodyItems)
+            {
+                antibody.Position += antibody.Velocity * deltaTime;
+                antibody.Position = Vector2.Clamp(antibody.Position, Vector2.Zero, new Vector2(WorldWidth, WorldHeight));
+                antibody.Velocity *= 0.9f; 
             }
+            
 
 
             //eaten food by cells
             foreach (var player in players.Values)
             {
                 var eaten = new List<Food>();
+                var eatenAnti = new List<AntiBody>();
+
                 foreach (var cell in player.Cells)
                 {
                     foreach (var food in foodItems)
@@ -82,6 +85,24 @@ public partial class Game {
                             break;
                         }
                     }
+
+                    // eat anti
+                    foreach (var anti in antibodyItems)
+                    {
+                        if (Vector2.Distance(cell.Position, anti.Position) < cell.Radius)
+                        {
+                            eatenAnti.Add(anti);
+
+                            float currentArea = MathF.PI * cell.Radius * cell.Radius;
+                            float antiArea = MathF.PI * anti.Radius * anti.Radius;
+                            int points = (int)(antiArea / 10f);
+                            player.Score += points;
+                            float newArea = currentArea + antiArea;
+                            cell.Radius = MathF.Sqrt(newArea / MathF.PI);
+
+                            break;
+                        }
+                    }
                 }
 
                 //remove eaten food, add new
@@ -98,6 +119,10 @@ public partial class Game {
                         Color = isBoost ? "#00cfff" : "#3dda83",
                         IsSpeedBoost = isBoost
                     });
+                }
+
+                foreach (var anti in eatenAnti) {
+                    antibodyItems.Remove(anti);
                 }
             }
 

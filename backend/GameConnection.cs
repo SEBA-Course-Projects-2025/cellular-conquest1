@@ -169,7 +169,7 @@ public partial class Game
 
                                 var newAntibody = new AntiBody {
                                     Position = spawnPos,
-                                    Velocity = direction * 150f,
+                                    Velocity = direction * 1500f,
                                     Radius = antiRadius
                                 };
 
