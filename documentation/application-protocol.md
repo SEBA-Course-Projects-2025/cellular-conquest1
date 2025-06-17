@@ -10,43 +10,59 @@
 <tr>
   <td><code>join</code></td>
   <td>Client → Server</td>
-  <td>Once, when the player connects and starts a session</td>
+  <td>Once, when connecting</td>
   <td>
     <pre><code>{
   "type": "join",
   "nickname": "PlayerName",
   "mode"?: "FFA" | "Death Match" | "Teams" | "Other",
-  "privateServer"?: true | UUID
+  "privateServer"?: true | Guid,
+  "customSkin"?: string // <b>🧪 Beta</b>
 }</code></pre>
   </td>
-  <td>Registers a new player in the game. Client can request a specific game mode.
-    <br/><span style="color:#d4ac0d"><b>🧪 Beta:</b></span> The <code>private</code> flag enables creation or joining of a private server. If an <code>id</code> is provided, attempts to join it; otherwise, a new room will be created.
+  <td>
+    Registers a new player and joins game.
+    <br/>
+    <b>🧪 Beta:</b> The <code>customSkin</code> field, if present, defines the player's image. It is:
+    <ul>
+      <li>Either a base64-encoded image (custom uploaded),</li>
+      <li>Or a predefined skin ID from <code>availableSkins</code>.</li>
+    </ul>
+    Server should broadcast it to others via <code>customSkinBroadcast</code>.
   </td>
 </tr>
 
 <tr>
   <td><code>playerData</code></td>
   <td>Server → Client</td>
-  <td>After a valid join request. Only sent to the joining client</td>
+  <td>After successful join</td>
   <td>
     <pre><code>{
   "type": "playerData",
-  "id": "UUID",
+  "id": Guid,
   "nickname": "PlayerName",
-  "width": number,
-  "height": number,
-  "roomId": UUID
-}</code></pre>
+  "width": 1920,
+  "height": 1080,
+  "roomId": Guid,
+  "currentImages": [
+    {
+      "id": Guid
+      "image": string (base64 OR skin ID)
+    } // <b>🧪 Beta</b>
+  ]
+}
+</code></pre>
   </td>
-  <td>Confirms successful join, sends back unique ID and nickname for reference.
-    <br/><span style="color:#d4ac0d"><b>🧪 Beta:</b></span> Return <code>roomId</code> so it can be displayed to players.
+  <td>Confirms successful join, sends back basic info of the game.
+  
+  <b>🧪 Beta:</b> Send initial image info for all players with specified Guids in the room to the newly joined player.
   </td>
 </tr>
 
 <tr>
   <td><code>input</code></td>
   <td>Client → Server</td>
-  <td>Whenever user moves the mouse</td>
+  <td>On mouse movement</td>
   <td>
     <pre><code>{
   "type": "input",
@@ -56,55 +72,58 @@
   }
 }</code></pre>
   </td>
-  <td>Informs server of movement vector. Each blob may react differently.</td>
+  <td>Sets move vector</td>
 </tr>
 
 <tr>
   <td><code>split</code></td>
   <td>Client → Server</td>
-  <td>On keypress (e.g., spacebar)</td>
-  <td>
-    <pre><code>{
-  "type": "split"
-}</code></pre>
-  </td>
-  <td>Triggers a blob split and shoot-forward action.</td>
+  <td>On Space key press</td>
+  <td><pre><code>{ "type": "split" }</code></pre></td>
+  <td>Triggers cell split.</td>
 </tr>
 
 <tr>
-  <td><code><span style="color:#d4ac0d">speedup</span></code></td>
+  <td><code>feed</code></td>
   <td>Client → Server</td>
-  <td>On key down and key up of speed key (e.g., Shift)</td>
+  <td>On W key press</td>
+  <td><pre><code>{ "type": "feed" }</code></pre></td>
+  <td>
+    <b>🧪 Beta:</b> Shoots 10% mass as food. In mode against bots acts as projectiles damaging them.
+  </td>
+</tr>
+
+<tr>
+  <td><code>speedup</code></td>
+  <td>Client → Server</td>
+  <td>On Shift press</td>
   <td>
     <pre><code>{
   "type": "speedup"
 }</code></pre>
   </td>
-  <td><span style="color:#d4ac0d"><b>🧪 Beta:</b></span> Requests temporary speed boost. "active: true" starts the boost, "false" stops it. Server validates & consumes points.</td>
+  <td>Enables speed boost.</td>
 </tr>
 
 <tr>
   <td><code>leave</code></td>
   <td>Client → Server</td>
-  <td>On intentional player quit</td>
-  <td>
-    <pre><code>{
-  "type": "leave"
-}</code></pre>
-  </td>
-  <td>Notifies the server that the player is leaving the game.</td>
+  <td>On player exit</td>
+  <td><pre><code>{ "type": "leave" }</code></pre></td>
+  <td>Disconnects player.</td>
 </tr>
 
 <tr>
   <td><code>gameState</code></td>
   <td>Server → Client</td>
-  <td>Every ~16ms (~60 FPS)</td>
+  <td>Every frame (~60 fps)</td>
   <td>
     <pre><code>{
   "type": "gameState",
   "visiblePlayers": [
     {
-      "id": "UUID",
+      "id": Guid,
+      "nickname": string,
       "score": number,
       "cells": [
         {
@@ -125,35 +144,31 @@
       "y": number,
       "radius": number,
       "color": number,
-      "type"?: "normal" | "speed" | "shield" | "unknown"
+      "type"?: "normal" | "speed" | "shield" | "unknown",
+      "visibility"?: number (0 - 100) // <b>🧪 Beta</b>
     }
   ],
   "timestamp": number
 }</code></pre>
   </td>
-  <td>World state updates.
-    <br/><span style="color:#d4ac0d"><b>🧪 Beta:</b></span> Optional <code>abilities</code> field appears for players with special powers (e.g., speed boost).
-    <br/><span style="color:#d4ac0d"><b>🧪 Beta:</b></span> <code>type</code> in food shows if it grants special effects.
-  </td>
+  <td>Full world snapshot.</td>
 </tr>
 
 <tr>
   <td><code>death</code></td>
   <td>Server → Client</td>
-  <td>When a player dies</td>
-  <td>
-    <pre><code>{
+  <td>On player death</td>
+  <td><pre><code>{
   "type": "death",
   "score": number
-}</code></pre>
-  </td>
-  <td>Informs the client of their death and final score.</td>
+}</code></pre></td>
+  <td>Final score summary.</td>
 </tr>
 
 <tr>
   <td><code>leaderboard</code></td>
   <td>Server → Client</td>
-  <td>Every 1 second</td>
+  <td>Every 1s</td>
   <td>
     <pre><code>{
   "type": "leaderboard",
@@ -166,6 +181,58 @@
   }
 }</code></pre>
   </td>
-  <td>Current top players and the client's own stats.</td>
+  <td>Ranking data.</td>
 </tr>
+
+<tr>
+  <td><code>availableSkins</code></td>
+  <td>Server → Client</td>
+  <td>On connection or request</td>
+  <td>
+    <pre><code>{
+  "type": "availableSkins",
+  "skins": [
+    {
+      "id": string,
+      "image": string (base64)
+    }
+  ]
+}</code></pre>
+  </td>
+  <td>
+    <b>🧪 Beta:</b> Sends list of available skins as ID + base64 image.
+  </td>
+</tr>
+
+<tr>
+  <td><code>customSkinBroadcast</code></td>
+  <td>Server → All clients in room</td>
+  <td>When a player joins with a skin</td>
+  <td>
+    <pre><code>{
+  "type": "customSkinBroadcast",
+  "id": Guid,
+  "image": string (base64 OR skin ID)
+}</code></pre>
+  </td>
+  <td>
+    <b>🧪 Beta:</b> Informs room about a new image for player with specified Guid — either uploaded image (base64) or ID from skins.
+  </td>
+</tr>
+
+<tr>
+  <td><code>playerDisconnected</code></td>
+  <td>Server → All clients in room</td>
+  <td>On player leave</td>
+  <td>
+    <pre><code>{
+  "type": "playerDisconnected",
+  "id": Guid
+}</code></pre>
+  </td>
+  <td>
+    <b>🧪 Beta:</b> Tells clients to remove the disconnected player's image.
+  </td>
+</tr>
+
 </table>
