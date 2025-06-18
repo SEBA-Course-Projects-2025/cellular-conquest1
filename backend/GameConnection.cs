@@ -84,7 +84,7 @@ public partial class Game
                             //     int botCount = 1;
                             //     var bots = new List<Bot>();
                             //     for (int i = 0; i < botCount; i++) {
-                            //         var bot = new Bot($"Bot_{i+1}", PublicRoomId);
+                            //         var bot = new Bot($"Bot {i+1}", PublicRoomId);
                             //         ffaRoomPlayers[bot.Id] = bot;
                             //         bots.Add(bot);
                             //     }
@@ -196,7 +196,8 @@ public partial class Game
                                 var newAntibody = new AntiBody {
                                     Position = spawnPos,
                                     Velocity = direction * 1500f,
-                                    Radius = antiRadius
+                                    Radius = antiRadius,
+                                    CreatedAt = DateTime.UtcNow
                                 };
 
                                 var roomAntiList = antibodys.GetOrAdd(player.RoomId, _ => new List<AntiBody>());

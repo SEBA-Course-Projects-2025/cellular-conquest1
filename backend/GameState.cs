@@ -21,6 +21,10 @@ public partial class Game {
                 continue;
             if (!antibodys.TryGetValue(roomId, out var antibodyItems))
                 antibodyItems = new List<AntiBody>();
+            
+            var now = DateTime.UtcNow;
+            antibodyItems.RemoveAll(a => (now - a.CreatedAt).TotalSeconds > 10);
+            
             var deltaTime = 1f / 60f;
             var eatenCells = new List<(Player victim, Cell cell)>();
             
