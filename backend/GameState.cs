@@ -23,14 +23,24 @@ public partial class Game {
                 antibodyItems = new List<AntiBody>();
             var deltaTime = 1f / 60f;
             var eatenCells = new List<(Player victim, Cell cell)>();
+            
+            var realPlayer = players.Values.FirstOrDefault(p => !p.IsBot);
 
+            roomBots.TryGetValue(roomId, out var botsList);
+            if (botsList != null && realPlayer != null)
+            {
+                foreach (var bot in botsList)
+                {
+                    bot.UpdateAI(realPlayer);
+                }
+            }
 
             //cell movements
             foreach (var player in players.Values)
             {
                 foreach (var cell in player.Cells)
                 {
-                    float baseSpeed = player.HasSpeedBoost ? 450f : 300f;
+                    float baseSpeed = player.HasSpeedBoost ? 450f : (player.IsBot ? 180f : 300F);
                     float sizeFactor = cell.Radius / 15f;
                     float speed = baseSpeed / sizeFactor;
 
@@ -89,18 +99,35 @@ public partial class Game {
                     // eat anti
                     foreach (var anti in antibodyItems)
                     {
-                        if (Vector2.Distance(cell.Position, anti.Position) < cell.Radius)
+                        if (player.IsBot)
                         {
-                            eatenAnti.Add(anti);
+                            var botObj = player as Bot;
+                            if (botObj != null && Vector2.Distance(cell.Position, anti.Position) < cell.Radius)
+                            {
+                                eatenAnti.Add(anti);
+                                botObj.AntibodyHits++;
+                                if (botObj.AntibodyHits >= botObj.MaxAntibodyHits)
+                                {
+                                    eatenCells.Add((botObj, cell));
+                                }
+                                break; 
+                            }
+                        }
+                        else
+                        {
+                            if (Vector2.Distance(cell.Position, anti.Position) < cell.Radius)
+                            {
+                                eatenAnti.Add(anti);
 
-                            float currentArea = MathF.PI * cell.Radius * cell.Radius;
-                            float antiArea = MathF.PI * anti.Radius * anti.Radius;
-                            int points = (int)(antiArea / 10f);
-                            player.Score += points;
-                            float newArea = currentArea + antiArea;
-                            cell.Radius = MathF.Sqrt(newArea / MathF.PI);
+                                float currentArea = MathF.PI * cell.Radius * cell.Radius;
+                                float antiArea = MathF.PI * anti.Radius * anti.Radius;
+                                int points = (int)(antiArea / 10f);
+                                player.Score += points;
+                                float newArea = currentArea + antiArea;
+                                cell.Radius = MathF.Sqrt(newArea / MathF.PI);
 
-                            break;
+                                break;
+                            }
                         }
                     }
                 }
@@ -131,6 +158,7 @@ public partial class Game {
             {
                 foreach (var prey in players.Values)
                 {
+                    if (hunter.IsBot && prey.IsBot) continue;
                     if (hunter.Id == prey.Id) {
                     var merged = new List<(Cell, Cell)>();
 
@@ -165,6 +193,7 @@ public partial class Game {
                 foreach (var hunterCell in hunter.Cells) {
                     foreach (var preyCell in prey.Cells) {
                             float distance = Vector2.Distance(hunterCell.Position, preyCell.Position);
+                            if (prey.IsBot) continue; 
                             if ((hunterCell.Radius > preyCell.Radius * 1.1f && distance < hunterCell.Radius &&
                                  hunter.Cells.Count() == 1)
                                 || (hunterCell.Radius > preyCell.Radius * 1.33f && distance < hunterCell.Radius &&
@@ -209,6 +238,20 @@ public partial class Game {
 
                     players.TryRemove(victim.Id, out _);
                     Console.WriteLine($"{victim.Nickname} was eaten.");
+                    
+                    if (victim is Bot botVictim)
+                    {
+                        // remove bot from roomBots
+                        if (roomBots.TryGetValue(roomId, out var botList))
+                        {
+                            botList.Remove(botVictim);
+
+                            // create and add new bot
+                            var newBot = new Bot(botVictim.Nickname, roomId);
+                            players[newBot.Id] = newBot;
+                            botList.Add(newBot);
+                        }
+                    }
                 }
             }
 
@@ -240,7 +283,7 @@ public partial class Game {
                     x = c.Position.X,
                     y = c.Position.Y,
                     radius = c.Radius,
-                    color = "#3d78dd"
+                    color = p.IsBot ? "#ffe600" : "#3d78dd"
                 }).ToList(),
                 abilities = p.SpeedBoostPoints > 0
                     ? new

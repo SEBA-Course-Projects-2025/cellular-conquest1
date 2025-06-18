@@ -40,9 +40,24 @@ public partial class Game
                     case "join":
                         string? roomIdStr = obj?["roomId"]?.ToString();
                         string? privateServer = obj?["privateServer"]?.ToString();
-                        Guid roomId;
+                        bool isDeathMatch =
+                            (obj?["deathMatch"]?.GetValue<bool>() ?? false)
+                            || (obj?["mode"]?.ToString()?.ToLower() == "deathmatch");
 
-                        if (!string.IsNullOrWhiteSpace(privateServer))
+                        
+                        Guid roomId;
+                        if (isDeathMatch) {
+                            roomId = Guid.NewGuid();
+                            int botCount = 5;
+                            var bots = new List<Bot>();
+                            for (int i = 0; i < botCount; i++) {
+                                var bot = new Bot($"Bot_{i+1}", roomId);
+                                rooms[roomId][bot.Id] = bot; 
+                                bots.Add(bot);
+                            }
+                            roomBots[roomId] = bots;
+                        }
+                        else if (!string.IsNullOrWhiteSpace(privateServer))
                         {
                             if (privateServer == "true")
                             {
@@ -64,6 +79,17 @@ public partial class Game
                         else
                         {
                             roomId = PublicRoomId;
+                            // var ffaRoomPlayers = rooms.GetOrAdd(PublicRoomId, _ => new ConcurrentDictionary<Guid, Player>());
+                            // if (!roomBots.ContainsKey(PublicRoomId) || roomBots[PublicRoomId].Count == 0) {
+                            //     int botCount = 1;
+                            //     var bots = new List<Bot>();
+                            //     for (int i = 0; i < botCount; i++) {
+                            //         var bot = new Bot($"Bot_{i+1}", PublicRoomId);
+                            //         ffaRoomPlayers[bot.Id] = bot;
+                            //         bots.Add(bot);
+                            //     }
+                            //     roomBots[PublicRoomId] = bots;
+                            // }
                         }
 
                         player = new Player
