@@ -21,6 +21,18 @@ const deathPopup = document.getElementById("deathPopup");
 const finalScoreSpan = document.getElementById("finalScore");
 const skinImageCache = new Map();
 const cellMovementCache = new Map();
+let hideTimeout;
+
+export function showGameError(message) {
+  clearTimeout(hideTimeout);
+  const popup = document.getElementById("errorPopup");
+  popup.classList.add("visible");
+  popup.innerText = message;
+
+  setTimeout(() => {
+    popup.classList.remove("visible");
+  }, 2000);
+}
 
 function getSkinImage(playerId) {
   const skinEntry = gameState.playersSkins.find((p) => p.id === playerId);
@@ -75,10 +87,10 @@ export function updateSpeedBar(speedBars) {
 document.getElementById("roomId").addEventListener("click", () => {
   navigator.clipboard.writeText(gameState.roomId).then(() => {
     const popup = document.getElementById("copyPopup");
-    popup.style.top = "1rem";
+    popup.classList.add("visible");
 
     setTimeout(() => {
-      popup.style.top = "-4rem";
+      popup.classList.remove("visible");
     }, 2000);
   });
 });

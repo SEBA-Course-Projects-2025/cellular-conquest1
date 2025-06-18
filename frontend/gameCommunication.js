@@ -6,6 +6,7 @@ import {
 } from "./gameLogic.js";
 import gameState from "./gameState.js";
 import logger from "./gameLogger.js";
+import { showGameError } from "./gameUI.js";
 
 const isLocalhost =
   location.hostname === "localhost" || location.hostname === "127.0.0.1";
@@ -76,18 +77,20 @@ export const connectToServer = () => {
 
   socket.onclose = () => {
     console.log("Disconnected from server");
+    showGameError("Disconnected from server. Attempting reconnection...");
     gameState.connected = false;
     setTimeout(connectToServer, 3000);
   };
 
   socket.onerror = (error) => {
     console.error("Websocket error:", error);
+    showGameError("Connection error! Trying to reconnect...");
   };
 };
 
 const handleError = (message) => {
   console.error(`Server error: ${message}`);
-  // todo: add UI error handling
+  showGameError(message.error);
 };
 
 export const sendInput = (mousePosition) => {

@@ -68,13 +68,22 @@ body {
   justify-content: center;
   align-items: center;
 }
-#copyPopup {
+.popupNotice {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
   transition: top 0.5s ease;
   z-index: 1000;
+  top: -10rem;
 }
+.popupNotice.visible {
+  top: 1rem;
+}
+.error {
+  border-color: #ff4d4d;
+  color: #ff4d4d;
+}
+
 #autoCloseNotice {
   color: rgb(255, 94, 0);
   font-weight: bold;
