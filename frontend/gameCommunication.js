@@ -5,6 +5,7 @@ import {
   handlePlayerData,
 } from "./gameLogic.js";
 import gameState from "./gameState.js";
+import logger from "./gameLogger.js";
 
 const isLocalhost =
   location.hostname === "localhost" || location.hostname === "127.0.0.1";
@@ -38,11 +39,13 @@ export const connectToServer = () => {
       joinMessage.customSkin = customSkin;
     }
 
+    logger.out("join", joinMessage);
     socket.send(JSON.stringify(joinMessage));
   };
 
   socket.onmessage = (event) => {
     const message = JSON.parse(event.data);
+    logger.in(message.type, message);
 
     switch (message.type) {
       case "playerData":
@@ -97,34 +100,38 @@ export const sendInput = (mousePosition) => {
   const normalizedDx = length > 0 ? dx / length : 0;
   const normalizedDy = length > 0 ? dy / length : 0;
 
-  socket.send(
-    JSON.stringify({
-      type: "input",
-      direction: { x: normalizedDx, y: normalizedDy },
-    })
-  );
+  const inputMsg = {
+    type: "input",
+    direction: { x: normalizedDx, y: normalizedDy },
+  };
+  logger.out("input", inputMsg);
+  socket.send(JSON.stringify(inputMsg));
 };
 
 export const sendSplitMessage = () => {
   if (isReady()) {
+    logger.out("split");
     socket.send(JSON.stringify({ type: "split" }));
   }
 };
 
 export const sendFeedMessage = () => {
   if (isReady()) {
+    logger.out("feed");
     socket.send(JSON.stringify({ type: "feed" }));
   }
 };
 
 export const sendSpeedup = () => {
   if (isReady()) {
+    logger.out("speedup");
     socket.send(JSON.stringify({ type: "speedup" }));
   }
 };
 
 export const sendLeaveMessage = () => {
   if (isReady()) {
+    logger.out("leave");
     socket.send(JSON.stringify({ type: "leave" }));
   }
 };

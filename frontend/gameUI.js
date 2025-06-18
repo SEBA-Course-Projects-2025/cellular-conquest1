@@ -4,6 +4,7 @@ import {
   sendSpeedup,
   sendFeedMessage,
 } from "./gameCommunication.js";
+import logger from "./gameLogger.js";
 import gameState from "./gameState.js";
 
 export const canvas = document.getElementById("gameCanvas");
@@ -44,6 +45,7 @@ function getSkinImage(playerId) {
   return img;
 }
 
+let keyword = "";
 window.addEventListener("keydown", (e) => {
   if (
     e.key === "Shift" &&
@@ -57,6 +59,12 @@ window.addEventListener("keydown", (e) => {
     }, 5000);
   } else if (e.key == "w") {
     sendFeedMessage();
+  } else if (e.key === "Backspace") {
+    keyword = "";
+  } else {
+    keyword += e.key;
+    if (keyword === "logs1") logger.exportAsJSON();
+    else if (keyword === "logs2") logger.exportAsText();
   }
 });
 
