@@ -43,6 +43,7 @@ public partial class Game
                         bool isDeathMatch =
                             (obj?["deathMatch"]?.GetValue<bool>() ?? false)
                             || (obj?["mode"]?.ToString()?.ToLower() == "deathmatch");
+                        string? customSkin = obj?["customSkin"]?.ToString();
 
                         
                         Guid roomId;
@@ -98,6 +99,7 @@ public partial class Game
                             Nickname = obj?["nickname"]?.ToString() ?? "Anonymous",
                             Socket = webSocket,
                             RoomId = roomId,
+                            CustomSkin = customSkin,
                             Cells = new List<Cell>
                             {
                                 new Cell
@@ -110,6 +112,20 @@ public partial class Game
 
                         var roomPlayers = rooms.GetOrAdd(roomId, _ => new ConcurrentDictionary<Guid, Player>());
                         roomPlayers[player.Id] = player;
+                        
+                        if (!string.IsNullOrEmpty(customSkin))
+                        {
+                            var skinMsg = new {
+                                type = "customSkinBroadcast",
+                                id = player.Id,
+                                image = customSkin
+                            };
+
+                            foreach (var p in roomPlayers.Values)
+                            {
+                                await SendJson(p, skinMsg);
+                            }
+                        }
 
                         if (!roomFood.ContainsKey(roomId))
                         {
@@ -123,7 +139,11 @@ public partial class Game
                             nickname = player.Nickname,
                             width = 2000,
                             height = 2000,
-                            roomId = roomId
+                            roomId = roomId,
+                            currentImages = roomPlayers.Values
+                                .Where(p => !string.IsNullOrEmpty(p.CustomSkin))
+                                .Select(p => new { id = p.Id, image = p.CustomSkin })
+                                .ToList()
                         };
                         await SendJson(player, joinResponse);
 
