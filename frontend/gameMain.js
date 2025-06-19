@@ -10,6 +10,7 @@ import {
 } from "./gameUI.js";
 import gameState from "./gameState.js";
 import { gameLoop } from "./gameLogic.js";
+import "./gameMobileUI.js";
 
 const init = () => {
   resizeCanvas();

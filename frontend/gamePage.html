@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cellular conquest</title>
     <link rel="stylesheet" href="gameStyles.css" />
+    <link rel="stylesheet" href="gameMobile.css" />
   </head>
   <body>
     <canvas id="gameCanvas"></canvas>
@@ -93,6 +94,19 @@
         </div>
       </div>
     </div>
+    <div id="mobileControls" class="allScreen hidden">
+      <div id="joystickContainer">
+        <div id="joystickBase"></div>
+        <div id="joystickHandle"></div>
+      </div>
+
+      <div id="actionButtons">
+        <button id="speedupBtn" class="actionBtn">Speed up</button>
+        <button id="splitBtn" class="actionBtn">Split</button>
+        <button id="feedBtn" class="actionBtn">Feed</button>
+      </div>
+    </div>
+
     <script type="module" src="./gameMain.js"></script>
   </body>
 </html>
