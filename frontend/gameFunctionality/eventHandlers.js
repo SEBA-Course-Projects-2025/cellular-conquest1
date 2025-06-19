@@ -6,6 +6,7 @@ import {
   showDeathPopup,
   updateSpeedBar,
 } from "../gameUI/uiController.js";
+import { updateCamera } from "../gameUI/camera.js";
 import {
   sendFeedMessage,
   sendInput,
@@ -57,15 +58,7 @@ export const handleGameState = (data) => {
 
     const cellsCount = player.cells.length;
     if (cellsCount > 0) {
-      gameState.camera.x =
-        player.cells.reduce((a, c) => a + c.x, 0) / cellsCount;
-      gameState.camera.y =
-        player.cells.reduce((a, c) => a + c.y, 0) / cellsCount;
-
-      gameState.camera.scale = Math.max(
-        0.5,
-        Math.min(1, 300 / gameState.playerScore)
-      );
+      updateCamera();
     }
   }
 };

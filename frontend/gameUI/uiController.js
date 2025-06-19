@@ -28,7 +28,6 @@ export function updateSpeedBar(speedBars) {
 }
 
 // execCommand is deprecated, but is used as last resort in case http prohibits copying to clipboard
-// execCommand is deprecated, but is used as last resort in case http prohibits copying to clipboard
 function fallbackCopy(text) {
   const textarea = document.createElement("textarea");
   textarea.value = text;
