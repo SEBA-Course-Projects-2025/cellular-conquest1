@@ -126,7 +126,7 @@ export const sendFeedMessage = () => {
   }
 };
 
-export const sendSpeedup = () => {
+export const sendSpeedupMessage = () => {
   if (isReady()) {
     logger.out("speedup");
     socket.send(JSON.stringify({ type: "speedup" }));

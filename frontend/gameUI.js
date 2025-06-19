@@ -1,7 +1,7 @@
 import {
   sendInput,
   sendSplitMessage,
-  sendSpeedup,
+  sendSpeedupMessage,
   sendFeedMessage,
 } from "./gameCommunication.js";
 import logger from "./gameLogger.js";
@@ -64,7 +64,7 @@ window.addEventListener("keydown", (e) => {
     !gameState.speedupActive &&
     gameState.speedupAvailable
   ) {
-    sendSpeedup();
+    sendSpeedupMessage();
     gameState.speedupActive = true;
     setTimeout(() => {
       gameState.speedupActive = false;
