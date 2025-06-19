@@ -18,8 +18,8 @@ const buttons = [
   { el: speedupBtn, action: handleSpeedup },
 ];
 
-const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
-mobileControls.classList.toggle("hidden", !isTouch);
+gameState.isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+mobileControls.classList.toggle("hidden", !gameState.isTouch);
 
 // === Joystick ===
 let joystickActive = false;

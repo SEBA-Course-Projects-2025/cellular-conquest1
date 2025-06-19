@@ -74,8 +74,9 @@ export const handleLeaderboard = (data) => {
   leaderboardList.innerHTML = "";
 
   const sortedPlayers = data.topPlayers;
+  const maxListLen = gameState.isTouch ? 3 : 10;
 
-  for (let i = 0; i < Math.min(10, sortedPlayers.length); i++) {
+  for (let i = 0; i < Math.min(maxListLen, sortedPlayers.length); i++) {
     const player = sortedPlayers[i];
     const li = document.createElement("li");
     li.textContent = `${player.nickname}: ${Math.floor(player.score)}`;
@@ -87,7 +88,7 @@ export const handleLeaderboard = (data) => {
     leaderboardList.appendChild(li);
   }
 
-  if (data.personal.rank > sortedPlayers.length) {
+  if (data.personal.rank > maxListLen) {
     const li = document.createElement("li");
     li.textContent = `${gameState.playerName}: ${Math.floor(
       gameState.playerScore
