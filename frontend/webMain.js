@@ -17,7 +17,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const displayRoomCode = document.getElementById("displayRoomCode");
   const copyCodeBtn = document.getElementById("copyCodeBtn");
   const startGameBtn = document.getElementById("startGameBtn");
-  let socket = null;
   let nickname = "";
   let currentRoomId = null;
   let currentGameMode = "ffa";
@@ -96,11 +95,11 @@ document.addEventListener("DOMContentLoaded", function () {
   addCustomSkinBtn.addEventListener("click", () => {
     const file = customSkinInput.files[0];
     if (!file) {
-      alert("Будь ласка, виберіть файл зображення.");
+      alert("Please select the file.");
       return;
     }
     if (file.size > 500000) {
-      alert("Файл занадто великий. Максимальний розмір: 500KB.");
+      alert("File is so big. Max size: 500KB.");
       return;
     }
     
@@ -115,12 +114,6 @@ document.addEventListener("DOMContentLoaded", function () {
       if (!skins.some(s => s.url === base64)) {
         skins.unshift({ name: "Custom", url: base64 });
         localStorage.setItem("availableSkins", JSON.stringify(skins));
-      }
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({
-          type: "updateSkin",
-          customSkin: base64  
-        }));
       }
       
       updateAvatar();
@@ -157,63 +150,10 @@ document.addEventListener("DOMContentLoaded", function () {
       return;
     }
     localStorage.setItem("playerName", nickname);
-    startGame(nickname);
-  }
-
-  function getWsHost() {
-    const isLocal = location.hostname === "localhost" 
-    || location.hostname.startsWith("192.168.") 
-    || location.hostname === "127.0.0.1";
-    return isLocal ? location.hostname + ":8080" : "161.35.75.14:8080";
-  }
-
-  function startGame(nick) {
     loginScreen.style.display = "none";
     document.querySelector(".wrapper").style.display = "block";
-    document.querySelector(".nick").textContent = nick;
+    document.querySelector(".nick").textContent = nickname;
     updateAvatar();
-    const wsHost = getWsHost();
-    socket = new WebSocket("ws://" + wsHost);
-
-    socket.addEventListener("open", () => {
-      const selectedSkin = localStorage.getItem("selectedSkin") || defaultSkins[0].url;
-      const customSkin = localStorage.getItem("customSkin");
-      
-      const joinMessage = { 
-        type: "join", 
-        nickname: nick
-      };
-      
-      if (customSkin === selectedSkin) {
-        joinMessage.customSkin = customSkin;
-      }
-      
-      socket.send(JSON.stringify(joinMessage));
-    });
-
-    socket.addEventListener("message", (event) => {
-      const data = JSON.parse(event.data);
-      
-      if (data.availableSkins) {
-        if (Array.isArray(data.availableSkins) && data.availableSkins.length > 0) {
-          console.log("Отримано список скінів від сервера:", data.availableSkins);
-          localStorage.setItem("availableSkins", JSON.stringify(data.availableSkins));
-        }
-      }
-      
-      if (data.type === "playerData") {
-        if (data.roomId) currentRoomId = data.roomId;
-      } else if (data.type === "gameState") {
-        if (window.updateGameState) {
-          window.updateGameState(data);
-        }
-      } else if (data.type === "error") {
-        alert(data.message || "An error occurred");
-      }
-    });
-
-    socket.addEventListener("close", () => { alert("Disconnected from server"); location.reload(); });
-    socket.addEventListener("error", (err) => { alert("WebSocket error!"); console.error(err); });
   }
 
   closeModal.addEventListener("click", () =>
@@ -245,7 +185,12 @@ document.addEventListener("DOMContentLoaded", function () {
     roomCodeModal.style.display = "flex"; 
   }
   
-  function resetModal() { createdRoomInfo.style.display = "none"; roomCodeInput.value = ""; displayRoomCode.textContent = ""; currentRoomId = null; }
+  function resetModal() { 
+    createdRoomInfo.style.display = "none"; 
+    roomCodeInput.value = ""; 
+    displayRoomCode.textContent = ""; 
+    currentRoomId = null; 
+  }
   
   function createRoom() { 
     localStorage.setItem('privateRoomId', 'true'); 
@@ -253,9 +198,11 @@ document.addEventListener("DOMContentLoaded", function () {
     playSound("success"); 
     const customSkin = localStorage.getItem("customSkin");
     const selectedSkin = localStorage.getItem("selectedSkin");
+    
     if (customSkin === selectedSkin) {
       localStorage.setItem('gameCustomSkin', customSkin);
     }
+    
     window.location.href = `gamePage.html`;
   }
   
@@ -268,6 +215,7 @@ document.addEventListener("DOMContentLoaded", function () {
     } 
     localStorage.setItem('privateRoomId', roomCode);
     localStorage.setItem('gameMode', currentGameMode);
+    
     const customSkin = localStorage.getItem("customSkin");
     const selectedSkin = localStorage.getItem("selectedSkin");
     if (customSkin === selectedSkin) {
@@ -278,9 +226,35 @@ document.addEventListener("DOMContentLoaded", function () {
     window.location.href = `gamePage.html?nickname=${encodeURIComponent(nickname)}&mode=${currentGameMode}&roomId=${roomCode}`; 
   }
   
-  function copyRoomCode() { const code = displayRoomCode.textContent; if (navigator.clipboard) { navigator.clipboard.writeText(code).then(() => { copyCodeBtn.textContent = "Copied!"; setTimeout(() => { copyCodeBtn.textContent = "Copy"; }, 2000); }); } else { const textArea = document.createElement("textarea"); textArea.value = code; document.body.appendChild(textArea); textArea.select(); document.execCommand("copy"); document.body.removeChild(textArea); copyCodeBtn.textContent = "Copied!"; setTimeout(() => { copyCodeBtn.textContent = "Copy"; }, 2000); } playSound("click"); }
+  function copyRoomCode() { 
+    const code = displayRoomCode.textContent; 
+    if (navigator.clipboard) { 
+      navigator.clipboard.writeText(code).then(() => { 
+        copyCodeBtn.textContent = "Copied!"; 
+        setTimeout(() => { copyCodeBtn.textContent = "Copy"; }, 2000); 
+      }); 
+    } else { 
+      const textArea = document.createElement("textarea"); 
+      textArea.value = code; 
+      document.body.appendChild(textArea); 
+      textArea.select(); 
+      document.execCommand("copy"); 
+      document.body.removeChild(textArea); 
+      copyCodeBtn.textContent = "Copied!"; 
+      setTimeout(() => { copyCodeBtn.textContent = "Copy"; }, 2000); 
+    } 
+    playSound("click"); 
+  }
   
-  function startTeamsGame() { if (!currentRoomId) { alert("No room selected!"); return; } roomCodeModal.style.display = "none"; resetModal(); window.location.href = `gamePage.html`; }
+  function startTeamsGame() { 
+    if (!currentRoomId) { 
+      alert("No room selected!"); 
+      return; 
+    } 
+    roomCodeModal.style.display = "none"; 
+    resetModal(); 
+    window.location.href = `gamePage.html`; 
+  }
   
   const modeButtons = document.querySelectorAll(".mode-btn");
   let selectedMode = "ffa";
@@ -300,7 +274,7 @@ document.addEventListener("DOMContentLoaded", function () {
           alert("Please enter a nickname and click Join Game first!"); 
           return; 
         } 
-        window.location.href = `gamePage.html?nickname=${encodeURIComponent(nicknameValue)}`; 
+        window.location.href = `gamePage.html?nickname=${encodeURIComponent(nicknameValue)}`;
       } else if (selectedMode === "teams") { 
         showRoomModal(); 
       } else if (selectedMode === "deathmatch") {
@@ -310,6 +284,7 @@ document.addEventListener("DOMContentLoaded", function () {
           return; 
         }
         localStorage.setItem('gameMode', 'deathmatch');
+        
         const customSkin = localStorage.getItem("customSkin");
         const selectedSkin = localStorage.getItem("selectedSkin");
         if (customSkin === selectedSkin) {
@@ -322,9 +297,31 @@ document.addEventListener("DOMContentLoaded", function () {
   });
   
   const allButtons = document.querySelectorAll("button");
-  allButtons.forEach((button) => { button.addEventListener("mouseenter", function () { this.style.transform = "translateY(-3px)"; playSound("hover"); }); button.addEventListener("mouseleave", function () { this.style.transform = "translateY(0)"; }); });
-  document.getElementById("settingsBtn").addEventListener("click", function () { playSound("click"); alert("Settings panel will open here"); });
-  document.getElementById("logoutBtn").addEventListener("click", function () { playSound("click"); if (confirm("Are you sure you want to log out?")) { if (socket && socket.readyState === WebSocket.OPEN) { socket.send(JSON.stringify({ type: "leave" })); socket.close(); } localStorage.removeItem('privateRoomId'); document.querySelector(".wrapper").style.display = "none"; loginScreen.style.display = "block"; nicknameInput.value = ""; resetModal(); } });
+  allButtons.forEach((button) => { 
+    button.addEventListener("mouseenter", function () { 
+      this.style.transform = "translateY(-3px)"; 
+      playSound("hover"); 
+    }); 
+    button.addEventListener("mouseleave", function () { 
+      this.style.transform = "translateY(0)"; 
+    }); 
+  });
+  
+  document.getElementById("settingsBtn").addEventListener("click", function () { 
+    playSound("click"); 
+    alert("Settings panel will open here"); 
+  });
+  
+  document.getElementById("logoutBtn").addEventListener("click", function () { 
+    playSound("click"); 
+    if (confirm("Are you sure you want to log out?")) { 
+      localStorage.removeItem('privateRoomId'); 
+      document.querySelector(".wrapper").style.display = "none"; 
+      loginScreen.style.display = "block"; 
+      nicknameInput.value = ""; 
+      resetModal(); 
+    } 
+  });
 
   updateAvatar();
 });
