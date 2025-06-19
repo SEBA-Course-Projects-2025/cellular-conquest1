@@ -98,11 +98,6 @@ export const handleDeath = (data) => {
 
   localStorage.setItem("lastScore", Math.floor(gameState.playerScore));
 
-  const canvas = document.getElementById("gameCanvas");
-  if (canvas) {
-    canvas.classList.add("blured");
-  }
-
   showDeathPopup(data.score);
   const inactivityDelay = 30000;
   const countdownSeconds = 10;

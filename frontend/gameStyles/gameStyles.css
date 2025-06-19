@@ -131,10 +131,8 @@ body {
 }
 .blur {
   backdrop-filter: blur(5px);
-  background-color: #0007;
-  z-index: 1;
+  -webkit-backdrop-filter: blur(5px);
 }
-
 .popupContent {
   z-index: 2;
   display: flex;
@@ -158,9 +156,6 @@ body {
 
 #gameCanvas {
   transition: filter 1.8s ease-out;
-}
-.blured {
-  filter: blur(5px);
 }
 
 .copyable {
