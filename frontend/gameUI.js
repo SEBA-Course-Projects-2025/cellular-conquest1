@@ -4,6 +4,7 @@ import {
   sendSpeedup,
   sendFeedMessage,
 } from "./gameCommunication.js";
+import logger from "./gameLogger.js";
 import gameState from "./gameState.js";
 
 export const canvas = document.getElementById("gameCanvas");
@@ -19,6 +20,19 @@ export const confirmExitBtn = document.getElementById("confirmExit");
 const deathPopup = document.getElementById("deathPopup");
 const finalScoreSpan = document.getElementById("finalScore");
 const skinImageCache = new Map();
+const cellMovementCache = new Map();
+let hideTimeout;
+
+export function showGameError(message) {
+  clearTimeout(hideTimeout);
+  const popup = document.getElementById("errorPopup");
+  popup.classList.add("visible");
+  popup.innerText = message;
+
+  setTimeout(() => {
+    popup.classList.remove("visible");
+  }, 2000);
+}
 
 function getSkinImage(playerId) {
   const skinEntry = gameState.playersSkins.find((p) => p.id === playerId);
@@ -43,15 +57,26 @@ function getSkinImage(playerId) {
   return img;
 }
 
+let keyword = "";
 window.addEventListener("keydown", (e) => {
-  if (e.key === "Shift" && !gameState.speedupActive) {
+  if (
+    e.key === "Shift" &&
+    !gameState.speedupActive &&
+    gameState.speedupAvailable
+  ) {
     sendSpeedup();
     gameState.speedupActive = true;
     setTimeout(() => {
       gameState.speedupActive = false;
-    }, 1000);
+    }, 5000);
   } else if (e.key == "w") {
     sendFeedMessage();
+  } else if (e.key === "Backspace") {
+    keyword = "";
+  } else {
+    keyword += e.key;
+    if (keyword === "logs1") logger.exportAsJSON();
+    else if (keyword === "logs2") logger.exportAsText();
   }
 });
 
@@ -62,10 +87,10 @@ export function updateSpeedBar(speedBars) {
 document.getElementById("roomId").addEventListener("click", () => {
   navigator.clipboard.writeText(gameState.roomId).then(() => {
     const popup = document.getElementById("copyPopup");
-    popup.style.top = "1rem";
+    popup.classList.add("visible");
 
     setTimeout(() => {
-      popup.style.top = "-4rem";
+      popup.classList.remove("visible");
     }, 2000);
   });
 });
@@ -110,6 +135,16 @@ export const render = () => {
 
   for (const player of gameState.players) {
     for (const cell of player.cells) {
+      const key = `${player.id}_${player.cells.indexOf(cell)}`;
+      const lastPos = cellMovementCache.get(key) || { x: cell.x, y: cell.y };
+      const dx = cell.x - lastPos.x;
+      const dy = cell.y - lastPos.y;
+      cellMovementCache.set(key, { x: cell.x, y: cell.y });
+
+      if (gameState.speedupActive && player.id === gameState.playerId) {
+        drawTrail(cell.x, cell.y, cell.radius, dx, dy, cell.color);
+      }
+
       const skinImg = getSkinImage(player.id);
       if (skinImg?.complete && skinImg.naturalWidth) {
         ctx.save();
@@ -131,8 +166,7 @@ export const render = () => {
           cell.radius,
           cell.color,
           Date.now(),
-          player.id,
-          gameState.speedupActive && player.id === gameState.playerId
+          player.id
         );
       }
 
@@ -291,7 +325,7 @@ function getMiddlePoint(p1, p2) {
   };
 }
 
-function drawWavyBlob(x, y, radius, color, timestamp, blobId, isSpeeding) {
+function drawWavyBlob(x, y, radius, color, timestamp, blobId) {
   const points = Math.max(8, Math.min(16, Math.floor(radius / 10)));
   const wobbleAmount = radius * 0.04;
   const wobbleSpeed = 0.008;
@@ -329,30 +363,6 @@ function drawWavyBlob(x, y, radius, color, timestamp, blobId, isSpeeding) {
     point.y = y + adjustedRadius * point.baseY;
   }
 
-  if (isSpeeding) {
-    const trailLength = 5;
-    const dx = lastMouseWorldPos.x - x;
-    const dy = lastMouseWorldPos.y - y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    const directionX = distance > 0 ? -dx / distance : 0;
-    const directionY = distance > 0 ? -dy / distance : 0;
-
-    for (let i = 0; i < trailLength; i++) {
-      const t = 1 - i / trailLength;
-      const alpha = t * 0.3;
-      const size = radius * (0.5 + t * 0.5);
-      const offset = (i / trailLength) * radius * 1.5;
-
-      drawCircle(
-        x + directionX * offset,
-        y + directionY * offset,
-        size,
-        color,
-        100 * alpha
-      );
-    }
-  }
-
   ctx.fillStyle = color;
   ctx.beginPath();
 
@@ -374,4 +384,20 @@ function drawWavyBlob(x, y, radius, color, timestamp, blobId, isSpeeding) {
 
   ctx.closePath();
   ctx.fill();
+}
+
+function drawTrail(x, y, radius, dx, dy, color) {
+  const trailLength = 5;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  const dirX = distance > 0 ? -dx / distance : 0;
+  const dirY = distance > 0 ? -dy / distance : 0;
+
+  for (let i = 0; i < trailLength; i++) {
+    const t = 1 - i / trailLength;
+    const alpha = t * 0.3;
+    const size = radius * (0.5 + t * 0.5);
+    const offset = (i / trailLength) * radius * 1.5;
+
+    drawCircle(x + dirX * offset, y + dirY * offset, size, color, 100 * alpha);
+  }
 }
