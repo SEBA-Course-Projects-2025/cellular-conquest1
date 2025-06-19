@@ -186,20 +186,6 @@
     gap: 12px;
   }
   
-  .avatar {
-    width: 70px;
-    height: 70px;
-    background: linear-gradient(135deg, var(--accent), #4dff7a);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 1.8rem;
-    font-weight: bold;
-    color: var(--bg-color);
-    box-shadow: 0 0 15px rgba(122, 255, 153, 0.5);
-    transition: var(--transition);
-  }
   
   .profile-panel:hover .avatar {
     transform: rotate(10deg) scale(1.05);
@@ -243,7 +229,7 @@
     transform: translateY(-2px);
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
   }
-  
+
   #logoutBtn {
     background: rgba(255, 90, 90, 0.1);
     border-color: rgba(255, 90, 90, 0.3);
@@ -459,6 +445,162 @@
     border-radius: 50%;
     pointer-events: none;
     z-index: -1;
+  }
+  #skinModal {
+    position: fixed;
+    inset: 0;
+    background: rgba(11,26,44,0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    overflow: hidden;
+  }
+
+  #skinModal .modal-content {
+    width: 800px;
+    max-width: 98vw;
+    min-height: 400px;
+    background: linear-gradient(135deg, #181f2a 80%, #222c3c 100%);
+    border-radius: 26px;
+    padding: 56px 48px 48px 48px;
+    box-shadow: 0 12px 48px #000b, 0 0 0 2px #2de37e33;
+    position: relative;
+    text-align: center;
+    overflow: visible !important;
+    border: none;
+    animation: modalSlideIn 0.3s cubic-bezier(.4,2,.6,1);
+  }
+
+  #skinsList {
+    display: flex;
+    flex-direction: row;
+    gap: 36px;
+    overflow-x: auto;
+    padding: 24px 0 16px 0;
+    margin: 0 auto 16px auto;
+    max-width: 540px;
+    scrollbar-width: thin;
+    scrollbar-color: #2de37e #181f2a;
+  }
+  #skinsList::-webkit-scrollbar {
+    height: 8px;
+    background: #181f2a;
+    display: none;
+  }
+  #skinsList::-webkit-scrollbar-thumb {
+    background: #2de37e;
+    border-radius: 4px;
+  }
+
+  .skin-option {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    border: 4px solid #7aff99;
+    background: #222c3c;
+    object-fit: cover;
+    cursor: pointer;
+    transition: box-shadow 0.2s, border-color 0.2s;
+    box-shadow: 0 0 12px 3px #2de37e22;
+    display: block;
+  }
+
+  .skin-option.selected,
+  .skin-option:hover {
+    border-color: #2de37e;
+    box-shadow: 0 0 0 6px #2de37e55;
+  }
+
+  #skinsBtn,
+  #addCustomSkinBtn {
+    padding: 10px 24px;
+    font-size: 1.1rem;
+    border-radius: 8px;
+    background-color: var(--accent);
+    color: var(--bg-color);
+    font-weight: bold;
+    cursor: pointer;
+    border: none;
+    transition: var(--transition);
+    margin-bottom: 10px;
+    margin-top: 10px;
+    box-shadow: 0 2px 8px rgba(122,255,153,0.08);
+    display: inline-block;
+  }
+
+  #skinsBtn:hover,
+  #addCustomSkinBtn:hover {
+    background-color: #5df18b;
+    box-shadow: var(--glow);
+    transform: translateY(-2px);
+  }
+
+  #customSkinInput {
+    display: block;
+    margin: 0 auto 10px auto;
+    padding: 8px 0;
+    font-size: 1rem;
+    color: var(--text-light);
+    background: none;
+    border: none;
+    outline: none;
+  }
+
+  #customSkinInput::-webkit-file-upload-button {
+    padding: 8px 18px;
+    border-radius: 8px;
+    background-color: var(--accent);
+    color: var(--bg-color);
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-right: 10px;
+  }
+
+  #customSkinInput:hover::-webkit-file-upload-button {
+    background-color: #5df18b;
+    box-shadow: var(--glow);
+  }
+
+  #customSkinInput::file-selector-button {
+    padding: 8px 18px;
+    border-radius: 8px;
+    background-color: var(--accent);
+    color: var(--bg-color);
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    transition: var(--transition);
+    margin-right: 10px;
+  }
+
+  #customSkinInput:hover::file-selector-button {
+    background-color: #5df18b;
+    box-shadow: var(--glow);
+  }
+
+  .avatar {
+    width: 96px;
+    height: 96px;
+    border-radius: 50%;
+    background: #181f2a;
+    margin: 0 auto 12px auto;
+    box-shadow: 0 0 16px 4px #2de37e33;
+    background-size: cover;
+    background-position: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    font-size: 2.5rem;
+    color: #fff;
+  }
+  .avatar.skin{
+    background-size: cover !important;
+    background-position: center !important;
+    color: transparent !important;
   }
   
   @media (max-width: 600px) {

@@ -26,8 +26,8 @@ public partial class Game
 
     public async Task StartServer()
     {
-        //httpListener.Prefixes.Add("http://localhost:8080/");
-        httpListener.Prefixes.Add("http://+:8080/");
+        httpListener.Prefixes.Add("http://localhost:8080/");
+        //httpListener.Prefixes.Add("http://+:8080/");
         httpListener.Start();
         Console.WriteLine("Server started on ws://localhost:8080");
         

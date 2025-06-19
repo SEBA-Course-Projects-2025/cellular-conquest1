@@ -43,6 +43,16 @@
     </div>
   </div>
 
+  <div id="skinModal" class="modal" style="display:none;">
+    <div class="modal-content">
+      <span id="closeSkinModal" class="close">&times;</span>
+      <h2>Choose your skin</h2>
+      <div id="skinsList"></div>
+      <input type="file" id="customSkinInput" accept="image/*" style="margin-bottom:8px;">
+      <button id="addCustomSkinBtn">Add Custom Skin</button>
+    </div>
+  </div>
+
   <div class="wrapper">
     <h1>Cellular Conquest</h1>
     <h2>Grow. Survive. Conquer.</h2>
@@ -57,9 +67,10 @@
         </div>
       </div>
       <div class="panel profile-panel">
+        <button id="skinsBtn" style="margin-left:12px;">Skins</button>
         <div class="avatar"></div>
         <div class="nick">Nickname</div>
-        <div class="level">Level 10</div>
+        <div class="level">Level 0</div>
       </div>
     </div>
     <div class="actions-panel">
