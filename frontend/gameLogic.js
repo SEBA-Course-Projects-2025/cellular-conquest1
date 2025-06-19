@@ -1,3 +1,9 @@
+import {
+  sendFeedMessage,
+  sendInput,
+  sendSpeedupMessage,
+  sendSplitMessage,
+} from "./gameCommunication.js";
 import gameState from "./gameState.js";
 import {
   leaderboardList,
@@ -132,4 +138,26 @@ export const handleDeath = (data) => {
       })
     );
   }, inactivityDelay);
+};
+
+export const handleSpeedup = () => {
+  if (!gameState.speedupActive && gameState.speedupAvailable) {
+    sendSpeedupMessage();
+    gameState.speedupActive = true;
+    setTimeout(() => {
+      gameState.speedupActive = false;
+    }, 5000);
+  }
+};
+
+export const handleFeed = () => {
+  sendFeedMessage();
+};
+
+export const handleSplit = () => {
+  sendSplitMessage();
+};
+
+export const handleInput = (input) => {
+  sendInput(input);
 };

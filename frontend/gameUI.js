@@ -1,10 +1,10 @@
-import {
-  sendInput,
-  sendSplitMessage,
-  sendSpeedupMessage,
-  sendFeedMessage,
-} from "./gameCommunication.js";
 import logger from "./gameLogger.js";
+import {
+  handleFeed,
+  handleInput,
+  handleSpeedup,
+  handleSplit,
+} from "./gameLogic.js";
 import gameState from "./gameState.js";
 
 export const canvas = document.getElementById("gameCanvas");
@@ -59,21 +59,10 @@ function getSkinImage(playerId) {
 
 let keyword = "";
 window.addEventListener("keydown", (e) => {
-  if (
-    e.key === "Shift" &&
-    !gameState.speedupActive &&
-    gameState.speedupAvailable
-  ) {
-    sendSpeedupMessage();
-    gameState.speedupActive = true;
-    setTimeout(() => {
-      gameState.speedupActive = false;
-    }, 5000);
-  } else if (e.key == "w") {
-    sendFeedMessage();
-  } else if (e.key === "Backspace") {
-    keyword = "";
-  } else {
+  if (e.key === "Shift") handleSpeedup();
+  else if (e.key == "w") handleFeed();
+  else if (e.key === "Backspace") keyword = "";
+  else {
     keyword += e.key;
     if (keyword === "logs1") logger.exportAsJSON();
     else if (keyword === "logs2") logger.exportAsText();
@@ -285,7 +274,7 @@ export function handleKeyDown(event) {
     if (gameState.inactive) exitPopup.classList.remove("hidden");
     else exitPopup.classList.add("hidden");
   } else if (event.key === " ") {
-    sendSplitMessage();
+    handleSplit();
   }
 }
 
@@ -308,7 +297,7 @@ export const handleMouseMove = (event) => {
     gameState.camera.y + (screenY - canvas.height / 2) / gameState.camera.scale;
 
   lastMouseWorldPos = { x: worldX, y: worldY };
-  sendInput({ x: worldX, y: worldY });
+  handleInput({ x: worldX, y: worldY });
 };
 
 export const hideExitPopup = () => {

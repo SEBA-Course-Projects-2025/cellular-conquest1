@@ -1,11 +1,10 @@
-import {
-  sendInput,
-  sendSplitMessage,
-  sendFeedMessage,
-  sendSpeedupMessage,
-} from "./gameCommunication.js";
 import gameState from "./gameState.js";
-
+import {
+  handleFeed,
+  handleInput,
+  handleSpeedup,
+  handleSplit,
+} from "./gameLogic.js";
 const $ = (id) => document.getElementById(id);
 const mobileControls = $("mobileControls");
 const joystickContainer = $("joystickContainer");
@@ -14,9 +13,9 @@ const splitBtn = $("splitBtn");
 const speedupBtn = $("speedupBtn");
 const feedBtn = $("feedBtn");
 const buttons = [
-  { el: splitBtn, action: sendSplitMessage },
-  { el: feedBtn, action: sendFeedMessage },
-  { el: speedupBtn, action: sendSpeedupMessage },
+  { el: splitBtn, action: handleSplit },
+  { el: feedBtn, action: handleFeed },
+  { el: speedupBtn, action: handleSpeedup },
 ];
 
 const isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
@@ -47,7 +46,7 @@ const updateJoystick = (x, y) => {
   joystickKnob.style.top = `${50 + cdy}px`;
 
   const norm = { x: cdx / joystickRadius, y: cdy / joystickRadius };
-  sendInput({
+  handleInput({
     x: gameState.camera.x + norm.x * 100,
     y: gameState.camera.y + norm.y * 100,
   });
@@ -88,7 +87,7 @@ const onJoystickEnd = (e) => {
   joystickPointerId = null;
   joystickKnob.style.left = "50%";
   joystickKnob.style.top = "50%";
-  sendInput({ x: gameState.camera.x, y: gameState.camera.y });
+  handleInput({ x: gameState.camera.x, y: gameState.camera.y });
   e.preventDefault();
 };
 
@@ -109,7 +108,7 @@ attach(window, ["mouseup"], onJoystickEnd);
 attach(joystickContainer, ["touchstart", "mousedown", "click"], () =>
   joystickContainer.classList.add("pressed")
 );
-attach(joystickContainer, ["touchend", "mouseup"], () =>
+attach(joystickContainer, ["touchend", "mouseup", "click"], () =>
   joystickContainer.classList.remove("pressed")
 );
 for (const { el, action } of buttons) {
