@@ -73,16 +73,47 @@ export function updateSpeedBar(speedBars) {
   document.getElementById("speedBarFill").style.width =
     (speedBars / 5) * 100 + "%";
 }
-document.getElementById("roomId").addEventListener("click", () => {
-  navigator.clipboard.writeText(gameState.roomId).then(() => {
-    const popup = document.getElementById("copyPopup");
-    popup.classList.add("visible");
 
-    setTimeout(() => {
-      popup.classList.remove("visible");
-    }, 2000);
-  });
+// execCommand is deprecated, but is used as last resort in case http prohibits copying to clipboard
+function fallbackCopy(text) {
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.style.position = "fixed";
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+
+  try {
+    document.execCommand("copy");
+    console.log("Fallback: Copy successful");
+  } catch (err) {
+    console.error("Fallback: Copy failed", err);
+  }
+
+  document.body.removeChild(textarea);
+}
+document.getElementById("roomId").addEventListener("click", () => {
+  const text = gameState.roomId;
+
+  if (navigator.clipboard && location.protocol === "https:") {
+    navigator.clipboard
+      .writeText(text)
+      .then(showCopyPopup)
+      .catch((err) => {
+        console.error("Clipboard error:", err);
+        fallbackCopy(text);
+        showCopyPopup();
+      });
+  } else {
+    fallbackCopy(text);
+    showCopyPopup();
+  }
 });
+function showCopyPopup() {
+  const popup = document.getElementById("copyPopup");
+  popup.classList.add("visible");
+  setTimeout(() => popup.classList.remove("visible"), 2000);
+}
 
 let currentScale = gameState.camera.scale;
 let lastRenderTime = performance.now();
