@@ -1,10 +1,11 @@
-import gameState from "./gameState.js";
 import {
   handleFeed,
   handleInput,
   handleSpeedup,
   handleSplit,
-} from "./gameLogic.js";
+} from "../gameFunctionality/eventHandlers.js";
+import gameState from "../gameFunctionality/gameState.js";
+
 const $ = (id) => document.getElementById(id);
 const mobileControls = $("mobileControls");
 const joystickContainer = $("joystickContainer");

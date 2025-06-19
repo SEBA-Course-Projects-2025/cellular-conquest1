@@ -1,18 +1,18 @@
-import {
-  sendFeedMessage,
-  sendInput,
-  sendSpeedupMessage,
-  sendSplitMessage,
-} from "./gameCommunication.js";
-import gameState from "./gameState.js";
+import { render } from "../gameUI/gameRenderer.js";
 import {
   leaderboardList,
   playerNameElement,
   playerScoreElement,
   showDeathPopup,
-  render,
   updateSpeedBar,
-} from "./gameUI.js";
+} from "../gameUI/uiController.js";
+import {
+  sendFeedMessage,
+  sendInput,
+  sendSpeedupMessage,
+  sendSplitMessage,
+} from "./communication.js";
+import gameState from "./gameState.js";
 
 export const gameLoop = () => {
   const dt = gameState.dt;

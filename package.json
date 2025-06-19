@@ -19,9 +19,9 @@
   },
   "homepage": "https://github.com/SEBA-Course-Projects-2025/cellular-conquest#readme",
   "devDependencies": {
-    "@eslint/js": "^9.27.0",
-    "eslint": "^9.27.0",
-    "globals": "^16.1.0"
+    "@eslint/js": "^9.29.0",
+    "eslint": "^9.29.0",
+    "globals": "^16.2.0"
   },
   "dependencies": {
     "express": "^5.1.0",

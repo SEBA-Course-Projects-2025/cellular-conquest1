@@ -1,12 +1,12 @@
+import { showGameError } from "../gameUI/uiController.js";
 import {
   handleDeath,
   handleGameState,
   handleLeaderboard,
   handlePlayerData,
-} from "./gameLogic.js";
+} from "./eventHandlers.js";
 import gameState from "./gameState.js";
-import logger from "./gameLogger.js";
-import { showGameError } from "./gameUI.js";
+import logger from "./logger.js";
 
 const isLocal =
   location.hostname === "localhost" ||

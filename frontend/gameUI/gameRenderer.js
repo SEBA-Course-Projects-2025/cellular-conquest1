@@ -1,38 +1,16 @@
-import logger from "./gameLogger.js";
-import {
-  handleFeed,
-  handleInput,
-  handleSpeedup,
-  handleSplit,
-} from "./gameLogic.js";
-import gameState from "./gameState.js";
+import gameState from "../gameFunctionality/gameState.js";
 
 export const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-export const playerNameElement = document.getElementById("playerName");
-export const playerScoreElement = document.getElementById("playerScore");
-export const leaderboardList = document.getElementById("leaderboardList");
 
-const exitPopup = document.getElementById("exitPopup");
-export const cancelExitBtn = document.getElementById("cancelExit");
-export const confirmExitBtn = document.getElementById("confirmExit");
-
-const deathPopup = document.getElementById("deathPopup");
-const finalScoreSpan = document.getElementById("finalScore");
 const skinImageCache = new Map();
 const cellMovementCache = new Map();
-let hideTimeout;
+const blobCache = new Map();
 
-export function showGameError(message) {
-  clearTimeout(hideTimeout);
-  const popup = document.getElementById("errorPopup");
-  popup.classList.add("visible");
-  popup.innerText = message;
+let currentScale = gameState.camera.scale;
+let lastRenderTime = performance.now();
 
-  setTimeout(() => {
-    popup.classList.remove("visible");
-  }, 2000);
-}
+const lerp = (start, end, t) => start + (end - start) * t;
 
 function getSkinImage(playerId) {
   const skinEntry = gameState.playersSkins.find((p) => p.id === playerId);
@@ -46,78 +24,13 @@ function getSkinImage(playerId) {
   } else {
     base64 = skinEntry.skin;
   }
-
   if (!base64) return null;
-
   if (skinImageCache.has(base64)) return skinImageCache.get(base64);
-
   const img = new Image();
   img.src = base64;
   skinImageCache.set(base64, img);
   return img;
 }
-
-let keyword = "";
-window.addEventListener("keydown", (e) => {
-  if (e.key === "Shift") handleSpeedup();
-  else if (e.key == "w") handleFeed();
-  else if (e.key === "Backspace") keyword = "";
-  else {
-    keyword += e.key;
-    if (keyword === "logs1") logger.exportAsJSON();
-    else if (keyword === "logs2") logger.exportAsText();
-  }
-});
-
-export function updateSpeedBar(speedBars) {
-  document.getElementById("speedBarFill").style.width =
-    (speedBars / 5) * 100 + "%";
-}
-
-// execCommand is deprecated, but is used as last resort in case http prohibits copying to clipboard
-function fallbackCopy(text) {
-  const textarea = document.createElement("textarea");
-  textarea.value = text;
-  textarea.style.position = "fixed";
-  document.body.appendChild(textarea);
-  textarea.focus();
-  textarea.select();
-
-  try {
-    document.execCommand("copy");
-    console.log("Fallback: Copy successful");
-  } catch (err) {
-    console.error("Fallback: Copy failed", err);
-  }
-
-  document.body.removeChild(textarea);
-}
-document.getElementById("roomId").addEventListener("click", () => {
-  const text = gameState.roomId;
-
-  if (navigator.clipboard && location.protocol === "https:") {
-    navigator.clipboard
-      .writeText(text)
-      .then(showCopyPopup)
-      .catch((err) => {
-        console.error("Clipboard error:", err);
-        fallbackCopy(text);
-        showCopyPopup();
-      });
-  } else {
-    fallbackCopy(text);
-    showCopyPopup();
-  }
-});
-function showCopyPopup() {
-  const popup = document.getElementById("copyPopup");
-  popup.classList.add("visible");
-  setTimeout(() => popup.classList.remove("visible"), 2000);
-}
-
-let currentScale = gameState.camera.scale;
-let lastRenderTime = performance.now();
-const lerp = (start, end, t) => start + (end - start) * t;
 
 export const resizeCanvas = () => {
   canvas.width = window.innerWidth;
@@ -127,14 +40,11 @@ export const resizeCanvas = () => {
 export const render = () => {
   ctx.fillStyle = "#111111";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-
   ctx.save();
-
   ctx.translate(canvas.width / 2, canvas.height / 2);
   const now = performance.now();
   const deltaTime = (now - lastRenderTime) / 1000;
   lastRenderTime = now;
-
   const smoothingSpeed = 5;
   if (Math.abs(currentScale - gameState.camera.scale) > 0.001) {
     currentScale = lerp(
@@ -143,16 +53,12 @@ export const render = () => {
       1 - Math.exp(-smoothingSpeed * deltaTime)
     );
   }
-
   ctx.scale(currentScale, currentScale);
   ctx.translate(-gameState.camera.x, -gameState.camera.y);
-
   drawGrid();
-
   for (const food of gameState.food) {
     drawCircle(food.x, food.y, food.radius, food.color, food.visibility ?? 100);
   }
-
   for (const player of gameState.players) {
     for (const cell of player.cells) {
       const key = `${player.id}_${player.cells.indexOf(cell)}`;
@@ -160,11 +66,9 @@ export const render = () => {
       const dx = cell.x - lastPos.x;
       const dy = cell.y - lastPos.y;
       cellMovementCache.set(key, { x: cell.x, y: cell.y });
-
       if (gameState.speedupActive && player.id === gameState.playerId) {
         drawTrail(cell.x, cell.y, cell.radius, dx, dy, cell.color);
       }
-
       const skinImg = getSkinImage(player.id);
       if (skinImg?.complete && skinImg.naturalWidth) {
         ctx.save();
@@ -189,25 +93,21 @@ export const render = () => {
           player.id
         );
       }
-
       drawText(player.nickname, cell.x, cell.y, cell.radius, "white");
     }
   }
-
   ctx.restore();
 };
 
 const drawCircle = (x, y, radius, fillColor, visibility = 100, borderColor) => {
   ctx.save();
   ctx.globalAlpha = Math.max(0, Math.min(visibility, 100)) / 100;
-
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.fillStyle = fillColor;
   if (borderColor) ctx.strokeStyle = borderColor;
   ctx.fill();
   ctx.stroke();
-
   ctx.restore();
 };
 
@@ -232,7 +132,6 @@ const drawText = (text, x, y, radius, color) => {
   ctx.font = `${fontSize}px Inter`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-
   const padding = 4;
   const textMetrics = ctx.measureText(text);
   const textWidth = textMetrics.width + padding * 2;
@@ -240,7 +139,6 @@ const drawText = (text, x, y, radius, color) => {
   const rectX = x - textWidth / 2;
   const rectY = y - textHeight / 2;
   const borderRadius = textHeight / 2;
-
   drawRoundedRect(
     rectX,
     rectY,
@@ -249,7 +147,6 @@ const drawText = (text, x, y, radius, color) => {
     borderRadius,
     "rgba(0, 0, 0, 0.5)"
   );
-
   ctx.fillStyle = color;
   ctx.fillText(text, x, y);
 };
@@ -257,10 +154,8 @@ const drawText = (text, x, y, radius, color) => {
 const drawGrid = () => {
   const gridSize = 50;
   const lineColor = "rgb(15, 66, 85)";
-
   ctx.strokeStyle = lineColor;
   ctx.lineWidth = 1;
-
   const startX =
     Math.floor(
       (gameState.camera.x - canvas.width / 2 / gameState.camera.scale) /
@@ -281,7 +176,6 @@ const drawGrid = () => {
       (gameState.camera.y + canvas.height / 2 / gameState.camera.scale) /
         gridSize
     ) * gridSize;
-
   for (let x = startX; x <= endX; x += gridSize) {
     if (x < 0 || x > gameState.worldSize.width) continue;
     ctx.beginPath();
@@ -289,7 +183,6 @@ const drawGrid = () => {
     ctx.lineTo(x, Math.min(gameState.worldSize.height, endY));
     ctx.stroke();
   }
-
   for (let y = startY; y <= endY; y += gridSize) {
     if (y < 0 || y > gameState.worldSize.height) continue;
     ctx.beginPath();
@@ -298,45 +191,6 @@ const drawGrid = () => {
     ctx.stroke();
   }
 };
-
-export function handleKeyDown(event) {
-  if (event.key === "Escape") {
-    gameState.inactive = !gameState.inactive;
-    if (gameState.inactive) exitPopup.classList.remove("hidden");
-    else exitPopup.classList.add("hidden");
-  } else if (event.key === " ") {
-    handleSplit();
-  }
-}
-
-export function showDeathPopup(score) {
-  finalScoreSpan.textContent = score;
-  deathPopup.classList.remove("hidden");
-  gameState.inactive = true;
-}
-
-let lastMouseWorldPos = { x: 0, y: 0 };
-
-export const handleMouseMove = (event) => {
-  const rect = canvas.getBoundingClientRect();
-  const screenX = event.clientX - rect.left;
-  const screenY = event.clientY - rect.top;
-
-  const worldX =
-    gameState.camera.x + (screenX - canvas.width / 2) / gameState.camera.scale;
-  const worldY =
-    gameState.camera.y + (screenY - canvas.height / 2) / gameState.camera.scale;
-
-  lastMouseWorldPos = { x: worldX, y: worldY };
-  handleInput({ x: worldX, y: worldY });
-};
-
-export const hideExitPopup = () => {
-  exitPopup.classList.add("hidden");
-  gameState.inactive = false;
-};
-
-const blobCache = new Map();
 
 function getMiddlePoint(p1, p2) {
   return {
@@ -349,17 +203,13 @@ function drawWavyBlob(x, y, radius, color, timestamp, blobId) {
   const points = Math.max(8, Math.min(16, Math.floor(radius / 10)));
   const wobbleAmount = radius * 0.04;
   const wobbleSpeed = 0.008;
-
   let controlPoints = blobCache.get(blobId);
-
   if (!controlPoints) {
     controlPoints = [];
     const angleStep = (Math.PI * 2) / points;
-
     for (let i = 0; i < points; i++) {
       const angle = i * angleStep;
       const phaseOffset = Math.random() * Math.PI * 2;
-
       controlPoints.push({
         baseX: Math.cos(angle),
         baseY: Math.sin(angle),
@@ -367,41 +217,32 @@ function drawWavyBlob(x, y, radius, color, timestamp, blobId) {
         wobbleFreq: 0.9 + Math.random() * 0.2,
       });
     }
-
     blobCache.set(blobId, controlPoints);
   }
-
   for (let i = 0; i < controlPoints.length; i++) {
     const point = controlPoints[i];
-
     const wobble =
       Math.sin(timestamp * wobbleSpeed * point.wobbleFreq + point.phaseOffset) *
       wobbleAmount;
     const adjustedRadius = radius + wobble;
-
     point.x = x + adjustedRadius * point.baseX;
     point.y = y + adjustedRadius * point.baseY;
   }
-
   ctx.fillStyle = color;
   ctx.beginPath();
-
   if (controlPoints.length > 0) {
     const firstMidpoint = getMiddlePoint(
       controlPoints[controlPoints.length - 1],
       controlPoints[0]
     );
     ctx.moveTo(firstMidpoint.x, firstMidpoint.y);
-
     for (let i = 0; i < controlPoints.length; i++) {
       const current = controlPoints[i];
       const next = controlPoints[(i + 1) % controlPoints.length];
       const midPoint = getMiddlePoint(current, next);
-
       ctx.quadraticCurveTo(current.x, current.y, midPoint.x, midPoint.y);
     }
   }
-
   ctx.closePath();
   ctx.fill();
 }
@@ -411,13 +252,11 @@ function drawTrail(x, y, radius, dx, dy, color) {
   const distance = Math.sqrt(dx * dx + dy * dy);
   const dirX = distance > 0 ? -dx / distance : 0;
   const dirY = distance > 0 ? -dy / distance : 0;
-
   for (let i = 0; i < trailLength; i++) {
     const t = 1 - i / trailLength;
     const alpha = t * 0.3;
     const size = radius * (0.5 + t * 0.5);
     const offset = (i / trailLength) * radius * 1.5;
-
     drawCircle(x + dirX * offset, y + dirY * offset, size, color, 100 * alpha);
   }
 }
