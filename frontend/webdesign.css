@@ -458,18 +458,17 @@
   }
 
   #skinModal .modal-content {
-    width: 800px;
+    width: 900px;
     max-width: 98vw;
     min-height: 400px;
-    background: linear-gradient(135deg, #181f2a 80%, #222c3c 100%);
-    border-radius: 26px;
-    padding: 56px 48px 48px 48px;
-    box-shadow: 0 12px 48px #000b, 0 0 0 2px #2de37e33;
+    background: #181f2a;
+    border-radius: 18px;
+    padding: 40px 32px 32px 32px;
+    box-shadow: 0 8px 32px #000a;
     position: relative;
     text-align: center;
+    overflow: visible;
     overflow: visible !important;
-    border: none;
-    animation: modalSlideIn 0.3s cubic-bezier(.4,2,.6,1);
   }
 
   #skinsList {
@@ -602,6 +601,13 @@
     background-position: center !important;
     color: transparent !important;
   }
+
+  .mode-btn[data-mode="deathmatch"].active {
+    background-color: #ff5555; 
+    color: white;
+    border-color: #ff3333;
+  }
+
   
   @media (max-width: 600px) {
     .wrapper h1 {
