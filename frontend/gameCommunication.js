@@ -8,12 +8,13 @@ import gameState from "./gameState.js";
 import logger from "./gameLogger.js";
 import { showGameError } from "./gameUI.js";
 
-const isLocalhost =
-  location.hostname === "localhost" || location.hostname === "127.0.0.1";
-const ENDPOINT = isLocalhost
-  ? "ws://localhost:8080"
+const isLocal =
+  location.hostname === "localhost" ||
+  location.hostname.startsWith("192.168.") ||
+  location.hostname === "127.0.0.1";
+const ENDPOINT = isLocal
+  ? "ws://" + location.hostname + ":8080/ws"
   : "ws://161.35.75.14:8080/ws";
-
 let socket;
 
 export const connectToServer = () => {
