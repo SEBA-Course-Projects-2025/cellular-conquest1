@@ -13,12 +13,15 @@ public partial class Game
 {
     private readonly ConcurrentDictionary<Guid, ConcurrentDictionary<Guid, Player>> rooms = new();
     private readonly ConcurrentDictionary<Guid, List<Food>> roomFood = new();
+    private readonly ConcurrentDictionary<Guid, List<AntiBody>> antibodys = new();
+    private readonly ConcurrentDictionary<Guid, List<Bot>> roomBots = new();
+
     private readonly Guid PublicRoomId = Guid.Empty; 
     
     private HttpListener httpListener = new();
     private Random rng = new();
-    private const int WorldWidth = 2000;
-    private const int WorldHeight = 2000;
+    public const int WorldWidth = 2000;
+    public const int WorldHeight = 2000;
     private const float PlayerSpeed = 150f;
     private Timer? gameLoopTimer;
     private Timer? leaderboardTimer;

@@ -19,16 +19,32 @@ public partial class Game {
 
             if (!roomFood.TryGetValue(roomId, out var foodItems))
                 continue;
+            if (!antibodys.TryGetValue(roomId, out var antibodyItems))
+                antibodyItems = new List<AntiBody>();
+            
+            var now = DateTime.UtcNow;
+            antibodyItems.RemoveAll(a => (now - a.CreatedAt).TotalSeconds > 10);
+            
             var deltaTime = 1f / 60f;
             var eatenCells = new List<(Player victim, Cell cell)>();
+            
+            var realPlayer = players.Values.FirstOrDefault(p => !p.IsBot);
 
+            roomBots.TryGetValue(roomId, out var botsList);
+            if (botsList != null && realPlayer != null)
+            {
+                foreach (var bot in botsList)
+                {
+                    bot.UpdateAI(realPlayer);
+                }
+            }
 
             //cell movements
             foreach (var player in players.Values)
             {
                 foreach (var cell in player.Cells)
                 {
-                    float baseSpeed = player.HasSpeedBoost ? 450f : 300f;
+                    float baseSpeed = player.HasSpeedBoost ? 450f : (player.IsBot ? 180f : 300F);
                     float sizeFactor = cell.Radius / 15f;
                     float speed = baseSpeed / sizeFactor;
 
@@ -43,11 +59,22 @@ public partial class Game {
                 }
             }
 
+            // move antibodys
+            foreach (var antibody in antibodyItems)
+            {
+                antibody.Position += antibody.Velocity * deltaTime;
+                antibody.Position = Vector2.Clamp(antibody.Position, Vector2.Zero, new Vector2(WorldWidth, WorldHeight));
+                antibody.Velocity *= 0.9f; 
+            }
+            
+
 
             //eaten food by cells
             foreach (var player in players.Values)
             {
                 var eaten = new List<Food>();
+                var eatenAnti = new List<AntiBody>();
+
                 foreach (var cell in player.Cells)
                 {
                     foreach (var food in foodItems)
@@ -72,6 +99,41 @@ public partial class Game {
                             break;
                         }
                     }
+
+                    // eat anti
+                    foreach (var anti in antibodyItems)
+                    {
+                        if (player.IsBot)
+                        {
+                            var botObj = player as Bot;
+                            if (botObj != null && Vector2.Distance(cell.Position, anti.Position) < cell.Radius)
+                            {
+                                eatenAnti.Add(anti);
+                                botObj.AntibodyHits++;
+                                if (botObj.AntibodyHits >= botObj.MaxAntibodyHits)
+                                {
+                                    eatenCells.Add((botObj, cell));
+                                }
+                                break; 
+                            }
+                        }
+                        else
+                        {
+                            if (Vector2.Distance(cell.Position, anti.Position) < cell.Radius)
+                            {
+                                eatenAnti.Add(anti);
+
+                                float currentArea = MathF.PI * cell.Radius * cell.Radius;
+                                float antiArea = MathF.PI * anti.Radius * anti.Radius;
+                                int points = (int)(antiArea / 10f);
+                                player.Score += points;
+                                float newArea = currentArea + antiArea;
+                                cell.Radius = MathF.Sqrt(newArea / MathF.PI);
+
+                                break;
+                            }
+                        }
+                    }
                 }
 
                 //remove eaten food, add new
@@ -89,6 +151,10 @@ public partial class Game {
                         IsSpeedBoost = isBoost
                     });
                 }
+
+                foreach (var anti in eatenAnti) {
+                    antibodyItems.Remove(anti);
+                }
             }
 
             //handling cell VS cell
@@ -96,6 +162,7 @@ public partial class Game {
             {
                 foreach (var prey in players.Values)
                 {
+                    if (hunter.IsBot && prey.IsBot) continue;
                     if (hunter.Id == prey.Id) {
                     var merged = new List<(Cell, Cell)>();
 
@@ -130,6 +197,7 @@ public partial class Game {
                 foreach (var hunterCell in hunter.Cells) {
                     foreach (var preyCell in prey.Cells) {
                             float distance = Vector2.Distance(hunterCell.Position, preyCell.Position);
+                            if (prey.IsBot) continue; 
                             if ((hunterCell.Radius > preyCell.Radius * 1.1f && distance < hunterCell.Radius &&
                                  hunter.Cells.Count() == 1)
                                 || (hunterCell.Radius > preyCell.Radius * 1.33f && distance < hunterCell.Radius &&
@@ -174,16 +242,39 @@ public partial class Game {
 
                     players.TryRemove(victim.Id, out _);
                     Console.WriteLine($"{victim.Nickname} was eaten.");
+                    
+                    if (victim is Bot botVictim)
+                    {
+                        // remove bot from roomBots
+                        if (roomBots.TryGetValue(roomId, out var botList))
+                        {
+                            botList.Remove(botVictim);
+
+                            // create and add new bot
+                            var newBot = new Bot(botVictim.Nickname, roomId);
+                            players[newBot.Id] = newBot;
+                            botList.Add(newBot);
+                        }
+                    }
                 }
             }
 
-            var visibleFood = foodItems.Select(f => new
-            {
+            var visibleFood = foodItems.Select(f => new {
                 x = f.Position.X,
                 y = f.Position.Y,
                 radius = f.Radius,
                 color = f.Color
             }).ToList();
+
+            // add antibodys 
+            if (antibodys.TryGetValue(roomId, out var antibodyList)) {
+                visibleFood.AddRange(antibodyList.Select(a => new {
+                    x = a.Position.X,
+                    y = a.Position.Y,
+                    radius = a.Radius,
+                    color = a.Color
+                }));
+            }
 
             var visiblePlayersList = players.Values.Select(p => new
             {
@@ -196,7 +287,7 @@ public partial class Game {
                     x = c.Position.X,
                     y = c.Position.Y,
                     radius = c.Radius,
-                    color = "#3d78dd"
+                    color = p.IsBot ? "#ffe600" : "#3d78dd"
                 }).ToList(),
                 abilities = p.SpeedBoostPoints > 0
                     ? new

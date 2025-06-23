@@ -12,22 +12,34 @@ using System.Threading.Tasks;
 
 public partial class Game
 {
+    private Cell GetBiggestCell(Player player) {
+        return player.Cells.OrderByDescending(cell => cell.Radius).First();
+    }
+
     private async Task HandleConnection(HttpListenerContext context) {
         WebSocket webSocket = (await context.AcceptWebSocketAsync(null)).WebSocket;
         Console.WriteLine("New connection");
 
         Player? player = null;
 
-        byte[] buffer = new byte[1024];
+        byte[] buffer = new byte[4096];
         while (webSocket.State == WebSocketState.Open)
         {
             try
             {
-                var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                var ms = new MemoryStream();
+                WebSocketReceiveResult result;
+                do
+                {
+                   result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                   ms.Write(buffer, 0, result.Count);
+                } while (!result.EndOfMessage);
+
                 if (result.MessageType == WebSocketMessageType.Close)
                     break;
 
-                var json = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                ms.Seek(0, SeekOrigin.Begin);
+                var json = Encoding.UTF8.GetString(ms.ToArray());
                 var obj = JsonNode.Parse(json);
                 string? type = obj?["type"]?.ToString();
 
@@ -36,9 +48,17 @@ public partial class Game
                     case "join":
                         string? roomIdStr = obj?["roomId"]?.ToString();
                         string? privateServer = obj?["privateServer"]?.ToString();
-                        Guid roomId;
+                        bool isDeathMatch =
+                            (obj?["deathMatch"]?.GetValue<bool>() ?? false)
+                            || (obj?["mode"]?.ToString()?.ToLower() == "deathmatch");
+                        string? customSkin = obj?["customSkin"]?.ToString();
 
-                        if (!string.IsNullOrWhiteSpace(privateServer))
+                        
+                        Guid roomId;
+                        if (isDeathMatch) {
+                            roomId = Guid.NewGuid();
+                        }
+                        else if (!string.IsNullOrWhiteSpace(privateServer))
                         {
                             if (privateServer == "true")
                             {
@@ -60,7 +80,30 @@ public partial class Game
                         else
                         {
                             roomId = PublicRoomId;
+                            // var ffaRoomPlayers = rooms.GetOrAdd(PublicRoomId, _ => new ConcurrentDictionary<Guid, Player>());
+                            // if (!roomBots.ContainsKey(PublicRoomId) || roomBots[PublicRoomId].Count == 0) {
+                            //     int botCount = 1;
+                            //     var bots = new List<Bot>();
+                            //     for (int i = 0; i < botCount; i++) {
+                            //         var bot = new Bot($"Bot {i+1}", PublicRoomId);
+                            //         ffaRoomPlayers[bot.Id] = bot;
+                            //         bots.Add(bot);
+                            //     }
+                            //     roomBots[PublicRoomId] = bots;
+                            // }
                         }
+						var roomPlayers = rooms.GetOrAdd(roomId, _ => new ConcurrentDictionary<Guid, Player>());
+
+						if (isDeathMatch) {
+        					int botCount = 5;
+        					var bots = new List<Bot>();
+        					for (int i = 0; i < botCount; i++) {
+            					var bot = new Bot($"Bot {i+1}", roomId);
+            					roomPlayers[bot.Id] = bot;
+            					bots.Add(bot);
+        					}
+        					roomBots[roomId] = bots;
+    					}
 
                         player = new Player
                         {
@@ -68,6 +111,7 @@ public partial class Game
                             Nickname = obj?["nickname"]?.ToString() ?? "Anonymous",
                             Socket = webSocket,
                             RoomId = roomId,
+                            CustomSkin = customSkin,
                             Cells = new List<Cell>
                             {
                                 new Cell
@@ -78,8 +122,21 @@ public partial class Game
                             }
                         };
 
-                        var roomPlayers = rooms.GetOrAdd(roomId, _ => new ConcurrentDictionary<Guid, Player>());
                         roomPlayers[player.Id] = player;
+                        
+                        if (!string.IsNullOrEmpty(customSkin))
+                        {
+                            var skinMsg = new {
+                                type = "customSkinBroadcast",
+                                id = player.Id,
+                                image = customSkin
+                            };
+
+                            foreach (var p in roomPlayers.Values)
+                            {
+                                await SendJson(p, skinMsg);
+                            }
+                        }
 
                         if (!roomFood.ContainsKey(roomId))
                         {
@@ -93,7 +150,11 @@ public partial class Game
                             nickname = player.Nickname,
                             width = 2000,
                             height = 2000,
-                            roomId = roomId
+                            roomId = roomId,
+                            currentImages = roomPlayers.Values
+                                .Where(p => !string.IsNullOrEmpty(p.CustomSkin))
+                                .Select(p => new { id = p.Id, image = p.CustomSkin })
+                                .ToList()
                         };
                         await SendJson(player, joinResponse);
 
@@ -151,6 +212,33 @@ public partial class Game
                         }
                         break;
                         
+                    case "feed":
+                        if (player != null && player.Cells.Count() > 0) {
+                            Console.WriteLine($"Feed boost");
+                            var bigCell = GetBiggestCell(player);
+                            if (bigCell.Radius > 10f) {
+                                float antiRadius = bigCell.Radius * 0.1f;
+                                bigCell.Radius *= 0.9f;
+
+                                Vector2 direction = Vector2.Normalize(player.Direction == Vector2.Zero ? new Vector2(1, 0) : player.Direction);
+                                Vector2 offset = direction * (bigCell.Radius + antiRadius + 5); 
+                                Vector2 spawnPos = bigCell.Position + offset;
+
+                                var newAntibody = new AntiBody {
+                                    Position = spawnPos,
+                                    Velocity = direction * 1500f,
+                                    Radius = antiRadius,
+                                    CreatedAt = DateTime.UtcNow
+                                };
+
+                                var roomAntiList = antibodys.GetOrAdd(player.RoomId, _ => new List<AntiBody>());
+                                lock (roomAntiList)
+                                {
+                                    roomAntiList.Add(newAntibody);
+                                }
+                            } 
+                        }
+                        break;
 
                     case "leave":
                         if (player != null)
