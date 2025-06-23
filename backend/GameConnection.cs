@@ -52,7 +52,6 @@ public partial class Game
                             (obj?["deathMatch"]?.GetValue<bool>() ?? false)
                             || (obj?["mode"]?.ToString()?.ToLower() == "deathmatch");
                         string? customSkin = obj?["customSkin"]?.ToString();
-
                         
                         Guid roomId;
                         if (isDeathMatch) {
@@ -80,17 +79,6 @@ public partial class Game
                         else
                         {
                             roomId = PublicRoomId;
-                            // var ffaRoomPlayers = rooms.GetOrAdd(PublicRoomId, _ => new ConcurrentDictionary<Guid, Player>());
-                            // if (!roomBots.ContainsKey(PublicRoomId) || roomBots[PublicRoomId].Count == 0) {
-                            //     int botCount = 1;
-                            //     var bots = new List<Bot>();
-                            //     for (int i = 0; i < botCount; i++) {
-                            //         var bot = new Bot($"Bot {i+1}", PublicRoomId);
-                            //         ffaRoomPlayers[bot.Id] = bot;
-                            //         bots.Add(bot);
-                            //     }
-                            //     roomBots[PublicRoomId] = bots;
-                            // }
                         }
 						var roomPlayers = rooms.GetOrAdd(roomId, _ => new ConcurrentDictionary<Guid, Player>());
 
@@ -121,6 +109,8 @@ public partial class Game
                                 }
                             }
                         };
+
+                        Console.WriteLine($"[{player.Nickname}] Mode is {obj?["mode"]?.ToString()}");
 
                         roomPlayers[player.Id] = player;
                         
@@ -173,6 +163,7 @@ public partial class Game
                     case "split":
                         if (player != null && player.Cells.Count < 16)
                         {
+                            Console.WriteLine($"[{player.Nickname}] Split avtivated");
                             var newCells = new List<Cell>();
                             foreach (var cell in player.Cells)
                             {
@@ -201,10 +192,8 @@ public partial class Game
 
                     case "speedup":
                         if (player != null) {
-                            Console.WriteLine($"Speed boost is {player.SpeedBoostPoints}");
                             if (player.SpeedBoostPoints > 0 )
                             {
-                                // Console.WriteLine("Speed boost is", player.SpeedBoostPoints);
                                 player.SpeedBoostUntil = DateTime.UtcNow.AddSeconds(5);
                                 player.SpeedBoostPoints--;
                             }
@@ -214,7 +203,7 @@ public partial class Game
                         
                     case "feed":
                         if (player != null && player.Cells.Count() > 0) {
-                            Console.WriteLine($"Feed boost");
+                            Console.WriteLine($"[{player.Nickname}] Feed activated.");
                             var bigCell = GetBiggestCell(player);
                             if (bigCell.Radius > 10f) {
                                 float antiRadius = bigCell.Radius * 0.1f;
@@ -243,6 +232,7 @@ public partial class Game
                     case "leave":
                         if (player != null)
                         {
+                            Console.WriteLine($"[{player.Nickname}] Disconnected.");
                             ConcurrentDictionary<Guid, Player>? roomPlayers1;
                             
                             if (!rooms.TryGetValue(player.RoomId, out roomPlayers1))
@@ -274,7 +264,7 @@ public partial class Game
             if (disconnectRoom.IsEmpty && player.RoomId != PublicRoomId)
                 rooms.TryRemove(player.RoomId, out _);
 
-            Console.WriteLine($"Player {player?.Nickname} disconnected.");
+            Console.WriteLine($"[{player?.Nickname}] Disconnected.");
         }
     }
 }

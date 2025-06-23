@@ -93,7 +93,7 @@ public partial class Game {
                             if (food.IsSpeedBoost)
                             {
                                 player.SpeedBoostPoints = Math.Min(player.SpeedBoostPoints + 1, 5);
-                                Console.WriteLine("Boost is eaten");
+                                Console.WriteLine($"[{player.Nickname}] Boost is eaten");
                             }
 
                             break;
@@ -174,6 +174,7 @@ public partial class Game {
                             float distance = Vector2.Distance(cellA.Position, cellB.Position);
                             if (distance < Math.Min(cellA.Radius, cellB.Radius)) {
                                 merged.Add((cellA, cellB));
+                                Console.WriteLine($"[{hunter.Nickname}] Merged.");
                             }
                         }
                     }
@@ -211,11 +212,11 @@ public partial class Game {
                                 hunter.Score += points;
                                 if (prey.Cells.Count() > 1)
                                 {
-                                    Console.WriteLine("here");
                                     prey.Score = (prey.Score - points) < 0 ? 0 : prey.Score - points;
                                 }
 
                                 eatenCells.Add(new ValueTuple<Player, Cell>(prey, preyCell));
+                                Console.WriteLine($"[{hunter.Nickname}] Ate [{prey.Nickname}].");
                             }
                         }
                     }
