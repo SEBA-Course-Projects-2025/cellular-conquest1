@@ -57,14 +57,6 @@ public partial class Game
                         Guid roomId;
                         if (isDeathMatch) {
                             roomId = Guid.NewGuid();
-                            int botCount = 5;
-                            var bots = new List<Bot>();
-                            for (int i = 0; i < botCount; i++) {
-                                var bot = new Bot($"Bot_{i+1}", roomId);
-                                rooms[roomId][bot.Id] = bot; 
-                                bots.Add(bot);
-                            }
-                            roomBots[roomId] = bots;
                         }
                         else if (!string.IsNullOrWhiteSpace(privateServer))
                         {
@@ -100,6 +92,18 @@ public partial class Game
                             //     roomBots[PublicRoomId] = bots;
                             // }
                         }
+						var roomPlayers = rooms.GetOrAdd(roomId, _ => new ConcurrentDictionary<Guid, Player>());
+
+						if (isDeathMatch) {
+        					int botCount = 5;
+        					var bots = new List<Bot>();
+        					for (int i = 0; i < botCount; i++) {
+            					var bot = new Bot($"Bot {i+1}", roomId);
+            					roomPlayers[bot.Id] = bot;
+            					bots.Add(bot);
+        					}
+        					roomBots[roomId] = bots;
+    					}
 
                         player = new Player
                         {
@@ -118,7 +122,6 @@ public partial class Game
                             }
                         };
 
-                        var roomPlayers = rooms.GetOrAdd(roomId, _ => new ConcurrentDictionary<Guid, Player>());
                         roomPlayers[player.Id] = player;
                         
                         if (!string.IsNullOrEmpty(customSkin))
