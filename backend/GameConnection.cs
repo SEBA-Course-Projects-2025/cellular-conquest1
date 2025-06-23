@@ -22,16 +22,24 @@ public partial class Game
 
         Player? player = null;
 
-        byte[] buffer = new byte[1024];
+        byte[] buffer = new byte[4096];
         while (webSocket.State == WebSocketState.Open)
         {
             try
             {
-                var result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                var ms = new MemoryStream();
+                WebSocketReceiveResult result;
+                do
+                {
+                   result = await webSocket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                   ms.Write(buffer, 0, result.Count);
+                } while (!result.EndOfMessage);
+
                 if (result.MessageType == WebSocketMessageType.Close)
                     break;
 
-                var json = Encoding.UTF8.GetString(buffer, 0, result.Count);
+                ms.Seek(0, SeekOrigin.Begin);
+                var json = Encoding.UTF8.GetString(ms.ToArray());
                 var obj = JsonNode.Parse(json);
                 string? type = obj?["type"]?.ToString();
 
