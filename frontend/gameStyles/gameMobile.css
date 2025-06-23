@@ -1,0 +1,80 @@
+#mobileControls {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: flex-end;
+}
+#mobileControls.hidden {
+  display: none;
+}
+
+#joystickContainer {
+  position: relative;
+  width: 100px;
+  height: 100px;
+  pointer-events: auto;
+}
+
+#joystickBase {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: rgba(1, 35, 69, 0.6);
+  border: 2px solid rgba(15, 66, 85, 0.8);
+  position: relative;
+  transition: all 0.3s ease;
+}
+#joystickHandle {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(160, 216, 255, 0.8);
+  border: 2px solid rgba(160, 216, 255, 1);
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  transition: all 0.1s ease;
+  box-shadow: 0 0 10px rgba(160, 216, 255, 0.3);
+}
+
+#actionButtons {
+  display: flex;
+  flex-wrap: wrap-reverse;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: flex-end;
+  gap: 1rem;
+  pointer-events: auto;
+  height: 50%;
+}
+
+.actionBtn {
+  width: 70px;
+  height: 70px;
+  border-radius: 50%;
+  background: rgba(1, 35, 69, 0.6);
+  border: 2px solid rgba(15, 66, 85, 0.8);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  color: rgba(160, 216, 255, 1);
+  touch-action: manipulation;
+  user-select: none;
+  transition: all 0.3s ease;
+}
+
+.actionBtn:active {
+  background: rgba(160, 216, 255, 0.3);
+  transform: scale(0.95);
+  box-shadow: var(--glow);
+}
+
+#joystickContainer.pressed #joystickBase,
+.actionBtn.pressed {
+  background: rgba(160, 216, 255, 0.4);
+  border-color: rgba(160, 216, 255, 1);
+  box-shadow: var(--glow);
+}

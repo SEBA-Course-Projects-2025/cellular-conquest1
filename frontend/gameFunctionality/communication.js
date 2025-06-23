@@ -1,17 +1,20 @@
+import { showGameError } from "../gameUI/uiController.js";
 import {
   handleDeath,
   handleGameState,
   handleLeaderboard,
   handlePlayerData,
-} from "./gameLogic.js";
+} from "./eventHandlers.js";
 import gameState from "./gameState.js";
+import logger from "./logger.js";
 
-const isLocalhost =
-  location.hostname === "localhost" || location.hostname === "127.0.0.1";
-const ENDPOINT = isLocalhost
-  ? "ws://localhost:8080"
+const isLocal =
+  location.hostname === "localhost" ||
+  location.hostname.startsWith("192.168.") ||
+  location.hostname === "127.0.0.1";
+const ENDPOINT = isLocal
+  ? "ws://" + location.hostname + ":8080/ws"
   : "ws://161.35.75.14:8080/ws";
-
 let socket;
 
 export const connectToServer = () => {
@@ -38,11 +41,13 @@ export const connectToServer = () => {
       joinMessage.customSkin = customSkin;
     }
 
+    logger.out("join", joinMessage);
     socket.send(JSON.stringify(joinMessage));
   };
 
   socket.onmessage = (event) => {
     const message = JSON.parse(event.data);
+    logger.in(message.type, message);
 
     switch (message.type) {
       case "playerData":
@@ -73,59 +78,64 @@ export const connectToServer = () => {
 
   socket.onclose = () => {
     console.log("Disconnected from server");
+    showGameError("Disconnected from server. Attempting reconnection...");
     gameState.connected = false;
     setTimeout(connectToServer, 3000);
   };
 
   socket.onerror = (error) => {
     console.error("Websocket error:", error);
+    showGameError("Connection error! Trying to reconnect...");
   };
 };
 
 const handleError = (message) => {
   console.error(`Server error: ${message}`);
-  // todo: add UI error handling
+  showGameError(message.error);
 };
 
 export const sendInput = (mousePosition) => {
   if (!isReady()) return;
   const player = gameState.players.find((p) => p.id === gameState.playerId);
   if (!player || player.cells.length === 0) return;
-  const playerCell = player.cells[0]; // todo: calculate average
-  const dx = mousePosition.x - playerCell.x;
-  const dy = mousePosition.y - playerCell.y;
+  const dx = mousePosition.x - gameState.camera.x;
+  const dy = mousePosition.y - gameState.camera.y;
   const length = Math.sqrt(dx * dx + dy * dy);
   const normalizedDx = length > 0 ? dx / length : 0;
   const normalizedDy = length > 0 ? dy / length : 0;
 
-  socket.send(
-    JSON.stringify({
-      type: "input",
-      direction: { x: normalizedDx, y: normalizedDy },
-    })
-  );
+  const inputMsg = {
+    type: "input",
+    direction: { x: normalizedDx, y: normalizedDy },
+  };
+  logger.out("input", inputMsg);
+  socket.send(JSON.stringify(inputMsg));
 };
 
 export const sendSplitMessage = () => {
   if (isReady()) {
+    logger.out("split");
     socket.send(JSON.stringify({ type: "split" }));
   }
 };
 
 export const sendFeedMessage = () => {
   if (isReady()) {
+    logger.out("feed");
     socket.send(JSON.stringify({ type: "feed" }));
   }
 };
 
-export const sendSpeedup = () => {
+export const sendSpeedupMessage = () => {
   if (isReady()) {
+    logger.out("speedup");
     socket.send(JSON.stringify({ type: "speedup" }));
   }
 };
 
 export const sendLeaveMessage = () => {
   if (isReady()) {
+    logger.out("leave");
     socket.send(JSON.stringify({ type: "leave" }));
   }
 };

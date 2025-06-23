@@ -15,7 +15,7 @@
     <pre><code>{
   "type": "join",
   "nickname": "PlayerName",
-  "mode"?: "FFA" | "Death Match" | "Teams" | "Other",
+  "mode"?: "ffa" | "deathmatch" | "teams" | "other",
   "privateServer"?: true | Guid,
   "customSkin"?: string // <b>🧪 Beta</b>
 }</code></pre>
@@ -182,26 +182,6 @@
 }</code></pre>
   </td>
   <td>Ranking data.</td>
-</tr>
-
-<tr>
-  <td><code>availableSkins</code></td>
-  <td>Server → Client</td>
-  <td>On connection or request</td>
-  <td>
-    <pre><code>{
-  "type": "availableSkins",
-  "skins": [
-    {
-      "id": string,
-      "image": string (base64)
-    }
-  ]
-}</code></pre>
-  </td>
-  <td>
-    <b>🧪 Beta:</b> Sends list of available skins as ID + base64 image.
-  </td>
 </tr>
 
 <tr>
