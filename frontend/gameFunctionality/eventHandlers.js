@@ -1,12 +1,19 @@
-import gameState from "./gameState.js";
+import { render } from "../gameUI/gameRenderer.js";
 import {
   leaderboardList,
   playerNameElement,
   playerScoreElement,
   showDeathPopup,
-  render,
   updateSpeedBar,
-} from "./gameUI.js";
+} from "../gameUI/uiController.js";
+import { updateCamera } from "../gameUI/camera.js";
+import {
+  sendFeedMessage,
+  sendInput,
+  sendSpeedupMessage,
+  sendSplitMessage,
+} from "./communication.js";
+import gameState from "./gameState.js";
 
 export const gameLoop = () => {
   const dt = gameState.dt;
@@ -47,21 +54,11 @@ export const handleGameState = (data) => {
       gameState.playerScore
     )}`;
     updateSpeedBar(player.abilities?.speed ?? 0);
+    gameState.speedupAvailable = !!player.abilities?.speed;
 
-    if (player.cells.length > 0) {
-      let centerX = 0,
-        centerY = 0;
-      for (const cell of player.cells) {
-        centerX += cell.x;
-        centerY += cell.y;
-      }
-      gameState.camera.x = centerX / player.cells.length;
-      gameState.camera.y = centerY / player.cells.length;
-
-      gameState.camera.scale = Math.max(
-        0.5,
-        Math.min(1, 300 / gameState.playerScore)
-      );
+    const cellsCount = player.cells.length;
+    if (cellsCount > 0) {
+      updateCamera();
     }
   }
 };
@@ -70,8 +67,9 @@ export const handleLeaderboard = (data) => {
   leaderboardList.innerHTML = "";
 
   const sortedPlayers = data.topPlayers;
+  const maxListLen = gameState.isTouch ? 3 : 10;
 
-  for (let i = 0; i < Math.min(10, sortedPlayers.length); i++) {
+  for (let i = 0; i < Math.min(maxListLen, sortedPlayers.length); i++) {
     const player = sortedPlayers[i];
     const li = document.createElement("li");
     li.textContent = `${player.nickname}: ${Math.floor(player.score)}`;
@@ -83,7 +81,7 @@ export const handleLeaderboard = (data) => {
     leaderboardList.appendChild(li);
   }
 
-  if (data.personal.rank > sortedPlayers.length) {
+  if (data.personal.rank > maxListLen) {
     const li = document.createElement("li");
     li.textContent = `${gameState.playerName}: ${Math.floor(
       gameState.playerScore
@@ -99,11 +97,6 @@ export const handleDeath = (data) => {
   console.log(`${gameState.playerName} has died.`);
 
   localStorage.setItem("lastScore", Math.floor(gameState.playerScore));
-
-  const canvas = document.getElementById("gameCanvas");
-  if (canvas) {
-    canvas.classList.add("blured");
-  }
 
   showDeathPopup(data.score);
   const inactivityDelay = 30000;
@@ -134,4 +127,26 @@ export const handleDeath = (data) => {
       })
     );
   }, inactivityDelay);
+};
+
+export const handleSpeedup = () => {
+  if (!gameState.speedupActive && gameState.speedupAvailable) {
+    sendSpeedupMessage();
+    gameState.speedupActive = true;
+    setTimeout(() => {
+      gameState.speedupActive = false;
+    }, 5000);
+  }
+};
+
+export const handleFeed = () => {
+  sendFeedMessage();
+};
+
+export const handleSplit = () => {
+  sendSplitMessage();
+};
+
+export const handleInput = (input) => {
+  sendInput(input);
 };

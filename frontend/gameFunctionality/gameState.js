@@ -1,6 +1,7 @@
 const defaultWorldSize = 2000;
 
 const state = {
+  isTouch: false,
   playerName: localStorage.getItem("playerName") || "YourNickname",
   playerId: null,
   playerScore: 0,
@@ -11,6 +12,7 @@ const state = {
   lastTimestamp: null,
   dt: null,
   speedupActive: false,
+  speedupAvailable: false,
   inactive: false,
   connected: false,
   camera: { x: defaultWorldSize / 2, y: defaultWorldSize / 2, scale: 1 },
