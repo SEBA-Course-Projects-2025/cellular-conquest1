@@ -1,15 +1,19 @@
-import { connectToServer, sendLeaveMessage } from "./gameCommunication.js";
+import "./gameUI/mobileControls.js";
+import { canvas, resizeCanvas } from "./gameUI/gameRenderer.js";
+import { handleKeyDown, handleMouseMove } from "./gameUI/inputHandler.js";
 import {
   cancelExitBtn,
-  canvas,
   confirmExitBtn,
-  handleKeyDown,
-  handleMouseMove,
   hideExitPopup,
-  resizeCanvas,
-} from "./gameUI.js";
-import gameState from "./gameState.js";
-import { gameLoop } from "./gameLogic.js";
+} from "./gameUI/uiController.js";
+import {
+  connectToServer,
+  sendLeaveMessage,
+} from "./gameFunctionality/communication.js";
+import {
+  gameLoop,
+  handleGameState,
+} from "./gameFunctionality/eventHandlers.js";
 
 const init = () => {
   resizeCanvas();
@@ -25,7 +29,7 @@ const init = () => {
 };
 
 const exitGame = () => {
-  localStorage.setItem("lastScore", Math.floor(gameState.playerScore));
+  localStorage.setItem("lastScore", Math.floor(handleGameState.playerScore));
   sendLeaveMessage();
   window.location.href = "web.html";
 };

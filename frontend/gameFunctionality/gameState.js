@@ -1,6 +1,7 @@
 const defaultWorldSize = 2000;
 
 const state = {
+  isTouch: false,
   playerName: localStorage.getItem("playerName") || "YourNickname",
   playerId: null,
   playerScore: 0,
