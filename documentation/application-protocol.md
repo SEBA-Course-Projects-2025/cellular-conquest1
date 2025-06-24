@@ -138,6 +138,14 @@
       }
     }
   ],
+  "visibleBushes": [
+    {
+      "x": number,
+      "y": number,
+      "radius": number,
+      "color": number
+    }
+  ],
   "visibleFood": [
     {
       "x": number,
