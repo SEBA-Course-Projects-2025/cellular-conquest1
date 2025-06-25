@@ -12,7 +12,7 @@ public class WebSocketClient : MonoBehaviour
 {
     private WebSocket websocket;
     private Guid playerId;
-    private string nickname = "PlayerName";
+    private string nickname = "UnityPlayer";
 
     private Vector2 currentDirection = Vector2.zero;
 
@@ -21,6 +21,7 @@ public class WebSocketClient : MonoBehaviour
 
     public Canvas canvas;
     public TextMeshProUGUI scoreText;
+    public Transform leaderboardContent;
 
     private RectTransform canvasRect;
     private Vector2 canvasCenter;
@@ -53,7 +54,8 @@ public class WebSocketClient : MonoBehaviour
             return;
         }
 
-        websocket = new WebSocket("ws://localhost:8080/");
+        //websocket = new WebSocket("ws://localhost:8080/");
+        websocket = new WebSocket("ws://161.35.75.14:8080/ws");
 
         websocket.OnOpen += () =>
         {
@@ -180,6 +182,9 @@ public class WebSocketClient : MonoBehaviour
                 int score = obj["score"]?.ToObject<int>() ?? 0;
                 Debug.Log($"You died. Final Score: {score}");
                 break;
+            case "leaderboard":
+                HandleLeaderboard(obj);
+                break;
         }
     }
 
@@ -269,6 +274,44 @@ public class WebSocketClient : MonoBehaviour
             playerCellObjects.Remove(key);
         }
     }
+    
+    private void HandleLeaderboard(JObject data)
+    {
+        foreach (Transform child in leaderboardContent)
+        {
+            if (child.tag != "LeaderboardTitle")
+            {
+                Destroy(child.gameObject);
+            }
+        }
+
+        var sortedPlayers = data["topPlayers"]?.ToObject<List<PlayerData>>();
+        if (sortedPlayers == null) return;
+
+        int personalRank = data["personal"]?["rank"]?.ToObject<int>() ?? -1;
+        var currentPlayer = sortedPlayers.Find(p => p.id == playerId.ToString());
+        int displayCount = Math.Min(10, sortedPlayers.Count);
+
+        for (int i = 0; i < displayCount; i++)
+        {
+            var player = sortedPlayers[i];
+            GameObject entry = new GameObject($"PlayerEntry_{i}");
+            entry.transform.SetParent(leaderboardContent, false);
+            TextMeshProUGUI text = entry.AddComponent<TextMeshProUGUI>();
+            text.text = $"{player.nickname}: {Mathf.FloorToInt(player.score)}";
+            text.margin = new Vector4(20, 10, 0, 0);
+            text.alignment = TextAlignmentOptions.TopLeft;
+            text.fontSize = 20;
+            text.color = i == personalRank - 1 ? new Color(0.24f, 0.85f, 0.51f) : Color.white;
+
+            if (personalRank > sortedPlayers.Count && player.id == playerId.ToString())
+            {
+                text.color = new Color(0.24f, 0.85f, 0.51f);
+                text.text = $"{player.nickname}: {Mathf.FloorToInt(player.score)} (Rank: {personalRank})";
+            }
+        }
+    }
+
 
     //handling dimentions
     private Vector2 MapWorldToCanvas(float worldX, float worldY, float canvasWidth, float canvasHeight)
