@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Text;
 using System.Threading.Tasks;
 using TMPro;
+using UnityEngine.SceneManagement;
 
 public class WebSocketClient : MonoBehaviour
 {
@@ -15,6 +16,7 @@ public class WebSocketClient : MonoBehaviour
     private string nickname = "UnityPlayer";
 
     private Vector2 currentDirection = Vector2.zero;
+    private bool isDead = false;
 
     public GameObject foodPrefab;
     public GameObject playerCellPrefab;
@@ -22,6 +24,7 @@ public class WebSocketClient : MonoBehaviour
     public Canvas canvas;
     public TextMeshProUGUI scoreText;
     public Transform leaderboardContent;
+    public Canvas gameOverCanvas;
 
     private RectTransform canvasRect;
     private Vector2 canvasCenter;
@@ -195,6 +198,8 @@ public class WebSocketClient : MonoBehaviour
             case "death":
                 int score = obj["score"]?.ToObject<int>() ?? 0;
                 Debug.Log($"You died. Final Score: {score}");
+                isDead = true;
+                ShowGameOverScreen();
                 break;
             case "leaderboard":
                 HandleLeaderboard(obj);
@@ -342,6 +347,45 @@ public class WebSocketClient : MonoBehaviour
         SendLeave();
         await Task.Delay(100);
         await websocket.Close();
+    }
+    
+    private void ShowGameOverScreen()
+    {
+        if (gameOverCanvas != null)
+        {
+            gameOverCanvas.gameObject.SetActive(true);
+        }
+    }
+
+    public void OnPlayAgainClicked()
+    {
+        if (websocket != null && websocket.State == WebSocketState.Open)
+        {
+            SendLeave();
+            ClearGameObjects();
+        }
+        SendJoin();
+        isDead = false;
+        if (gameOverCanvas != null)
+        {
+            gameOverCanvas.gameObject.SetActive(false);
+        }
+        SceneManager.LoadScene(SceneManager.GetActiveScene().name);
+    }
+    
+    private void ClearGameObjects()
+    {
+        foreach (var food in foodObjects.Values)
+        {
+            Destroy(food);
+        }
+        foodObjects.Clear();
+
+        foreach (var cell in playerCellObjects.Values)
+        {
+            Destroy(cell);
+        }
+        playerCellObjects.Clear();
     }
 
     [Serializable]
