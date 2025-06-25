@@ -354,12 +354,6 @@ public partial class Game {
                     visibleBushes = visibleBushes,
                     visibleFood = visibleFood
                 };
-                
-                var bushIds = player.Cells
-                    .Where(c => c.Bush_ID.HasValue)
-                    .Select(c => c.Bush_ID!.Value)
-                    .Distinct()
-                    .ToList();
 
                 var enrichedGameState = new
                 {
@@ -369,7 +363,7 @@ public partial class Game {
                     visibleBushes = gameState.visibleBushes,
                     visibleFood = gameState.visibleFood,
                     playerInfo = new {
-                        bushIds = bushIds
+                        bushIds = playerBushIds
                     }
                 };
 

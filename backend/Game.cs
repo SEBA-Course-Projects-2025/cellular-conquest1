@@ -35,7 +35,7 @@ public partial class Game
         httpListener.Start();
         Console.WriteLine("Server started on ws://localhost:8080");
 
-        SpawnSlimes(PublicRoomId, 1);
+        SpawnSlimes(PublicRoomId, 3);
         SpawnFood(PublicRoomId, 100);
         
 
@@ -88,7 +88,7 @@ public partial class Game
 
         for (int i = 0; i < count; i++) {
             var slime = new Slime {
-                Position = new Vector2(rng.Next(0 + 70f, WorldWidth - 70f), rng.Next(0 + 70f, WorldHeight - 70f)),
+                Position = new Vector2(rng.Next(0, WorldWidth), rng.Next(0, WorldHeight)),
                 ID = i
             };
             slimes.Add(slime);
