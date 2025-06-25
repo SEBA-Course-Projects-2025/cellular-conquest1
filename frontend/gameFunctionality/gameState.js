@@ -9,6 +9,7 @@ const state = {
   worldSize: { width: defaultWorldSize, height: defaultWorldSize },
   players: [],
   food: [],
+  bushes: [],
   lastTimestamp: null,
   dt: null,
   speedupActive: false,
