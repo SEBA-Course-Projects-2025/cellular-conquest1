@@ -30,11 +30,11 @@ document.addEventListener("DOMContentLoaded", function () {
   const addCustomSkinBtn = document.getElementById("addCustomSkinBtn");
 
   const defaultSkins = [
-    { name: "Green",  url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%237aff99'/%3E%3C/svg%3E" },
-    { name: "Red",    url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23ff4d4d'/%3E%3C/svg%3E" },
-    { name: "Blue",   url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%234d7aff'/%3E%3C/svg%3E" },
-    { name: "Yellow", url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23ffe24d'/%3E%3C/svg%3E" },
-    { name: "Purple", url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23b84dff'/%3E%3C/svg%3E" }
+    { id: "green", image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%237aff99'/%3E%3C/svg%3E", name: "Green" },
+    { id: "red", image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23ff4d4d'/%3E%3C/svg%3E", name: "Red" },
+    { id: "blue", image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%234d7aff'/%3E%3C/svg%3E", name: "Blue" },
+    { id: "yellow", image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23ffe24d'/%3E%3C/svg%3E", name: "Yellow" },
+    { id: "purple", image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23b84dff'/%3E%3C/svg%3E", name: "Purple" }
   ];
 
   if (!localStorage.getItem("availableSkins")) {
@@ -42,7 +42,7 @@ document.addEventListener("DOMContentLoaded", function () {
   }
   
   if (!localStorage.getItem("selectedSkin")) {
-    localStorage.setItem("selectedSkin", defaultSkins[0].url);
+    localStorage.setItem("selectedSkin", defaultSkins[0].id);
   }
 
   function renderSkins() {
@@ -51,27 +51,28 @@ document.addEventListener("DOMContentLoaded", function () {
     let skins = JSON.parse(localStorage.getItem("availableSkins") || "[]");
 
     const customSkin = localStorage.getItem("customSkin");
-    if (customSkin && !skins.some(s => s.url === customSkin)) {
-      skins.unshift({ name: "Custom", url: customSkin });
+    if (customSkin) {
+      skins = skins.filter(s => s.id !== "custom");
+      skins.unshift({ id: "custom", image: customSkin, name: "Custom" });
       localStorage.setItem("availableSkins", JSON.stringify(skins));
     }
     
-    const selectedSkin = localStorage.getItem("selectedSkin") || skins[0]?.url;
+    const selectedSkinId = localStorage.getItem("selectedSkin") || skins[0]?.id;
     
     skins.forEach(skin => {
-      if (!skin || !skin.url) return; 
+      if (!skin || !skin.image) return; 
       
       const img = document.createElement("img");
-      img.src = skin.url;
-      img.className = "skin-option" + (skin.url === selectedSkin ? " selected" : "");
+      img.src = skin.image;
+      img.className = "skin-option" + (skin.id === selectedSkinId ? " selected" : "");
       img.title = skin.name || "Skin";
       img.alt = skin.name || "Skin";
       img.onerror = () => {
-        img.src = defaultSkins[0].url; 
+        img.src = defaultSkins[0].image; 
         console.warn("Failed to load skin, using default instead");
       };
       img.onclick = () => {
-        localStorage.setItem("selectedSkin", skin.url);
+        localStorage.setItem("selectedSkin", skin.id);
         updateAvatar();
         renderSkins();
       };
@@ -80,10 +81,13 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function updateAvatar() {
-    const selectedSkin = localStorage.getItem("selectedSkin");
-    if (selectedSkin) {
+    const selectedSkinId = localStorage.getItem("selectedSkin");
+    const skins = JSON.parse(localStorage.getItem("availableSkins") || "[]");
+    const selectedSkin = skins.find(s => s.id === selectedSkinId);
+    
+    if (selectedSkin && selectedSkin.image) {
       avatarDiv.classList.add("skin");
-      avatarDiv.style.backgroundImage = `url('${selectedSkin}')`;
+      avatarDiv.style.backgroundImage = `url('${selectedSkin.image}')`;
       avatarDiv.textContent = "";
     } else {
       avatarDiv.classList.remove("skin");
@@ -108,13 +112,12 @@ document.addEventListener("DOMContentLoaded", function () {
       const base64 = e.target.result;
       
       localStorage.setItem("customSkin", base64);
-      localStorage.setItem("selectedSkin", base64);
+      localStorage.setItem("selectedSkin", "custom");
       
       let skins = JSON.parse(localStorage.getItem("availableSkins") || "[]");
-      if (!skins.some(s => s.url === base64)) {
-        skins.unshift({ name: "Custom", url: base64 });
-        localStorage.setItem("availableSkins", JSON.stringify(skins));
-      }
+      skins = skins.filter(s => s.id !== "custom");
+      skins.unshift({ id: "custom", image: base64, name: "Custom" });
+      localStorage.setItem("availableSkins", JSON.stringify(skins));
       
       updateAvatar();
       renderSkins();
@@ -196,11 +199,14 @@ document.addEventListener("DOMContentLoaded", function () {
     localStorage.setItem('privateRoomId', 'true'); 
     localStorage.setItem('gameMode', currentGameMode);
     playSound("success"); 
-    const customSkin = localStorage.getItem("customSkin");
-    const selectedSkin = localStorage.getItem("selectedSkin");
     
-    if (customSkin === selectedSkin) {
+    const selectedSkinId = localStorage.getItem("selectedSkin");
+    const customSkin = localStorage.getItem("customSkin");
+    
+    if (selectedSkinId === "custom" && customSkin) {
       localStorage.setItem('gameCustomSkin', customSkin);
+    } else {
+      localStorage.setItem('gameSelectedSkinId', selectedSkinId);
     }
     
     window.location.href = `gamePage.html`;
@@ -216,10 +222,13 @@ document.addEventListener("DOMContentLoaded", function () {
     localStorage.setItem('privateRoomId', roomCode);
     localStorage.setItem('gameMode', currentGameMode);
     
+    const selectedSkinId = localStorage.getItem("selectedSkin");
     const customSkin = localStorage.getItem("customSkin");
-    const selectedSkin = localStorage.getItem("selectedSkin");
-    if (customSkin === selectedSkin) {
+    
+    if (selectedSkinId === "custom" && customSkin) {
       localStorage.setItem('gameCustomSkin', customSkin);
+    } else {
+      localStorage.setItem('gameSelectedSkinId', selectedSkinId);
     }
     
     playSound("success"); 
@@ -285,10 +294,13 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         localStorage.setItem('gameMode', 'deathmatch');
         
+        const selectedSkinId = localStorage.getItem("selectedSkin");
         const customSkin = localStorage.getItem("customSkin");
-        const selectedSkin = localStorage.getItem("selectedSkin");
-        if (customSkin === selectedSkin) {
+        
+        if (selectedSkinId === "custom" && customSkin) {
           localStorage.setItem('gameCustomSkin', customSkin);
+        } else {
+          localStorage.setItem('gameSelectedSkinId', selectedSkinId);
         }
         
         window.location.href = `gamePage.html?nickname=${encodeURIComponent(nicknameValue)}&mode=deathmatch&deathMatch=true`;

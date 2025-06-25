@@ -608,6 +608,10 @@
     border-color: #ff3333;
   }
 
+  .mode-btn[data-mode="deathmatch"]:hover {
+    background-color: rgba(255, 85, 85, 0.2);
+  }
+
   
   @media (max-width: 600px) {
     .wrapper h1 {
