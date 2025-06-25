@@ -10,6 +10,7 @@ const state = {
   players: [],
   food: [],
   bushes: [],
+  bushIds: [],
   lastTimestamp: null,
   dt: null,
   speedupActive: false,

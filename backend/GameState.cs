@@ -336,12 +336,14 @@ public partial class Game {
                         : null
                 }).Where(p => p.cells.Count > 0).ToList();
 
-                var visibleBushes = slimeItems.Select(b => new {
-                    x = b.Position.X,
-                    y = b.Position.Y,
-                    radius = b.Radius,
-                    color = b.Color
-                }).ToList();
+            var visibleBushes = slimeItems.Select(b => new
+            {
+                x = b.Position.X,
+                y = b.Position.Y,
+                radius = b.Radius,
+                color = b.Color,
+                id = b.ID
+            }).ToList();
 
                 //write gameState
                 var gameState = new
@@ -353,8 +355,27 @@ public partial class Game {
                     visibleFood = visibleFood
                 };
                 
-                await SendJson(player, gameState);
+                var bushIds = player.Cells
+                    .Where(c => c.Bush_ID.HasValue)
+                    .Select(c => c.Bush_ID!.Value)
+                    .Distinct()
+                    .ToList();
+
+                var enrichedGameState = new
+                {
+                    type = gameState.type,
+                    timestamp = gameState.timestamp,
+                    visiblePlayers = gameState.visiblePlayers,
+                    visibleBushes = gameState.visibleBushes,
+                    visibleFood = gameState.visibleFood,
+                    playerInfo = new {
+                        bushIds = bushIds
+                    }
+                };
+
+                await SendJson(player, enrichedGameState);
             }
+
         }
     }
 }
