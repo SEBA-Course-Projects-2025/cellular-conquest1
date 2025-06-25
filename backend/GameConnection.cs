@@ -21,6 +21,7 @@ public partial class Game
         Console.WriteLine("New connection");
 
         Player? player = null;
+        Random random = new Random();
 
         byte[] buffer = new byte[4096];
         while (webSocket.State == WebSocketState.Open)
@@ -104,7 +105,7 @@ public partial class Game
                             {
                                 new Cell
                                 {
-                                    Position = new Vector2(500, 500),
+                                    Position = new Vector2(random.Next(0, 2000), random.Next(0, 2000)),
                                     Radius = 20f
                                 }
                             }

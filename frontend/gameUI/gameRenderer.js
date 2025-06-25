@@ -57,6 +57,10 @@ export const render = () => {
   ctx.scale(currentScale, currentScale);
   ctx.translate(-gameState.camera.x, -gameState.camera.y);
   drawGrid();
+  // for (const bush of gameState.bushes) {
+  //   drawCircle(bush.x, bush.y, bush.radius, bush.color, bush.visibility ?? 100);
+  // }
+
   for (const food of gameState.food) {
     drawCircle(food.x, food.y, food.radius, food.color, food.visibility ?? 100);
   }
