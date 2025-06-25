@@ -47,6 +47,7 @@ export const handleGameState = (data) => {
   gameState.bushes = data.visibleBushes;
   gameState.dt = data.timestamp - gameState.lastTimestamp;
   gameState.lastTimestamp = data.timestamp;
+  gameState.bushIds = data.playerInfo.bushIds;
 
   const player = gameState.players.find((p) => p.id === gameState.playerId);
   if (player) {
