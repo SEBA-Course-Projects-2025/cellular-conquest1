@@ -1,35 +1,58 @@
 import gameState from "../gameFunctionality/gameState.js";
 import { canvas } from "./gameRenderer.js";
 
-// zoomOutThreshold: minimum size to enable manual scroll zoom
-// zoomStep: how much to zoom per scroll/auto-adjust step
 const zoomSettings = {
-  zoomOutThreshold: 100,
+  minRadius: 20,
+  maxRadius: 500,
+  minCoverage: 1 / 9,
+  maxCoverage: 3 / 4,
   zoomStep: 0.1,
-  minScale: 1,
-  maxScale: 2,
+  manualZoomThreshold: 100,
+  minManualScale: 1,
+  maxManualScale: 4,
+  smoothness: 0.1,
 };
 
-let manualZoomApplied = false;
+let manualZoom = false;
+let manualScale = 1;
 
-const clampScale = (scale) =>
-  Math.max(zoomSettings.minScale, Math.min(zoomSettings.maxScale, scale));
+const lerpClamp = (min, max, val) =>
+  Math.min(1, Math.max(0, (val - min) / (max - min)));
 
-const getTotalRadius = () => {
-  const player = gameState.players.find((p) => p.id === gameState.playerId);
-  return player?.cells.reduce((sum, cell) => sum + (cell.radius || 1), 0) || 0;
+const lerp = (a, b, t) => a + t * (b - a);
+
+const getTotalRadius = () =>
+  gameState.players
+    .find((p) => p.id === gameState.playerId)
+    ?.cells.reduce((sum, c) => sum + (c.radius || 1), 0) || 0;
+
+const getTargetScale = (r) => {
+  const screenSize = Math.min(canvas.width, canvas.height);
+  const normRadius = lerpClamp(
+    zoomSettings.minRadius,
+    zoomSettings.maxRadius,
+    r
+  );
+  const coverage = lerp(
+    zoomSettings.minCoverage,
+    zoomSettings.maxCoverage,
+    normRadius
+  );
+  return (screenSize * coverage) / (2 * r);
 };
 
-export const handleZoomWheel = (event) => {
-  event.preventDefault();
-  const totalRadius = getTotalRadius();
+export const handleZoomWheel = (e) => {
+  const radius = getTotalRadius();
+  if (radius < zoomSettings.manualZoomThreshold) return;
 
-  if (totalRadius < zoomSettings.zoomOutThreshold) return;
-
-  const zoomFactor =
-    event.deltaY > 0 ? 1 - zoomSettings.zoomStep : 1 + zoomSettings.zoomStep;
-  gameState.camera.scale = clampScale(gameState.camera.scale * zoomFactor);
-  manualZoomApplied = true;
+  e.preventDefault();
+  const factor =
+    e.deltaY > 0 ? 1 - zoomSettings.zoomStep : 1 + zoomSettings.zoomStep;
+  manualScale = Math.min(
+    zoomSettings.maxManualScale,
+    Math.max(zoomSettings.minManualScale, manualScale * factor)
+  );
+  manualZoom = true;
 };
 
 canvas.addEventListener("wheel", handleZoomWheel);
@@ -38,29 +61,28 @@ export const updateCamera = () => {
   const player = gameState.players.find((p) => p.id === gameState.playerId);
   if (!player?.cells.length) return;
 
-  let totalWeight = 0,
-    weightedX = 0,
-    weightedY = 0;
-
-  for (const cell of player.cells) {
-    const weight = cell.radius || 1;
-    weightedX += cell.x * weight;
-    weightedY += cell.y * weight;
-    totalWeight += weight;
+  let x = 0,
+    y = 0,
+    weight = 0;
+  for (const c of player.cells) {
+    const r = c.radius || 1;
+    x += c.x * r;
+    y += c.y * r;
+    weight += r;
   }
 
-  gameState.camera.x = weightedX / totalWeight;
-  gameState.camera.y = weightedY / totalWeight;
+  gameState.camera.x = x / weight;
+  gameState.camera.y = y / weight;
 
-  if (!manualZoomApplied || totalWeight < zoomSettings.zoomOutThreshold) {
-    if (totalWeight < zoomSettings.zoomOutThreshold) manualZoomApplied = false;
+  const r = getTotalRadius();
+  let scale = getTargetScale(r);
+  if (manualZoom) scale *= manualScale;
 
-    const targetScale = clampScale(300 / totalWeight);
-    const diff = targetScale - gameState.camera.scale;
+  gameState.camera.scale +=
+    (scale - gameState.camera.scale) * zoomSettings.smoothness;
 
-    gameState.camera.scale =
-      Math.abs(diff) <= zoomSettings.zoomStep
-        ? targetScale
-        : gameState.camera.scale + Math.sign(diff) * zoomSettings.zoomStep;
+  if (r < zoomSettings.minRadius * 0.5) {
+    manualZoom = false;
+    manualScale = 1;
   }
 };
