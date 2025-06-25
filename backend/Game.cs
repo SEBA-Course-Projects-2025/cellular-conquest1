@@ -35,7 +35,7 @@ public partial class Game
         httpListener.Start();
         Console.WriteLine("Server started on ws://localhost:8080");
 
-        SpawnSlimes(PublicRoomId, 3);
+        SpawnSlimes(PublicRoomId, 1);
         SpawnFood(PublicRoomId, 100);
         
 
@@ -68,7 +68,7 @@ public partial class Game
                 if (distance <= slime.Radius)
                 {
                     bushId = slime.ID;
-                    break; // stop after first slime
+                    break; // stop after first slime !! delete if slimes overlap
                 }
             }
 
@@ -88,7 +88,7 @@ public partial class Game
 
         for (int i = 0; i < count; i++) {
             var slime = new Slime {
-                Position = new Vector2(rng.Next(0, WorldWidth), rng.Next(0, WorldHeight)),
+                Position = new Vector2(rng.Next(0 + 70f, WorldWidth - 70f), rng.Next(0 + 70f, WorldHeight - 70f)),
                 ID = i
             };
             slimes.Add(slime);

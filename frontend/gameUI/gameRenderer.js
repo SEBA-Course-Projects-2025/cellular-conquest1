@@ -101,31 +101,6 @@ export const render = () => {
       drawText(player.nickname, cell.x, cell.y, cell.radius, "white");
     }
   }
-  for (const bush of gameState.bushes) {
-    let visibility = 100;
-
-    for (const player of gameState.players) {
-      for (const cell of player.cells) {
-        const dx = bush.x - cell.x;
-        const dy = bush.y - cell.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-
-        if (dist < cell.radius) {
-          const overlapArea =
-            Math.PI * bush.radius ** 2 * ((cell.radius - dist) / bush.radius);
-          const bushArea = Math.PI * bush.radius * bush.radius;
-
-          if (overlapArea > bushArea / 2) {
-            visibility = semiVisible;
-            break;
-          }
-        }
-      }
-      if (visibility < 100) break;
-    }
-
-    drawCircle(bush.x, bush.y, bush.radius, bush.color, visibility, "#336633");
-  }
   ctx.restore();
 };
 
