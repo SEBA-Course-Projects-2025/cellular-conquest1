@@ -111,6 +111,11 @@ public class WebSocketClient : MonoBehaviour
         {
             SendSplit();
         }
+        
+        if (Input.GetKeyDown(KeyCode.LeftShift) || Input.GetKeyDown(KeyCode.RightShift))
+        {
+            SendSpeedup();
+        }
     }
 
 
@@ -145,6 +150,15 @@ public class WebSocketClient : MonoBehaviour
             type = "split"
         };
         SendMessage(splitPayload);
+    }
+    
+    private void SendSpeedup()
+    {
+        var speedupPayload = new
+        {
+            type = "speedup"
+        };
+        SendMessage(speedupPayload);
     }
 
     private void SendLeave()
