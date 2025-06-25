@@ -44,6 +44,7 @@ export const handlePlayerData = (data) => {
 export const handleGameState = (data) => {
   gameState.players = data.visiblePlayers;
   gameState.food = data.visibleFood;
+  gameState.bushes = data.visibleBushes;
   gameState.dt = data.timestamp - gameState.lastTimestamp;
   gameState.lastTimestamp = data.timestamp;
 
