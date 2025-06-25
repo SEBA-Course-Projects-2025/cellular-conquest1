@@ -21,6 +21,9 @@ public partial class Game {
                 continue;
             if (!antibodys.TryGetValue(roomId, out var antibodyItems))
                 antibodyItems = new List<AntiBody>();
+            if (!roomSlimes.TryGetValue(roomId, out var slimeItems))
+                slimeItems = new List<Slime>();
+
             
             var now = DateTime.UtcNow;
             antibodyItems.RemoveAll(a => (now - a.CreatedAt).TotalSeconds > 10);
@@ -56,6 +59,15 @@ public partial class Game {
                     cell.Position += cell.Velocity * deltaTime;
                     cell.Position = Vector2.Clamp(cell.Position, Vector2.Zero, new Vector2(WorldWidth, WorldHeight));
                     cell.Velocity *= 0.9f;
+
+                    cell.Bush_ID = null; // Reset before checking
+                    foreach (var slime in slimeItems) {
+                        float dist = Vector2.Distance(cell.Position, slime.Position);
+                        if (dist <= slime.Radius) {
+                            cell.Bush_ID = slime.ID;
+                            break; //same as food
+                        }
+                    }
                 }
             }
 
@@ -65,6 +77,15 @@ public partial class Game {
                 antibody.Position += antibody.Velocity * deltaTime;
                 antibody.Position = Vector2.Clamp(antibody.Position, Vector2.Zero, new Vector2(WorldWidth, WorldHeight));
                 antibody.Velocity *= 0.9f; 
+
+                antibody.Bush_ID = null;
+                foreach (var slime in slimeItems) {
+                    float dist = Vector2.Distance(antibody.Position, slime.Position);
+                    if (dist <= slime.Radius) {
+                        antibody.Bush_ID = slime.ID;
+                        break; //same as food
+                    }
+                }
             }
             
 
@@ -93,7 +114,7 @@ public partial class Game {
                             if (food.IsSpeedBoost)
                             {
                                 player.SpeedBoostPoints = Math.Min(player.SpeedBoostPoints + 1, 5);
-                                Console.WriteLine("Boost is eaten");
+                                Console.WriteLine($"[{player.Nickname}] Boost is eaten");
                             }
 
                             break;
@@ -174,6 +195,7 @@ public partial class Game {
                             float distance = Vector2.Distance(cellA.Position, cellB.Position);
                             if (distance < Math.Min(cellA.Radius, cellB.Radius)) {
                                 merged.Add((cellA, cellB));
+                                Console.WriteLine($"[{hunter.Nickname}] Merged.");
                             }
                         }
                     }
@@ -211,11 +233,11 @@ public partial class Game {
                                 hunter.Score += points;
                                 if (prey.Cells.Count() > 1)
                                 {
-                                    Console.WriteLine("here");
                                     prey.Score = (prey.Score - points) < 0 ? 0 : prey.Score - points;
                                 }
 
                                 eatenCells.Add(new ValueTuple<Player, Cell>(prey, preyCell));
+                                Console.WriteLine($"[{hunter.Nickname}] Ate [{prey.Nickname}].");
                             }
                         }
                     }
@@ -297,6 +319,12 @@ public partial class Game {
                     : null
             }).ToList();
 
+            var visibleBushes = slimeItems.Select(b => new {
+                x = b.Position.X,
+                y = b.Position.Y,
+                radius = b.Radius,
+                color = b.Color
+            }).ToList();
 
             //write gameState
             var gameState = new
@@ -304,6 +332,7 @@ public partial class Game {
                 type = "gameState",
                 timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
                 visiblePlayers = visiblePlayersList,
+                visibleBushes = visibleBushes,
                 visibleFood = visibleFood
             };
 

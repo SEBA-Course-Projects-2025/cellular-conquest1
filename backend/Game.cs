@@ -15,6 +15,7 @@ public partial class Game
     private readonly ConcurrentDictionary<Guid, List<Food>> roomFood = new();
     private readonly ConcurrentDictionary<Guid, List<AntiBody>> antibodys = new();
     private readonly ConcurrentDictionary<Guid, List<Bot>> roomBots = new();
+    private readonly ConcurrentDictionary<Guid, List<Slime>> roomSlimes = new();
 
     private readonly Guid PublicRoomId = Guid.Empty; 
     
@@ -33,8 +34,10 @@ public partial class Game
         httpListener.Prefixes.Add("http://+:8080/");
         httpListener.Start();
         Console.WriteLine("Server started on ws://localhost:8080");
-        
+
+        SpawnSlimes(PublicRoomId, 3);
         SpawnFood(PublicRoomId, 100);
+        
 
         gameLoopTimer = new Timer(SendGameState, null, 0, 1000 / 60);
         leaderboardTimer = new Timer(async _ => await SendLeaderboardAsync(), null, 0, 1000); // every 1s
@@ -49,19 +52,47 @@ public partial class Game
         }
     }
    
-    private void SpawnFood(Guid roomId, int count)
-    {
+    private void SpawnFood(Guid roomId, int count) {
         var list = roomFood.GetOrAdd(roomId, _ => new List<Food>());
-        for (int i = 0; i < count; i++)
-        {
+        if (!roomSlimes.TryGetValue(roomId, out var slimes))
+            slimes = new List<Slime>();
+
+        for (int i = 0; i < count; i++) {
             bool isBoost = rng.NextDouble() < 0.1;
+
+            var food_pos = new Vector2(rng.Next(0, WorldWidth), rng.Next(0, WorldHeight));
+            int? bushId = null;
+            foreach (var slime in slimes)
+            {
+                float distance = Vector2.Distance(food_pos, slime.Position);
+                if (distance <= slime.Radius)
+                {
+                    bushId = slime.ID;
+                    break; // stop after first slime
+                }
+            }
+
             list.Add(new Food
             {
-                Position = new Vector2(rng.Next(0, WorldWidth), rng.Next(0, WorldHeight)),
+                Position = food_pos,
                 Radius = isBoost ? 9f : 5f,
                 Color = isBoost ? "#00cfff" : "#3dda83",
-                IsSpeedBoost = isBoost
+                IsSpeedBoost = isBoost,
+                Bush_ID = bushId
             });
+        }
+    }
+    private void SpawnSlimes(Guid roomId, int count) {
+        var slimes = roomSlimes.GetOrAdd(roomId, _ => new List<Slime>());
+        var rng = new Random();
+
+        for (int i = 0; i < count; i++) {
+            var slime = new Slime {
+                Position = new Vector2(rng.Next(0, WorldWidth), rng.Next(0, WorldHeight)),
+                ID = i
+            };
+            slimes.Add(slime);
+            Console.WriteLine("Slime is created.");
         }
     }
 
