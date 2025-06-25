@@ -95,8 +95,6 @@ export const render = () => {
       drawText(player.nickname, cell.x, cell.y, cell.radius, "white");
     }
   }
-<<<<<<< HEAD
-=======
 
   for (const bush of gameState.bushes) {
     let visibility = 100;
@@ -121,7 +119,6 @@ export const render = () => {
     drawCircle(bush.x, bush.y, bush.radius, bush.color, visibility, "#336633");
   }
 
->>>>>>> development
   ctx.restore();
 };
 
