@@ -44,10 +44,10 @@ export const handlePlayerData = (data) => {
 export const handleGameState = (data) => {
   gameState.players = data.visiblePlayers;
   gameState.food = data.visibleFood;
-  gameState.bushes = data.visibleBushes;
+  gameState.bushes = data.visibleBushes || [];
   gameState.dt = data.timestamp - gameState.lastTimestamp;
   gameState.lastTimestamp = data.timestamp;
-  gameState.bushIds = data.playerInfo.bushIds;
+  gameState.bushIds = data.playerInfo.bushIds || [];
 
   const player = gameState.players.find((p) => p.id === gameState.playerId);
   if (player) {
