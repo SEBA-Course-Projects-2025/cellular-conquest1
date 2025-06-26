@@ -35,27 +35,39 @@ document.addEventListener("DOMContentLoaded", function () {
     { id: "purple", image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23b84dff'/%3E%3C/svg%3E", name: "Purple", isDefault: true }
   ];
 
-  if (!localStorage.getItem("availableSkins")) {
-    localStorage.setItem("availableSkins", JSON.stringify(defaultSkins));
-  } else {
-    let currentSkins = JSON.parse(localStorage.getItem("availableSkins") || "[]");
-    let needUpdate = false;
-    
-    defaultSkins.forEach(defaultSkin => {
-      if (!currentSkins.find(s => s.id === defaultSkin.id)) {
-        currentSkins.push(defaultSkin);
-        needUpdate = true;
+  function initializeSkins() {
+    if (!localStorage.getItem("availableSkins")) {
+      localStorage.setItem("availableSkins", JSON.stringify(defaultSkins));
+    } else {
+      let currentSkins = JSON.parse(localStorage.getItem("availableSkins") || "[]");
+      let needUpdate = false;
+      
+      defaultSkins.forEach(defaultSkin => {
+        if (!currentSkins.find(s => s.id === defaultSkin.id)) {
+          currentSkins.push(defaultSkin);
+          needUpdate = true;
+        }
+      });
+      
+      if (needUpdate) {
+        localStorage.setItem("availableSkins", JSON.stringify(currentSkins));
       }
-    });
+    }
     
-    if (needUpdate) {
-      localStorage.setItem("availableSkins", JSON.stringify(currentSkins));
+    const selectedSkinId = localStorage.getItem("selectedSkin");
+    if (!selectedSkinId) {
+      localStorage.setItem("selectedSkin", defaultSkins[0].id);
+    } else {
+      const skins = JSON.parse(localStorage.getItem("availableSkins") || "[]");
+      const selectedSkin = skins.find(s => s.id === selectedSkinId);
+      if (!selectedSkin) {
+        console.warn("Selected skin not found, resetting to default");
+        localStorage.setItem("selectedSkin", defaultSkins[0].id);
+      }
     }
   }
-  
-  if (!localStorage.getItem("selectedSkin")) {
-    localStorage.setItem("selectedSkin", defaultSkins[0].id);
-  }
+
+  initializeSkins();
 
   function formatScore(score) {
     const num = parseInt(score);
@@ -112,6 +124,34 @@ document.addEventListener("DOMContentLoaded", function () {
     return "custom_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
   }
 
+  function saveSelectedSkinForGame() {
+    const selectedSkinId = localStorage.getItem("selectedSkin");
+    const skins = JSON.parse(localStorage.getItem("availableSkins") || "[]");
+    const selectedSkin = skins.find(s => s.id === selectedSkinId);
+    
+    console.log("💾 Saving skin for game:", selectedSkin?.name, selectedSkin?.isDefault ? "(Default)" : "(Custom)");
+    
+    if (selectedSkin && selectedSkin.image) {
+      localStorage.setItem('customSkin', selectedSkin.image);
+      
+      if (selectedSkin.isDefault) {
+        localStorage.setItem('gameSelectedSkinId', selectedSkinId);
+        localStorage.removeItem('gameCustomSkin');
+        console.log("✅ Saved default skin as customSkin:", selectedSkinId);
+      } else {
+        localStorage.setItem('gameCustomSkin', selectedSkin.image);
+        localStorage.removeItem('gameSelectedSkinId');
+        console.log("✅ Saved custom skin as customSkin");
+      }
+    } else {
+      console.warn("⚠️ No valid skin found, using fallback");
+      const fallbackSkin = defaultSkins.find(s => s.id === 'green') || defaultSkins[0];
+      localStorage.setItem('customSkin', fallbackSkin.image);
+      localStorage.setItem('gameSelectedSkinId', fallbackSkin.id);
+      localStorage.removeItem('gameCustomSkin');
+    }
+  }
+
   function renderSkins() {
     skinsList.innerHTML = "";
     
@@ -134,6 +174,7 @@ document.addEventListener("DOMContentLoaded", function () {
         console.warn("Failed to load skin, using default instead");
       };
       img.onclick = () => {
+        console.log("🎨 Selecting skin:", skin.name, skin.isDefault ? "(Default)" : "(Custom)");
         localStorage.setItem("selectedSkin", skin.id);
         updateAvatar();
         renderSkins();
@@ -141,12 +182,10 @@ document.addEventListener("DOMContentLoaded", function () {
       
       skinContainer.appendChild(img);
       
-      if (skin.isDefault) {
-        const defaultLabel = document.createElement("div");
-        skinContainer.appendChild(defaultLabel);
-      }
       if (!skin.isDefault && skin.id.startsWith("custom_")) {
         const deleteBtn = document.createElement("button");
+        deleteBtn.className = "delete-skin-btn";
+        deleteBtn.innerHTML = "×";
         deleteBtn.onclick = (e) => {
           e.stopPropagation();
           deleteSkin(skin.id);
@@ -190,6 +229,34 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  function resetSkinsToDefault() {
+    console.log("🔄 Resetting skins to default...");
+    localStorage.setItem("selectedSkin", "green");
+    updateAvatar();
+    renderSkins();
+  }
+  function testSkinSelection() {
+    const selectedSkinId = localStorage.getItem("selectedSkin");
+    const skins = JSON.parse(localStorage.getItem("availableSkins") || "[]");
+    const selectedSkin = skins.find(s => s.id === selectedSkinId);
+    
+    console.log("🎨 Skin Debug Info:");
+    console.log("Selected Skin ID:", selectedSkinId);
+    console.log("Selected Skin Object:", selectedSkin);
+    console.log("Available Skins:", skins.length);
+    console.log("CustomSkin in localStorage:", localStorage.getItem('customSkin') ? "SET" : "NOT SET");
+    console.log("Game Custom Skin:", localStorage.getItem('gameCustomSkin') ? "SET" : "NOT SET");
+    console.log("Game Selected Skin ID:", localStorage.getItem('gameSelectedSkinId'));
+    
+    if (selectedSkin) {
+      console.log("✅ Skin is valid:", selectedSkin.name, selectedSkin.isDefault ? "(Default)" : "(Custom)");
+    } else {
+      console.log("❌ Skin not found! Resetting...");
+      resetSkinsToDefault();
+    }
+  }
+  window.testSkins = testSkinSelection;
+
   nicknameInput.addEventListener('input', function() {
     localStorage.setItem("playerName", this.value.trim());
     updateAvatar();
@@ -198,7 +265,7 @@ document.addEventListener("DOMContentLoaded", function () {
   addCustomSkinBtn.addEventListener("click", () => {
     const file = customSkinInput.files[0];
     if (!file) {
-      alert("Please select the file.");
+      alert("Please select a file.");
       return;
     }
     if (file.size > 500000) {
@@ -233,9 +300,7 @@ document.addEventListener("DOMContentLoaded", function () {
   });
 
   resetSkinBtn.addEventListener("click", () => {
-    localStorage.setItem("selectedSkin", defaultSkins[0].id);
-    updateAvatar();
-    renderSkins();
+    resetSkinsToDefault();
     skinModal.style.display = "none";
   });
 
@@ -288,19 +353,7 @@ document.addEventListener("DOMContentLoaded", function () {
     localStorage.setItem('gameMode', currentGameMode);
     playSound("success"); 
     
-    const selectedSkinId = localStorage.getItem("selectedSkin");
-    const skins = JSON.parse(localStorage.getItem("availableSkins") || "[]");
-    const selectedSkin = skins.find(s => s.id === selectedSkinId);
-    
-    if (selectedSkin && selectedSkin.image) {
-      if (selectedSkin.isDefault) {
-        localStorage.setItem('gameSelectedSkinId', selectedSkinId);
-        localStorage.removeItem('gameCustomSkin');
-      } else {
-        localStorage.setItem('gameCustomSkin', selectedSkin.image);
-        localStorage.removeItem('gameSelectedSkinId');
-      }
-    }
+    saveSelectedSkinForGame();
     
     window.location.href = `gamePage.html`;
   }
@@ -315,19 +368,7 @@ document.addEventListener("DOMContentLoaded", function () {
     localStorage.setItem('privateRoomId', roomCode);
     localStorage.setItem('gameMode', currentGameMode);
     
-    const selectedSkinId = localStorage.getItem("selectedSkin");
-    const skins = JSON.parse(localStorage.getItem("availableSkins") || "[]");
-    const selectedSkin = skins.find(s => s.id === selectedSkinId);
-    
-    if (selectedSkin && selectedSkin.image) {
-      if (selectedSkin.isDefault) {
-        localStorage.setItem('gameSelectedSkinId', selectedSkinId);
-        localStorage.removeItem('gameCustomSkin');
-      } else {
-        localStorage.setItem('gameCustomSkin', selectedSkin.image);
-        localStorage.removeItem('gameSelectedSkinId');
-      }
-    }
+    saveSelectedSkinForGame(); 
     
     playSound("success"); 
     const nickname = nicknameInput.value.trim() || localStorage.getItem("playerName") || "";
@@ -382,7 +423,10 @@ document.addEventListener("DOMContentLoaded", function () {
           alert("Please enter a nickname first!"); 
           nicknameInput.focus();
           return; 
-        } 
+        }
+        
+        saveSelectedSkinForGame(); 
+        
         window.location.href = `gamePage.html?nickname=${encodeURIComponent(nicknameValue)}`;
       } else if (selectedMode === "teams") { 
         showRoomModal(); 
@@ -395,19 +439,7 @@ document.addEventListener("DOMContentLoaded", function () {
         }
         localStorage.setItem('gameMode', 'deathmatch');
         
-        const selectedSkinId = localStorage.getItem("selectedSkin");
-        const skins = JSON.parse(localStorage.getItem("availableSkins") || "[]");
-        const selectedSkin = skins.find(s => s.id === selectedSkinId);
-        
-        if (selectedSkin && selectedSkin.image) {
-          if (selectedSkin.isDefault) {
-            localStorage.setItem('gameSelectedSkinId', selectedSkinId);
-            localStorage.removeItem('gameCustomSkin');
-          } else {
-            localStorage.setItem('gameCustomSkin', selectedSkin.image);
-            localStorage.removeItem('gameSelectedSkinId');
-          }
-        }
+        saveSelectedSkinForGame();
         
         window.location.href = `gamePage.html?nickname=${encodeURIComponent(nicknameValue)}&mode=deathmatch&deathMatch=true`;
       }
@@ -450,6 +482,7 @@ document.addEventListener("DOMContentLoaded", function () {
       updateScoresDisplay(false);
     }
   });
+  
   window.addEventListener('focus', function() {
     updateScoresDisplay(false);
   });
