@@ -1,3 +1,29 @@
+:root {
+  --joystick-size: 100px;
+  --joystick-handle-size: 50px;
+  --action-btn-size: 70px;
+
+  --color-dark-bg: rgba(1, 35, 69, 0.6);
+  --color-dark-border: rgba(15, 66, 85, 0.8);
+  --color-light-bg: rgba(160, 216, 255, 0.8);
+  --color-light-border: rgba(160, 216, 255, 1);
+  --color-light-bg-active: rgba(160, 216, 255, 0.3);
+  --color-pressed-bg: rgba(160, 216, 255, 0.4);
+
+  --color-text: rgba(160, 216, 255, 1);
+
+  --font-size-action: 14px;
+  --font-weight-action: bold;
+
+  --transition-fast: all 0.1s ease;
+  --transition-medium: all 0.3s ease;
+
+  --glow: 0 0 16px rgba(122, 255, 226, 0.2);
+  --glow-focused: 0 0 5px rgba(122, 255, 226, 0.3);
+  --action-gap: 1rem;
+  --action-height: 50%;
+}
+
 #mobileControls {
   display: flex;
   flex-direction: row;
@@ -10,8 +36,8 @@
 
 #joystickContainer {
   position: relative;
-  width: 100px;
-  height: 100px;
+  width: var(--joystick-size);
+  height: var(--joystick-size);
   pointer-events: auto;
 }
 
@@ -19,23 +45,24 @@
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: rgba(1, 35, 69, 0.6);
-  border: 2px solid rgba(15, 66, 85, 0.8);
+  background: var(--color-dark-bg);
+  border: 2px solid var(--color-dark-border);
   position: relative;
-  transition: all 0.3s ease;
+  transition: var(--transition-medium);
 }
+
 #joystickHandle {
-  width: 50px;
-  height: 50px;
+  width: var(--joystick-handle-size);
+  height: var(--joystick-handle-size);
   border-radius: 50%;
-  background: rgba(160, 216, 255, 0.8);
-  border: 2px solid rgba(160, 216, 255, 1);
+  background: var(--color-light-bg);
+  border: 2px solid var(--color-light-border);
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  transition: all 0.1s ease;
-  box-shadow: 0 0 10px rgba(160, 216, 255, 0.3);
+  transition: var(--transition-fast);
+  box-shadow: var(--glow);
 }
 
 #actionButtons {
@@ -44,37 +71,37 @@
   flex-direction: column;
   justify-content: flex-end;
   align-items: flex-end;
-  gap: 1rem;
+  gap: var(--action-gap);
   pointer-events: auto;
-  height: 50%;
+  height: var(--action-height);
 }
 
 .actionBtn {
-  width: 70px;
-  height: 70px;
+  width: var(--action-btn-size);
+  height: var(--action-btn-size);
   border-radius: 50%;
-  background: rgba(1, 35, 69, 0.6);
-  border: 2px solid rgba(15, 66, 85, 0.8);
+  background: var(--color-dark-bg);
+  border: 2px solid var(--color-dark-border);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
-  font-weight: bold;
-  color: rgba(160, 216, 255, 1);
+  font-size: var(--font-size-action);
+  font-weight: var(--font-weight-action);
+  color: var(--color-text);
   touch-action: manipulation;
   user-select: none;
-  transition: all 0.3s ease;
+  transition: var(--transition-medium);
 }
 
 .actionBtn:active {
-  background: rgba(160, 216, 255, 0.3);
+  background: var(--color-light-bg-active);
   transform: scale(0.95);
   box-shadow: var(--glow);
 }
 
 #joystickContainer.pressed #joystickBase,
 .actionBtn.pressed {
-  background: rgba(160, 216, 255, 0.4);
-  border-color: rgba(160, 216, 255, 1);
+  background: var(--color-pressed-bg);
+  border-color: var(--color-light-border);
   box-shadow: var(--glow);
 }
