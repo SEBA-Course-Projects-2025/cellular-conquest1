@@ -16,6 +16,14 @@ import {
 import gameState from "./gameState.js";
 import { copyToClipboard } from "../gameUtils/copyToClipboard.js";
 
+import {
+  LEADERBOARD_CONFIG,
+  DEATH_POPUP_CONFIG,
+  SPEEDUP_CONFIG,
+  LOCAL_STORAGE_KEYS,
+  UI_MESSAGES,
+} from "../config/gamePlayConfig.js";
+
 export const gameLoop = () => {
   const dt = gameState.dt;
 
@@ -32,7 +40,7 @@ export const handlePlayerData = (data) => {
     gameState.playersSkins = data.currentImages;
   gameState.updatePlayerSkin(
     gameState.playerId,
-    localStorage.getItem("customSkin")
+    localStorage.getItem(LOCAL_STORAGE_KEYS.CUSTOM_SKIN)
   );
   if (data.width !== undefined) gameState.worldSize.width = data.width;
   if (data.height !== undefined) gameState.worldSize.height = data.height;
@@ -70,7 +78,9 @@ export const handleLeaderboard = (data) => {
   leaderboardList.innerHTML = "";
 
   const sortedPlayers = data.topPlayers;
-  const maxListLen = gameState.isTouch ? 3 : 10;
+  const maxListLen = gameState.isTouch
+    ? LEADERBOARD_CONFIG.MAX_LENGTH_TOUCH
+    : LEADERBOARD_CONFIG.MAX_LENGTH_DESKTOP;
 
   for (let i = 0; i < Math.min(maxListLen, sortedPlayers.length); i++) {
     const player = sortedPlayers[i];
@@ -99,11 +109,16 @@ export const handleDeath = (data) => {
   gameState.playerScore = data.score;
   console.log(`${gameState.playerName} has died.`);
 
-  localStorage.setItem("lastScore", Math.floor(gameState.playerScore));
+  localStorage.setItem(
+    LOCAL_STORAGE_KEYS.LAST_SCORE,
+    Math.floor(gameState.playerScore)
+  );
 
   showDeathPopup(data.score);
-  const inactivityDelay = 30000;
-  const countdownSeconds = 10;
+
+  const inactivityDelay = DEATH_POPUP_CONFIG.INACTIVITY_DELAY_MS;
+  const countdownSeconds = DEATH_POPUP_CONFIG.COUNTDOWN_SECONDS;
+  const redirectUrl = DEATH_POPUP_CONFIG.REDIRECT_URL;
 
   let inactivityTimer = setTimeout(() => {
     const notice = document.getElementById("autoCloseNotice");
@@ -118,7 +133,7 @@ export const handleDeath = (data) => {
 
       if (timeLeft <= 0) {
         clearInterval(interval);
-        location.href = "web.html";
+        location.href = redirectUrl;
       }
     }, 1000);
 
@@ -138,7 +153,7 @@ export const handleSpeedup = () => {
     gameState.speedupActive = true;
     setTimeout(() => {
       gameState.speedupActive = false;
-    }, 5000);
+    }, SPEEDUP_CONFIG.DURATION_MS);
   }
 };
 
@@ -156,11 +171,11 @@ export const handleInput = (input) => {
 
 export const handleMasking = (newImage) => {
   gameState.updatePlayerSkin(gameState.playerId, newImage);
-  copyToClipboard(() => newImage, "Click 'R' to reset skin!")();
+  copyToClipboard(() => newImage, UI_MESSAGES.RESET_SKIN_HINT)();
 };
 
 export const handleSkinReset = () => {
-  const customSkin = localStorage.getItem("customSkin");
+  const customSkin = localStorage.getItem(LOCAL_STORAGE_KEYS.CUSTOM_SKIN);
   if (customSkin) {
     gameState.updatePlayerSkin(gameState.playerId, customSkin);
   }

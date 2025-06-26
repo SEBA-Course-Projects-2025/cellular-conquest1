@@ -11,9 +11,11 @@ import gameState from "../gameFunctionality/gameState.js";
 import { hideExitPopup, showExitPopup } from "./uiController.js";
 import logger from "../gameFunctionality/logger.js";
 import { copyToClipboard } from "../gameUtils/copyToClipboard.js";
+import { INPUT_KEYS, DEV_KEYWORDS, MESSAGES } from "../config/inputConfig.js";
 
 let keyword = "";
 let newSkin = null;
+
 export function initializeInputHandlers() {
   window.addEventListener("keydown", handleKeyDown);
   canvas.addEventListener("mousemove", handleMouseMove);
@@ -21,30 +23,28 @@ export function initializeInputHandlers() {
 }
 
 export function handleKeyDown(event) {
-  if (event.key === "Shift") {
+  const key = event.key;
+
+  if (key === INPUT_KEYS.SPEEDUP) {
     handleSpeedup();
-  } else if (event.key === "w") {
+  } else if (key === INPUT_KEYS.FEED) {
     handleFeed();
-  } else if (event.key === "a") {
-    if (newSkin) handleMasking(newSkin);
-  } else if (event.key === "r") {
-    if (newSkin) handleSkinReset();
-  } else if (event.key === "Backspace") {
+  } else if (key === INPUT_KEYS.MASK_SKIN && newSkin) {
+    handleMasking(newSkin);
+  } else if (key === INPUT_KEYS.RESET_SKIN && newSkin) {
+    handleSkinReset();
+  } else if (key === INPUT_KEYS.CLEAR_KEYWORD) {
     keyword = "";
-  } else if (event.key === "Escape") {
+  } else if (key === INPUT_KEYS.TOGGLE_PAUSE) {
     gameState.inactive = !gameState.inactive;
-    if (gameState.inactive) {
-      showExitPopup();
-    } else {
-      hideExitPopup();
-    }
-  } else if (event.key === " ") {
+    gameState.inactive ? showExitPopup() : hideExitPopup();
+  } else if (key === INPUT_KEYS.SPLIT) {
     handleSplit();
   } else {
-    keyword += event.key;
-    if (keyword === "logs1") {
+    keyword += key;
+    if (keyword === DEV_KEYWORDS.EXPORT_JSON) {
       logger.exportAsJSON();
-    } else if (keyword === "logs2") {
+    } else if (keyword === DEV_KEYWORDS.EXPORT_TEXT) {
       logger.exportAsText();
     }
   }
@@ -54,10 +54,12 @@ export const handleMouseMove = (event) => {
   const rect = canvas.getBoundingClientRect();
   const screenX = event.clientX - rect.left;
   const screenY = event.clientY - rect.top;
+
   const worldX =
     gameState.camera.x + (screenX - canvas.width / 2) / gameState.camera.scale;
   const worldY =
     gameState.camera.y + (screenY - canvas.height / 2) / gameState.camera.scale;
+
   handleInput({ x: worldX, y: worldY });
 };
 
@@ -78,10 +80,7 @@ export function handleCanvasClick(event) {
       const distance = Math.sqrt(dx * dx + dy * dy);
       if (distance < cell.radius) {
         newSkin = gameState.playersSkins.find((p) => p.id === player.id)?.image;
-        copyToClipboard(
-          () => player.name,
-          "Click 'A' to apply the new skin!"
-        )();
+        copyToClipboard(() => player.name, MESSAGES.SKIN_COPY_TOOLTIP)();
         return;
       }
     }

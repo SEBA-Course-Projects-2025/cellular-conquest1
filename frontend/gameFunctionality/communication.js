@@ -7,14 +7,24 @@ import {
 } from "./eventHandlers.js";
 import gameState from "./gameState.js";
 import logger from "./logger.js";
+import {
+  LOCAL_HOSTNAMES,
+  LOCAL_PREFIXES,
+  PRODUCTION_WS_URL,
+  RECONNECT_DELAY,
+  LOCAL_STORAGE_KEYS,
+  DEFAULTS,
+  MESSAGE_TYPES,
+} from "../config/networkConfig.js";
 
 const isLocal =
-  location.hostname === "localhost" ||
-  location.hostname.startsWith("192.168.") ||
-  location.hostname === "127.0.0.1";
+  LOCAL_HOSTNAMES.includes(location.hostname) ||
+  LOCAL_PREFIXES.some((prefix) => location.hostname.startsWith(prefix));
+
 const ENDPOINT = isLocal
-  ? "ws://" + location.hostname + ":8080/ws"
-  : "ws://161.35.75.14:8080/ws";
+  ? `ws://${location.hostname}:8080/ws`
+  : PRODUCTION_WS_URL;
+
 let socket;
 
 export const connectToServer = () => {
@@ -24,24 +34,23 @@ export const connectToServer = () => {
     console.log("Connected to server");
     gameState.connected = true;
 
-    const privateRoomId = localStorage.getItem("privateRoomId");
-
+    const privateRoomId = localStorage.getItem(LOCAL_STORAGE_KEYS.PRIVATE_ROOM);
     const joinMessage = {
-      type: "join",
+      type: MESSAGE_TYPES.JOIN,
       nickname: gameState.playerName,
-      mode: localStorage.getItem("gameMode") || "FFA",
+      mode: localStorage.getItem(LOCAL_STORAGE_KEYS.MODE) || DEFAULTS.GAME_MODE,
     };
 
     if (privateRoomId) {
       joinMessage.privateServer = privateRoomId;
     }
 
-    const customSkin = localStorage.getItem("customSkin");
+    const customSkin = localStorage.getItem(LOCAL_STORAGE_KEYS.CUSTOM_SKIN);
     if (customSkin) {
       joinMessage.customSkin = customSkin;
     }
 
-    logger.out("join", joinMessage);
+    logger.out(MESSAGE_TYPES.JOIN, joinMessage);
     socket.send(JSON.stringify(joinMessage));
   };
 
@@ -80,11 +89,11 @@ export const connectToServer = () => {
     console.log("Disconnected from server");
     showGameError("Disconnected from server. Attempting reconnection...");
     gameState.connected = false;
-    setTimeout(connectToServer, 3000);
+    setTimeout(connectToServer, RECONNECT_DELAY);
   };
 
   socket.onerror = (error) => {
-    console.error("Websocket error:", error);
+    console.error("WebSocket error:", error);
     showGameError("Connection error! Trying to reconnect...");
   };
 };
@@ -94,10 +103,14 @@ const handleError = (message) => {
   showGameError(message.error);
 };
 
+const isReady = () =>
+  gameState.connected && socket.readyState === WebSocket.OPEN;
+
 export const sendInput = (mousePosition) => {
   if (!isReady()) return;
   const player = gameState.players.find((p) => p.id === gameState.playerId);
   if (!player || player.cells.length === 0) return;
+
   const dx = mousePosition.x - gameState.camera.x;
   const dy = mousePosition.y - gameState.camera.y;
   const length = Math.sqrt(dx * dx + dy * dy);
@@ -105,40 +118,37 @@ export const sendInput = (mousePosition) => {
   const normalizedDy = length > 0 ? dy / length : 0;
 
   const inputMsg = {
-    type: "input",
+    type: MESSAGE_TYPES.INPUT,
     direction: { x: normalizedDx, y: normalizedDy },
   };
-  logger.out("input", inputMsg);
+  logger.out(MESSAGE_TYPES.INPUT, inputMsg);
   socket.send(JSON.stringify(inputMsg));
 };
 
 export const sendSplitMessage = () => {
   if (isReady()) {
-    logger.out("split");
-    socket.send(JSON.stringify({ type: "split" }));
+    logger.out(MESSAGE_TYPES.SPLIT);
+    socket.send(JSON.stringify({ type: MESSAGE_TYPES.SPLIT }));
   }
 };
 
 export const sendFeedMessage = () => {
   if (isReady()) {
-    logger.out("feed");
-    socket.send(JSON.stringify({ type: "feed" }));
+    logger.out(MESSAGE_TYPES.FEED);
+    socket.send(JSON.stringify({ type: MESSAGE_TYPES.FEED }));
   }
 };
 
 export const sendSpeedupMessage = () => {
   if (isReady()) {
-    logger.out("speedup");
-    socket.send(JSON.stringify({ type: "speedup" }));
+    logger.out(MESSAGE_TYPES.SPEEDUP);
+    socket.send(JSON.stringify({ type: MESSAGE_TYPES.SPEEDUP }));
   }
 };
 
 export const sendLeaveMessage = () => {
   if (isReady()) {
-    logger.out("leave");
-    socket.send(JSON.stringify({ type: "leave" }));
+    logger.out(MESSAGE_TYPES.LEAVE);
+    socket.send(JSON.stringify({ type: MESSAGE_TYPES.LEAVE }));
   }
 };
-
-const isReady = () =>
-  gameState.connected && socket.readyState === WebSocket.OPEN;

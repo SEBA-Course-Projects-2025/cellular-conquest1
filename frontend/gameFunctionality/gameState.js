@@ -1,8 +1,10 @@
+import { LOCAL_STORAGE_KEYS } from "../config/localStorageKeys.js";
 const defaultWorldSize = 2000;
 
 const state = {
   isTouch: false,
-  playerName: localStorage.getItem("playerName") || "YourNickname",
+  playerName:
+    localStorage.getItem(LOCAL_STORAGE_KEYS.PLAYER_NAME) || "YourNickname",
   playerId: null,
   playerScore: 0,
   roomId: null,
@@ -18,7 +20,8 @@ const state = {
   inactive: false,
   connected: false,
   camera: { x: defaultWorldSize / 2, y: defaultWorldSize / 2, scale: 1 },
-  availableSkins: localStorage.getItem("availableSkins") || [],
+  availableSkins:
+    localStorage.getItem(LOCAL_STORAGE_KEYS.AVAILABLE_SKINS) || [],
   playersSkins: [],
 
   updatePlayerSkin(id, image) {
