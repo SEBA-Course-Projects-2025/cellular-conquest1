@@ -21,6 +21,7 @@ html {
 body {
   width: 100vw;
   height: 100vh;
+  overflow: hidden;
 }
 
 /* Common */
@@ -33,12 +34,17 @@ body {
   padding: 1rem;
   height: 100%;
 }
-
+.row {
+  display: flex;
+  justify-content: space-between;
+  flex-direction: row;
+}
 .styledDiv {
   border-radius: 1rem;
   border: 1px solid #0f4255;
   background: #012345cc;
   padding: 1rem;
+  height: fit-content;
 }
 
 .special {
@@ -47,8 +53,8 @@ body {
 
 /* Game Info */
 #gameInfo {
+  flex-direction: column;
   justify-content: space-between;
-  align-items: flex-start;
   pointer-events: none;
 }
 #playerInfo,
@@ -68,13 +74,22 @@ body {
   justify-content: center;
   align-items: center;
 }
-#copyPopup {
+.popupNotice {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
   transition: top 0.5s ease;
   z-index: 1000;
+  top: -10rem;
 }
+.popupNotice.visible {
+  top: 1rem;
+}
+.error {
+  border-color: #ff4d4d;
+  color: #ff4d4d;
+}
+
 #autoCloseNotice {
   color: rgb(255, 94, 0);
   font-weight: bold;
@@ -116,10 +131,8 @@ body {
 }
 .blur {
   backdrop-filter: blur(5px);
-  background-color: #0007;
-  z-index: 1;
+  -webkit-backdrop-filter: blur(5px);
 }
-
 .popupContent {
   z-index: 2;
   display: flex;
@@ -143,9 +156,6 @@ body {
 
 #gameCanvas {
   transition: filter 1.8s ease-out;
-}
-.blured {
-  filter: blur(5px);
 }
 
 .copyable {

@@ -19,16 +19,35 @@ public partial class Game {
 
             if (!roomFood.TryGetValue(roomId, out var foodItems))
                 continue;
+            if (!antibodys.TryGetValue(roomId, out var antibodyItems))
+                antibodyItems = new List<AntiBody>();
+            if (!roomSlimes.TryGetValue(roomId, out var slimeItems))
+                slimeItems = new List<Slime>();
+
+            
+            var now = DateTime.UtcNow;
+            antibodyItems.RemoveAll(a => (now - a.CreatedAt).TotalSeconds > 10);
+            
             var deltaTime = 1f / 60f;
             var eatenCells = new List<(Player victim, Cell cell)>();
+            
+            var realPlayer = players.Values.FirstOrDefault(p => !p.IsBot);
 
+            roomBots.TryGetValue(roomId, out var botsList);
+            if (botsList != null && realPlayer != null)
+            {
+                foreach (var bot in botsList)
+                {
+                    bot.UpdateAI(realPlayer);
+                }
+            }
 
             //cell movements
             foreach (var player in players.Values)
             {
                 foreach (var cell in player.Cells)
                 {
-                    float baseSpeed = player.HasSpeedBoost ? 450f : 300f;
+                    float baseSpeed = player.HasSpeedBoost ? 450f : (player.IsBot ? 180f : 300F);
                     float sizeFactor = cell.Radius / 15f;
                     float speed = baseSpeed / sizeFactor;
 
@@ -40,19 +59,48 @@ public partial class Game {
                     cell.Position += cell.Velocity * deltaTime;
                     cell.Position = Vector2.Clamp(cell.Position, Vector2.Zero, new Vector2(WorldWidth, WorldHeight));
                     cell.Velocity *= 0.9f;
+
+                    cell.Bush_ID = null; // Reset before checking
+                    foreach (var slime in slimeItems) {
+                        float dist = Vector2.Distance(cell.Position, slime.Position);
+                        if (dist <= slime.Radius) {
+                            cell.Bush_ID = slime.ID;
+                            break; //same as food
+                        }
+                    }
                 }
             }
+
+            // move antibodys
+            foreach (var antibody in antibodyItems)
+            {
+                antibody.Position += antibody.Velocity * deltaTime;
+                antibody.Position = Vector2.Clamp(antibody.Position, Vector2.Zero, new Vector2(WorldWidth, WorldHeight));
+                antibody.Velocity *= 0.9f; 
+
+                antibody.Bush_ID = null;
+                foreach (var slime in slimeItems) {
+                    float dist = Vector2.Distance(antibody.Position, slime.Position);
+                    if (dist <= slime.Radius) {
+                        antibody.Bush_ID = slime.ID;
+                        break; //same as food
+                    }
+                }
+            }
+            
 
 
             //eaten food by cells
             foreach (var player in players.Values)
             {
                 var eaten = new List<Food>();
+                var eatenAnti = new List<AntiBody>();
+
                 foreach (var cell in player.Cells)
                 {
                     foreach (var food in foodItems)
                     {
-                        if (Vector2.Distance(cell.Position, food.Position) < cell.Radius)
+                        if (Vector2.Distance(cell.Position, food.Position) < cell.Radius && food.Bush_ID == cell.Bush_ID)
                         {
                             eaten.Add(food);
 
@@ -66,10 +114,45 @@ public partial class Game {
                             if (food.IsSpeedBoost)
                             {
                                 player.SpeedBoostPoints = Math.Min(player.SpeedBoostPoints + 1, 5);
-                                Console.WriteLine("Boost is eaten");
+                                Console.WriteLine($"[{player.Nickname}] Boost is eaten");
                             }
 
                             break;
+                        }
+                    }
+
+                    // eat anti
+                    foreach (var anti in antibodyItems)
+                    {
+                        if (player.IsBot)
+                        {
+                            var botObj = player as Bot;
+                            if (botObj != null && Vector2.Distance(cell.Position, anti.Position) < cell.Radius)
+                            {
+                                eatenAnti.Add(anti);
+                                botObj.AntibodyHits++;
+                                if (botObj.AntibodyHits >= botObj.MaxAntibodyHits)
+                                {
+                                    eatenCells.Add((botObj, cell));
+                                }
+                                break; 
+                            }
+                        }
+                        else
+                        {
+                            if (Vector2.Distance(cell.Position, anti.Position) < cell.Radius && anti.Bush_ID == cell.Bush_ID)
+                            {
+                                eatenAnti.Add(anti);
+
+                                float currentArea = MathF.PI * cell.Radius * cell.Radius;
+                                float antiArea = MathF.PI * anti.Radius * anti.Radius;
+                                int points = (int)(antiArea / 10f);
+                                player.Score += points;
+                                float newArea = currentArea + antiArea;
+                                cell.Radius = MathF.Sqrt(newArea / MathF.PI);
+
+                                break;
+                            }
                         }
                     }
                 }
@@ -89,6 +172,10 @@ public partial class Game {
                         IsSpeedBoost = isBoost
                     });
                 }
+
+                foreach (var anti in eatenAnti) {
+                    antibodyItems.Remove(anti);
+                }
             }
 
             //handling cell VS cell
@@ -96,17 +183,47 @@ public partial class Game {
             {
                 foreach (var prey in players.Values)
                 {
-                    if (hunter.Id == prey.Id) continue;
+                    if (hunter.IsBot && prey.IsBot) continue;
+                    if (hunter.Id == prey.Id) {
+                    var merged = new List<(Cell, Cell)>();
 
-                    foreach (var hunterCell in hunter.Cells)
-                    {
-                        foreach (var preyCell in prey.Cells)
-                        {
+                    for (int i = 0; i < hunter.Cells.Count; i++) {
+                        for (int j = i + 1; j < hunter.Cells.Count; j++) {
+                            var cellA = hunter.Cells[i];
+                            var cellB = hunter.Cells[j];
+
+                            float distance = Vector2.Distance(cellA.Position, cellB.Position);
+                            if (distance < Math.Min(cellA.Radius, cellB.Radius) && cellA.Bush_ID == cellB.Bush_ID) {
+                                merged.Add((cellA, cellB));
+                                Console.WriteLine($"[{hunter.Nickname}] Merged.");
+                            }
+                        }
+                    }
+
+                    foreach (var (cellA, cellB) in merged) {
+                        if (!hunter.Cells.Contains(cellA) || !hunter.Cells.Contains(cellB)) continue;
+
+                        float areaA = MathF.PI * cellA.Radius * cellA.Radius;
+                        float areaB = MathF.PI * cellB.Radius * cellB.Radius;
+                        float newArea = areaA + areaB;
+
+                        cellA.Radius = MathF.Sqrt(newArea / MathF.PI);
+                        cellA.Position = new Vector2(
+                            (cellA.Position.X * areaA + cellB.Position.X * areaB) / newArea,
+                            (cellA.Position.Y * areaA + cellB.Position.Y * areaB) / newArea
+                        );
+                        hunter.Cells.Remove(cellB);
+                    }
+                } 
+                //ordinar atack on another cell
+                foreach (var hunterCell in hunter.Cells) {
+                    foreach (var preyCell in prey.Cells) {
                             float distance = Vector2.Distance(hunterCell.Position, preyCell.Position);
-                            if ((hunterCell.Radius > preyCell.Radius * 1.1f && distance < hunterCell.Radius &&
+                            if (prey.IsBot) continue; 
+                            if (((hunterCell.Radius > preyCell.Radius * 1.1f && distance < hunterCell.Radius &&
                                  hunter.Cells.Count() == 1)
                                 || (hunterCell.Radius > preyCell.Radius * 1.33f && distance < hunterCell.Radius &&
-                                    hunter.Cells.Count() > 1))
+                                    hunter.Cells.Count() > 1)) && hunterCell.Bush_ID == preyCell.Bush_ID)
                             {
                                 float hunterArea = MathF.PI * hunterCell.Radius * hunterCell.Radius;
                                 float preyArea = MathF.PI * preyCell.Radius * preyCell.Radius;
@@ -116,11 +233,11 @@ public partial class Game {
                                 hunter.Score += points;
                                 if (prey.Cells.Count() > 1)
                                 {
-                                    Console.WriteLine("here");
                                     prey.Score = (prey.Score - points) < 0 ? 0 : prey.Score - points;
                                 }
 
                                 eatenCells.Add(new ValueTuple<Player, Cell>(prey, preyCell));
+                                Console.WriteLine($"[{hunter.Nickname}] Ate [{prey.Nickname}].");
                             }
                         }
                     }
@@ -147,53 +264,112 @@ public partial class Game {
 
                     players.TryRemove(victim.Id, out _);
                     Console.WriteLine($"{victim.Nickname} was eaten.");
+                    
+                    if (victim is Bot botVictim)
+                    {
+                        // remove bot from roomBots
+                        if (roomBots.TryGetValue(roomId, out var botList))
+                        {
+                            botList.Remove(botVictim);
+
+                            // create and add new bot
+                            var newBot = new Bot(botVictim.Nickname, roomId);
+                            players[newBot.Id] = newBot;
+                            botList.Add(newBot);
+                        }
+                    }
                 }
             }
 
-            var visibleFood = foodItems.Select(f => new
-            {
-                x = f.Position.X,
-                y = f.Position.Y,
-                radius = f.Radius,
-                color = f.Color
-            }).ToList();
+            // determine what bush_ids we have
+            foreach ( var player in players.Values){
+                var playerBushIds = player.Cells
+                    .Select(c => c.Bush_ID)
+                    .Where(id => id != null)
+                    .Distinct()
+                    .ToList();
 
-            var visiblePlayersList = players.Values.Select(p => new
-            {
-                id = p.Id,
-                nickname = p.Nickname,
-                score = p.Score,
-                boost = p.RemainingBoostSeconds,
-                cells = p.Cells.Select(c => new
+                //bool playerInBush = playerBushIds.Any();
+
+                var visibleFood = foodItems
+                    .Where(f => f.Bush_ID == null || playerBushIds.Contains(f.Bush_ID))
+                    .Select(f => new {
+                        x = f.Position.X,
+                        y = f.Position.Y,
+                        radius = f.Radius,
+                        color = f.Color
+                    })
+                    .ToList();
+
+                // add antibodys 
+                if (antibodys.TryGetValue(roomId, out var antibodyList)) {
+                    visibleFood.AddRange(antibodyList
+                        .Where(a => a.Bush_ID == null || playerBushIds.Contains(a.Bush_ID))
+                        .Select(a => new {
+                            x = a.Position.X,
+                            y = a.Position.Y,
+                            radius = a.Radius,
+                            color = a.Color
+                        }));
+                }
+
+                var visiblePlayersList = players.Values.Select(p => new
                 {
-                    x = c.Position.X,
-                    y = c.Position.Y,
-                    radius = c.Radius,
-                    color = "#3d78dd"
-                }).ToList(),
-                abilities = p.SpeedBoostPoints > 0
-                    ? new
-                    {
-                        speed = p.SpeedBoostPoints
-                    }
-                    : null
+                    id = p.Id,
+                    nickname = p.Nickname,
+                    score = p.Score,
+                    boost = p.RemainingBoostSeconds,
+                    cells = p.Cells
+                        .Where(c => c.Bush_ID == null || playerBushIds.Contains(c.Bush_ID))
+                        .Select(c => new
+                        {
+                            x = c.Position.X,
+                            y = c.Position.Y,
+                            radius = c.Radius,
+                            color = p.IsBot ? "#ffe600" : "#3d78dd"
+                        }).ToList(),
+                    abilities = p.SpeedBoostPoints > 0
+                        ? new
+                        {
+                            speed = p.SpeedBoostPoints
+                        }
+                        : null
+                }).Where(p => p.cells.Count > 0).ToList();
+
+            var visibleBushes = slimeItems.Select(b => new
+            {
+                x = b.Position.X,
+                y = b.Position.Y,
+                radius = b.Radius,
+                color = b.Color,
+                id = b.ID
             }).ToList();
 
+                //write gameState
+                var gameState = new
+                {
+                    type = "gameState",
+                    timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
+                    visiblePlayers = visiblePlayersList,
+                    visibleBushes = visibleBushes,
+                    visibleFood = visibleFood
+                };
 
-            //write gameState
-            var gameState = new
-            {
-                type = "gameState",
-                timestamp = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds(),
-                visiblePlayers = visiblePlayersList,
-                visibleFood = visibleFood
-            };
+                var enrichedGameState = new
+                {
+                    type = gameState.type,
+                    timestamp = gameState.timestamp,
+                    visiblePlayers = gameState.visiblePlayers,
+                    visibleBushes = gameState.visibleBushes,
+                    visibleFood = gameState.visibleFood,
+                    playerInfo = new {
+                        bushIds = playerBushIds
+                    }
+                };
 
-
-            foreach (var player in players.Values)
-            {
-                await SendJson(player, gameState);
+                await SendJson(player, enrichedGameState);
             }
+
         }
     }
 }

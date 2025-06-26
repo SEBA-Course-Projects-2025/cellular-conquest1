@@ -1,51 +1,38 @@
-import {
-  sendInput,
-  sendSplitMessage,
-  sendSpeedup,
-} from "./gameCommunication.js";
-import gameState from "./gameState.js";
+import gameState from "../gameFunctionality/gameState.js";
 
 export const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
-export const playerNameElement = document.getElementById("playerName");
-export const playerScoreElement = document.getElementById("playerScore");
-export const leaderboardList = document.getElementById("leaderboardList");
-
-const exitPopup = document.getElementById("exitPopup");
-export const cancelExitBtn = document.getElementById("cancelExit");
-export const confirmExitBtn = document.getElementById("confirmExit");
-
-const deathPopup = document.getElementById("deathPopup");
-const finalScoreSpan = document.getElementById("finalScore");
-
-window.addEventListener("keydown", (e) => {
-  if (e.key === "Shift" && !gameState.speedupActive) {
-    sendSpeedup();
-    gameState.speedupActive = true;
-    setTimeout(() => {
-      gameState.speedupActive = false;
-    }, 1000);
-  }
-});
-
-export function updateSpeedBar(speedBars) {
-  document.getElementById("speedBarFill").style.width =
-    (speedBars / 5) * 100 + "%";
-}
-document.getElementById("roomId").addEventListener("click", () => {
-  navigator.clipboard.writeText(gameState.roomId).then(() => {
-    const popup = document.getElementById("copyPopup");
-    popup.style.top = "1rem";
-
-    setTimeout(() => {
-      popup.style.top = "-4rem";
-    }, 2000);
-  });
-});
-
+const skinImageCache = new Map();
+const cellMovementCache = new Map();
+const blobCache = new Map();
+const semiVisible = 30;
 let currentScale = gameState.camera.scale;
 let lastRenderTime = performance.now();
+
 const lerp = (start, end, t) => start + (end - start) * t;
+
+function getSkinImage(playerId) {
+  const skinEntry = gameState.playersSkins.find((p) => p.id === playerId);
+  if (!skinEntry) return null;
+
+  let base64;
+  if (typeof skinEntry.skin === "number") {
+    const available = gameState.availableSkins.find(
+      (s) => s.id === skinEntry.skin
+    );
+    base64 = available?.skin;
+  } else {
+    base64 = skinEntry.skin;
+  }
+
+  if (!base64) return null;
+  if (skinImageCache.has(base64)) return skinImageCache.get(base64);
+
+  const img = new Image();
+  img.src = base64;
+  skinImageCache.set(base64, img);
+  return img;
+}
 
 export const resizeCanvas = () => {
   canvas.width = window.innerWidth;
@@ -57,8 +44,8 @@ export const render = () => {
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
   ctx.save();
-
   ctx.translate(canvas.width / 2, canvas.height / 2);
+
   const now = performance.now();
   const deltaTime = (now - lastRenderTime) / 1000;
   lastRenderTime = now;
@@ -78,11 +65,23 @@ export const render = () => {
   drawGrid();
 
   for (const food of gameState.food) {
-    drawCircle(food.x, food.y, food.radius, food.color);
+    drawCircle(food.x, food.y, food.radius, food.color, food.visibility ?? 100);
   }
 
   for (const player of gameState.players) {
     for (const cell of player.cells) {
+      const key = `${player.id}_${player.cells.indexOf(cell)}`;
+      const lastPos = cellMovementCache.get(key) || { x: cell.x, y: cell.y };
+      const dx = cell.x - lastPos.x;
+      const dy = cell.y - lastPos.y;
+      cellMovementCache.set(key, { x: cell.x, y: cell.y });
+
+      if (gameState.speedupActive && player.id === gameState.playerId) {
+        drawTrail(cell.x, cell.y, cell.radius, dx, dy, cell.color);
+      }
+
+      const skinImg = getSkinImage(player.id);
+
       drawWavyBlob(
         cell.x,
         cell.y,
@@ -90,23 +89,49 @@ export const render = () => {
         cell.color,
         Date.now(),
         player.id,
-        gameState.speedupActive && player.id === gameState.playerId
+        skinImg?.complete && skinImg.naturalWidth ? skinImg : null
       );
 
       drawText(player.nickname, cell.x, cell.y, cell.radius, "white");
     }
   }
 
+  for (const bush of gameState.bushes) {
+    let visibility = 100;
+    if (gameState.bushIds.includes(bush.id)) visibility = semiVisible;
+    for (const player of gameState.players) {
+      for (const cell of player.cells) {
+        const dx = bush.x - cell.x;
+        const dy = bush.y - cell.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < cell.radius) {
+          const overlapArea =
+            Math.PI * bush.radius ** 2 * ((cell.radius - dist) / bush.radius);
+          const bushArea = Math.PI * bush.radius * bush.radius;
+          if (overlapArea > bushArea / 2) {
+            visibility = semiVisible;
+            break;
+          }
+        }
+      }
+      if (visibility < 100) break;
+    }
+    drawCircle(bush.x, bush.y, bush.radius, bush.color, visibility, "#336633");
+  }
+
   ctx.restore();
 };
 
-const drawCircle = (x, y, radius, fillColor, borderColor) => {
+const drawCircle = (x, y, radius, fillColor, visibility = 100, borderColor) => {
+  ctx.save();
+  ctx.globalAlpha = Math.max(0, Math.min(visibility, 100)) / 100;
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.fillStyle = fillColor;
-  ctx.strokeStyle = borderColor;
+  if (borderColor) ctx.strokeStyle = borderColor;
   ctx.fill();
   ctx.stroke();
+  ctx.restore();
 };
 
 function drawRoundedRect(x, y, width, height, radius, fillStyle) {
@@ -155,7 +180,6 @@ const drawText = (text, x, y, radius, color) => {
 const drawGrid = () => {
   const gridSize = 50;
   const lineColor = "rgb(15, 66, 85)";
-
   ctx.strokeStyle = lineColor;
   ctx.lineWidth = 1;
 
@@ -197,45 +221,6 @@ const drawGrid = () => {
   }
 };
 
-export function handleKeyDown(event) {
-  if (event.key === "Escape") {
-    gameState.inactive = !gameState.inactive;
-    if (gameState.inactive) exitPopup.classList.remove("hidden");
-    else exitPopup.classList.add("hidden");
-  } else if (event.key === " ") {
-    sendSplitMessage();
-  }
-}
-
-export function showDeathPopup(score) {
-  finalScoreSpan.textContent = score;
-  deathPopup.classList.remove("hidden");
-  gameState.inactive = true;
-}
-
-let lastMouseWorldPos = { x: 0, y: 0 };
-
-export const handleMouseMove = (event) => {
-  const rect = canvas.getBoundingClientRect();
-  const screenX = event.clientX - rect.left;
-  const screenY = event.clientY - rect.top;
-
-  const worldX =
-    gameState.camera.x + (screenX - canvas.width / 2) / gameState.camera.scale;
-  const worldY =
-    gameState.camera.y + (screenY - canvas.height / 2) / gameState.camera.scale;
-
-  lastMouseWorldPos = { x: worldX, y: worldY };
-  sendInput({ x: worldX, y: worldY });
-};
-
-export const hideExitPopup = () => {
-  exitPopup.classList.add("hidden");
-  gameState.inactive = false;
-};
-
-const blobCache = new Map();
-
 function getMiddlePoint(p1, p2) {
   return {
     x: (p1.x + p2.x) / 2,
@@ -243,21 +228,18 @@ function getMiddlePoint(p1, p2) {
   };
 }
 
-function drawWavyBlob(x, y, radius, color, timestamp, blobId, isSpeeding) {
+function drawWavyBlob(x, y, radius, color, timestamp, blobId, image = null) {
   const points = Math.max(8, Math.min(16, Math.floor(radius / 10)));
   const wobbleAmount = radius * 0.04;
   const wobbleSpeed = 0.008;
 
   let controlPoints = blobCache.get(blobId);
-
   if (!controlPoints) {
     controlPoints = [];
     const angleStep = (Math.PI * 2) / points;
-
     for (let i = 0; i < points; i++) {
       const angle = i * angleStep;
       const phaseOffset = Math.random() * Math.PI * 2;
-
       controlPoints.push({
         baseX: Math.cos(angle),
         baseY: Math.sin(angle),
@@ -265,51 +247,22 @@ function drawWavyBlob(x, y, radius, color, timestamp, blobId, isSpeeding) {
         wobbleFreq: 0.9 + Math.random() * 0.2,
       });
     }
-
     blobCache.set(blobId, controlPoints);
   }
 
   for (let i = 0; i < controlPoints.length; i++) {
     const point = controlPoints[i];
-
     const wobble =
       Math.sin(timestamp * wobbleSpeed * point.wobbleFreq + point.phaseOffset) *
       wobbleAmount;
     const adjustedRadius = radius + wobble;
-
     point.x = x + adjustedRadius * point.baseX;
     point.y = y + adjustedRadius * point.baseY;
   }
 
-  if (isSpeeding) {
-    const trailLength = 5;
-    const dx = lastMouseWorldPos.x - x;
-    const dy = lastMouseWorldPos.y - y;
-    const distance = Math.sqrt(dx * dx + dy * dy);
-    const directionX = distance > 0 ? -dx / distance : 0;
-    const directionY = distance > 0 ? -dy / distance : 0;
+  ctx.save();
 
-    for (let i = 0; i < trailLength; i++) {
-      const t = 1 - i / trailLength;
-      const alpha = t * 0.3;
-      const size = radius * (0.5 + t * 0.5);
-      const offset = (i / trailLength) * radius * 1.5;
-
-      ctx.save();
-      ctx.globalAlpha = alpha;
-      drawCircle(
-        x + directionX * offset,
-        y + directionY * offset,
-        size,
-        color
-      );
-      ctx.restore();
-    }
-  }
-
-  ctx.fillStyle = color;
   ctx.beginPath();
-
   if (controlPoints.length > 0) {
     const firstMidpoint = getMiddlePoint(
       controlPoints[controlPoints.length - 1],
@@ -321,11 +274,58 @@ function drawWavyBlob(x, y, radius, color, timestamp, blobId, isSpeeding) {
       const current = controlPoints[i];
       const next = controlPoints[(i + 1) % controlPoints.length];
       const midPoint = getMiddlePoint(current, next);
-
       ctx.quadraticCurveTo(current.x, current.y, midPoint.x, midPoint.y);
     }
   }
-
   ctx.closePath();
-  ctx.fill();
+
+  if (image) {
+    ctx.clip();
+
+    const imgSize = radius * 2;
+
+    const breathe = 1 + Math.sin(timestamp * 0.003) * 0.02;
+    const scaledSize = imgSize * breathe;
+    const scaledX = x - scaledSize / 2;
+    const scaledY = y - scaledSize / 2;
+
+    ctx.drawImage(image, scaledX, scaledY, scaledSize, scaledSize);
+
+    ctx.globalCompositeOperation = "multiply";
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.1;
+    ctx.fill();
+
+    ctx.globalCompositeOperation = "screen";
+    ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
+    ctx.globalAlpha = 1;
+    ctx.fill();
+
+    ctx.globalCompositeOperation = "source-over";
+  } else {
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+
+  ctx.globalAlpha = 0.3;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = Math.max(1, radius * 0.02);
+  ctx.stroke();
+
+  ctx.restore();
+}
+
+function drawTrail(x, y, radius, dx, dy, color) {
+  const trailLength = 5;
+  const distance = Math.sqrt(dx * dx + dy * dy);
+  const dirX = distance > 0 ? -dx / distance : 0;
+  const dirY = distance > 0 ? -dy / distance : 0;
+
+  for (let i = 0; i < trailLength; i++) {
+    const t = 1 - i / trailLength;
+    const alpha = t * 0.3;
+    const size = radius * (0.5 + t * 0.5);
+    const offset = (i / trailLength) * radius * 1.5;
+    drawCircle(x + dirX * offset, y + dirY * offset, size, color, 100 * alpha);
+  }
 }
