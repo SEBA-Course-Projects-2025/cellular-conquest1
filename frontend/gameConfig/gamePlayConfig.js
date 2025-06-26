@@ -13,11 +13,6 @@ export const SPEEDUP_CONFIG = {
   DURATION_MS: 5000,
 };
 
-export const LOCAL_STORAGE_KEYS = {
-  CUSTOM_SKIN: "customSkin",
-  LAST_SCORE: "lastScore",
-};
-
 export const UI_MESSAGES = {
   RESET_SKIN_HINT: "Click 'R' to reset skin!",
 };

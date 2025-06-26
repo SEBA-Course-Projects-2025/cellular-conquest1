@@ -12,10 +12,10 @@ import {
   LOCAL_PREFIXES,
   PRODUCTION_WS_URL,
   RECONNECT_DELAY,
-  LOCAL_STORAGE_KEYS,
   DEFAULTS,
   MESSAGE_TYPES,
 } from "../gameConfig/networkConfig.js";
+import { LOCAL_STORAGE_KEYS } from "../gameConfig/localStorageKeys.js";
 
 const isLocal =
   LOCAL_HOSTNAMES.includes(location.hostname) ||

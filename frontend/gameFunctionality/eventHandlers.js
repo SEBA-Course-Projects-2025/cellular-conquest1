@@ -15,12 +15,11 @@ import {
 } from "./communication.js";
 import gameState from "./gameState.js";
 import { copyToClipboard } from "../gameUtils/copyToClipboard.js";
-
+import { LOCAL_STORAGE_KEYS } from "../gameConfig/localStorageKeys.js";
 import {
   LEADERBOARD_CONFIG,
   DEATH_POPUP_CONFIG,
   SPEEDUP_CONFIG,
-  LOCAL_STORAGE_KEYS,
   UI_MESSAGES,
 } from "../gameConfig/gamePlayConfig.js";
 

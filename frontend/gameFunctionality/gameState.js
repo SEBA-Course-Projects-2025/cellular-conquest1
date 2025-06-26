@@ -10,10 +10,8 @@ const state = {
   isTouch: false,
   playerName:
     trimWithEllipsis(
-      localStorage.getItem(
-        LOCAL_STORAGE_KEYS.PLAYER_NAME,
-        MAX_PLAYER_NAME_LENGTH
-      )
+      localStorage.getItem(LOCAL_STORAGE_KEYS.PLAYER_NAME),
+      MAX_PLAYER_NAME_LENGTH
     ) || "YourNickname",
   playerId: null,
   playerScore: 0,

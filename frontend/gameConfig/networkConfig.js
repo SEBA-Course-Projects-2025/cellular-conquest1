@@ -7,12 +7,6 @@ export const PRODUCTION_WS_URL = "ws://161.35.75.14:8080/ws";
 
 export const RECONNECT_DELAY = 3000;
 
-export const LOCAL_STORAGE_KEYS = {
-  MODE: "gameMode",
-  PRIVATE_ROOM: "privateRoomId",
-  CUSTOM_SKIN: "customSkin",
-};
-
 export const DEFAULTS = {
   GAME_MODE: "FFA",
 };
