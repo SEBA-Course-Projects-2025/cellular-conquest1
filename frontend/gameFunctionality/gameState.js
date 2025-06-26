@@ -1,10 +1,20 @@
+import { MAX_PLAYER_NAME_LENGTH } from "../commonConfig.js";
 import { LOCAL_STORAGE_KEYS } from "../gameConfig/localStorageKeys.js";
 const defaultWorldSize = 2000;
+
+function trimWithEllipsis(str, maxLength) {
+  return str.length > maxLength ? str.slice(0, maxLength - 3) + "..." : str;
+}
 
 const state = {
   isTouch: false,
   playerName:
-    localStorage.getItem(LOCAL_STORAGE_KEYS.PLAYER_NAME) || "YourNickname",
+    trimWithEllipsis(
+      localStorage.getItem(
+        LOCAL_STORAGE_KEYS.PLAYER_NAME,
+        MAX_PLAYER_NAME_LENGTH
+      )
+    ) || "YourNickname",
   playerId: null,
   playerScore: 0,
   roomId: null,
