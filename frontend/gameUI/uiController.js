@@ -1,4 +1,5 @@
 import gameState from "../gameFunctionality/gameState.js";
+import { copyToClipboard } from "../gameUtils/copyToClipboard.js";
 
 export const playerNameElement = document.getElementById("playerName");
 export const playerScoreElement = document.getElementById("playerScore");
@@ -27,65 +28,10 @@ export function updateSpeedBar(speedBars) {
     (speedBars / 5) * 100 + "%";
 }
 
-// execCommand is deprecated, but is used as last resort in case http prohibits copying to clipboard
-function fallbackCopy(text) {
-  const textarea = document.createElement("textarea");
-  textarea.value = text;
-  textarea.style.position = "fixed";
-  document.body.appendChild(textarea);
-  textarea.focus();
-  textarea.select();
-
-  try {
-    document.execCommand("copy");
-    console.log("Fallback: Copy successful");
-  } catch (err) {
-    console.error("Fallback: Copy failed", err);
-  }
-
-  document.body.removeChild(textarea);
-}
-document.getElementById("roomId").addEventListener("click", () => {
-  const text = gameState.roomId;
-
-  if (navigator.clipboard && location.protocol === "https:") {
-    navigator.clipboard
-      .writeText(text)
-      .then(showCopyPopup)
-      .catch((err) => {
-        console.error("Clipboard error:", err);
-        fallbackCopy(text);
-        showCopyPopup();
-      });
-  } else {
-    fallbackCopy(text);
-    showCopyPopup();
-  }
-});
-function showCopyPopup() {
-  const popup = document.getElementById("copyPopup");
-  popup.classList.add("visible");
-  setTimeout(() => popup.classList.remove("visible"), 2000);
-}
-
-export function initializeRoomIdCopy() {
-  document.getElementById("roomId").addEventListener("click", () => {
-    const text = gameState.roomId;
-    if (navigator.clipboard && location.protocol === "https:") {
-      navigator.clipboard
-        .writeText(text)
-        .then(showCopyPopup)
-        .catch((err) => {
-          console.error("Clipboard error:", err);
-          fallbackCopy(text);
-          showCopyPopup();
-        });
-    } else {
-      fallbackCopy(text);
-      showCopyPopup();
-    }
-  });
-}
+document.getElementById("roomId").addEventListener(
+  "click",
+  copyToClipboard(() => gameState.roomId)
+);
 
 export function showDeathPopup(score) {
   finalScoreSpan.textContent = score;
