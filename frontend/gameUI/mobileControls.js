@@ -9,7 +9,7 @@ import {
   JOYSTICK_CONFIG,
   MOBILE_BUTTONS,
   CONTAINER_IDS,
-} from "../config/mobileControlsConfig.js";
+} from "../gameConfig/mobileControlsConfig.js";
 
 const $ = (id) => document.getElementById(id);
 const mobileControls = $(CONTAINER_IDS.CONTROLS);

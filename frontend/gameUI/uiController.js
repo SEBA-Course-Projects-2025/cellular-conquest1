@@ -5,7 +5,7 @@ import {
   ERROR_POPUP_CONFIG,
   UI_MESSAGES,
   ELEMENT_IDS,
-} from "../config/uiConfig.js";
+} from "../gameConfig/uiConfig.js";
 
 export const playerNameElement = document.getElementById(
   ELEMENT_IDS.PLAYER_NAME

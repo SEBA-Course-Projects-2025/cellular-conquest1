@@ -1,5 +1,5 @@
 import gameState from "../gameFunctionality/gameState.js";
-import { RENDER_CONFIG } from "../config/rendererConfig.js";
+import { RENDER_CONFIG } from "../gameConfig/rendererConfig.js";
 
 export const canvas = document.getElementById(RENDER_CONFIG.CANVAS_ID);
 const ctx = canvas.getContext("2d");

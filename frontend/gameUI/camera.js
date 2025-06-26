@@ -1,6 +1,6 @@
 import gameState from "../gameFunctionality/gameState.js";
 import { canvas } from "./gameRenderer.js";
-import { ZOOM_CONFIG } from "../config/zoomConfig.js";
+import { ZOOM_CONFIG } from "../gameConfig/zoomConfig.js";
 
 let manualZoom = false;
 let manualScale = 1;

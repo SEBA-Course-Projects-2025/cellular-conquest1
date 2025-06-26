@@ -1,4 +1,4 @@
-import { LOCAL_STORAGE_KEYS } from "../config/localStorageKeys.js";
+import { LOCAL_STORAGE_KEYS } from "../gameConfig/localStorageKeys.js";
 const defaultWorldSize = 2000;
 
 const state = {

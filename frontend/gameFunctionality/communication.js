@@ -15,7 +15,7 @@ import {
   LOCAL_STORAGE_KEYS,
   DEFAULTS,
   MESSAGE_TYPES,
-} from "../config/networkConfig.js";
+} from "../gameConfig/networkConfig.js";
 
 const isLocal =
   LOCAL_HOSTNAMES.includes(location.hostname) ||

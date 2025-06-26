@@ -22,7 +22,7 @@ import {
   SPEEDUP_CONFIG,
   LOCAL_STORAGE_KEYS,
   UI_MESSAGES,
-} from "../config/gamePlayConfig.js";
+} from "../gameConfig/gamePlayConfig.js";
 
 export const gameLoop = () => {
   const dt = gameState.dt;

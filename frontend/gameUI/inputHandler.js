@@ -11,7 +11,11 @@ import gameState from "../gameFunctionality/gameState.js";
 import { hideExitPopup, showExitPopup } from "./uiController.js";
 import logger from "../gameFunctionality/logger.js";
 import { copyToClipboard } from "../gameUtils/copyToClipboard.js";
-import { INPUT_KEYS, DEV_KEYWORDS, MESSAGES } from "../config/inputConfig.js";
+import {
+  INPUT_KEYS,
+  DEV_KEYWORDS,
+  MESSAGES,
+} from "../gameConfig/inputConfig.js";
 
 let keyword = "";
 let newSkin = null;
