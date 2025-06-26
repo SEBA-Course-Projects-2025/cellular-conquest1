@@ -30,7 +30,7 @@ export function updateSpeedBar(speedBars) {
 
 document.getElementById("roomId").addEventListener(
   "click",
-  copyToClipboard(() => gameState.roomId)
+  copyToClipboard(() => gameState.roomId, "Room ID copied to clipboard!")
 );
 
 export function showDeathPopup(score) {

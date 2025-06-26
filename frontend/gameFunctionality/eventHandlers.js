@@ -14,6 +14,7 @@ import {
   sendSplitMessage,
 } from "./communication.js";
 import gameState from "./gameState.js";
+import { copyToClipboard } from "../gameUtils/copyToClipboard.js";
 
 export const gameLoop = () => {
   const dt = gameState.dt;
@@ -151,4 +152,16 @@ export const handleSplit = () => {
 
 export const handleInput = (input) => {
   sendInput(input);
+};
+
+export const handleMasking = (newImage) => {
+  gameState.updatePlayerSkin(gameState.playerId, newImage);
+  copyToClipboard(() => newImage, "Click 'R' to reset skin!")();
+};
+
+export const handleSkinReset = () => {
+  const customSkin = localStorage.getItem("customSkin");
+  if (customSkin) {
+    gameState.updatePlayerSkin(gameState.playerId, customSkin);
+  }
 };

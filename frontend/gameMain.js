@@ -1,6 +1,6 @@
 import "./gameUI/mobileControls.js";
-import { canvas, resizeCanvas } from "./gameUI/gameRenderer.js";
-import { handleKeyDown, handleMouseMove } from "./gameUI/inputHandler.js";
+import { resizeCanvas } from "./gameUI/gameRenderer.js";
+import { initializeInputHandlers } from "./gameUI/inputHandler.js";
 import {
   cancelExitBtn,
   confirmExitBtn,
@@ -19,8 +19,7 @@ const init = () => {
   resizeCanvas();
   window.addEventListener("resize", resizeCanvas);
 
-  canvas.addEventListener("mousemove", handleMouseMove);
-  window.addEventListener("keydown", handleKeyDown);
+  initializeInputHandlers();
   cancelExitBtn.addEventListener("click", hideExitPopup);
   confirmExitBtn.addEventListener("click", exitGame);
 

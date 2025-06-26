@@ -22,7 +22,6 @@ const state = {
   playersSkins: [],
 
   updatePlayerSkin(id, image) {
-    console.log(id, image);
     if (!image) {
       this.playersSkins = this.playersSkins.filter((p) => p.id !== id);
       return;
