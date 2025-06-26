@@ -17,13 +17,13 @@
   "nickname": "PlayerName",
   "mode"?: "ffa" | "deathmatch" | "teams" | "other",
   "privateServer"?: true | Guid,
-  "customSkin"?: string // <b>🧪 Beta</b>
+  "customSkin"?: string
 }</code></pre>
   </td>
   <td>
     Registers a new player and joins game.
     <br/>
-    <b>🧪 Beta:</b> The <code>customSkin</code> field, if present, defines the player's image. It is:
+    The <code>customSkin</code> field, if present, defines the player's image. It is:
     <ul>
       <li>Either a base64-encoded image (custom uploaded),</li>
       <li>Or a predefined skin ID from <code>availableSkins</code>.</li>
@@ -48,14 +48,14 @@
     {
       "id": Guid
       "image": string (base64 OR skin ID)
-    } // <b>🧪 Beta</b>
+    }
   ]
 }
 </code></pre>
   </td>
   <td>Confirms successful join, sends back basic info of the game.
   
-  <b>🧪 Beta:</b> Send initial image info for all players with specified Guids in the room to the newly joined player.
+  Send initial image info for all players with specified Guids in the room to the newly joined player.
   </td>
 </tr>
 
@@ -89,7 +89,7 @@
   <td>On W key press</td>
   <td><pre><code>{ "type": "feed" }</code></pre></td>
   <td>
-    <b>🧪 Beta:</b> Shoots 10% mass as food. In mode against bots acts as projectiles damaging them.
+    Shoots 10% mass as food. In mode against bots acts as projectiles damaging them.
   </td>
 </tr>
 
@@ -138,12 +138,13 @@
       }
     }
   ],
-  "visibleBushes": [
+  "visibleBushes"?: [
     {
       "x": number,
       "y": number,
       "radius": number,
-      "color": number
+      "color": number,
+      "id": number
     }
   ],
   "visibleFood": [
@@ -153,9 +154,12 @@
       "radius": number,
       "color": number,
       "type"?: "normal" | "speed" | "shield" | "unknown",
-      "visibility"?: number (0 - 100) // <b>🧪 Beta</b>
+      "visibility"?: number (0 - 100)
     }
   ],
+  "playerInfo": {
+    "bushIds: number[]
+  },
   "timestamp": number
 }</code></pre>
   </td>
@@ -204,7 +208,7 @@
 }</code></pre>
   </td>
   <td>
-    <b>🧪 Beta:</b> Informs room about a new image for player with specified Guid — either uploaded image (base64) or ID from skins.
+    Informs room about a new image for player with specified Guid — either uploaded image (base64) or ID from skins.
   </td>
 </tr>
 
@@ -219,7 +223,7 @@
 }</code></pre>
   </td>
   <td>
-    <b>🧪 Beta:</b> Tells clients to remove the disconnected player's image.
+    Tells clients to remove the disconnected player's image.
   </td>
 </tr>
 
