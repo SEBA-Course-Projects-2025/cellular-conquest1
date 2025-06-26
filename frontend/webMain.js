@@ -1,13 +1,11 @@
 function playSound() {}
 const API_BASE = "/api/player";
 document.addEventListener("DOMContentLoaded", function () {
-  document.querySelector(".wrapper").style.display = "none";
-  const loginScreen = document.getElementById("loginScreen");
   const nicknameInput = document.getElementById("nicknameInput");
   if (localStorage.getItem("playerName")){
-    nicknameInput.placeholder = localStorage.getItem("playerName");
+    nicknameInput.value = localStorage.getItem("playerName");
   }
-  const loginBtn = document.getElementById("loginBtn");
+  
   const roomCodeModal = document.getElementById("roomCodeModal");
   const closeModal = document.getElementById("closeModal");
   const createRoomBtn = document.getElementById("createRoomBtn");
@@ -17,8 +15,6 @@ document.addEventListener("DOMContentLoaded", function () {
   const displayRoomCode = document.getElementById("displayRoomCode");
   const copyCodeBtn = document.getElementById("copyCodeBtn");
   const startGameBtn = document.getElementById("startGameBtn");
-  let socket = null;
-  let nickname = "";
   let currentRoomId = null;
   let currentGameMode = "ffa";
 
@@ -29,62 +25,163 @@ document.addEventListener("DOMContentLoaded", function () {
   const skinsBtn = document.getElementById("skinsBtn");
   const customSkinInput = document.getElementById("customSkinInput");
   const addCustomSkinBtn = document.getElementById("addCustomSkinBtn");
+  const resetSkinBtn = document.getElementById("resetSkinBtn");
 
   const defaultSkins = [
-    { name: "Green",  url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%237aff99'/%3E%3C/svg%3E" },
-    { name: "Red",    url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23ff4d4d'/%3E%3C/svg%3E" },
-    { name: "Blue",   url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%234d7aff'/%3E%3C/svg%3E" },
-    { name: "Yellow", url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23ffe24d'/%3E%3C/svg%3E" },
-    { name: "Purple", url: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23b84dff'/%3E%3C/svg%3E" }
+    { id: "green", image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%237aff99'/%3E%3C/svg%3E", name: "Green", isDefault: true },
+    { id: "red", image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23ff4d4d'/%3E%3C/svg%3E", name: "Red", isDefault: true },
+    { id: "blue", image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%234d7aff'/%3E%3C/svg%3E", name: "Blue", isDefault: true },
+    { id: "yellow", image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23ffe24d'/%3E%3C/svg%3E", name: "Yellow", isDefault: true },
+    { id: "purple", image: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ccircle cx='50' cy='50' r='48' fill='%23b84dff'/%3E%3C/svg%3E", name: "Purple", isDefault: true }
   ];
 
   if (!localStorage.getItem("availableSkins")) {
     localStorage.setItem("availableSkins", JSON.stringify(defaultSkins));
+  } else {
+    let currentSkins = JSON.parse(localStorage.getItem("availableSkins") || "[]");
+    let needUpdate = false;
+    
+    defaultSkins.forEach(defaultSkin => {
+      if (!currentSkins.find(s => s.id === defaultSkin.id)) {
+        currentSkins.push(defaultSkin);
+        needUpdate = true;
+      }
+    });
+    
+    if (needUpdate) {
+      localStorage.setItem("availableSkins", JSON.stringify(currentSkins));
+    }
   }
   
   if (!localStorage.getItem("selectedSkin")) {
-    localStorage.setItem("selectedSkin", defaultSkins[0].url);
+    localStorage.setItem("selectedSkin", defaultSkins[0].id);
+  }
+
+  function formatScore(score) {
+    const num = parseInt(score);
+    if (num >= 1000000) {
+      return (num / 1000000).toFixed(1) + "M";
+    } else if (num >= 1000) {
+      return (num / 1000).toFixed(1) + "K";
+    }
+    return num.toString();
+  }
+
+  function animateScoreUpdate(element, newValue) {
+    element.style.transform = 'scale(1.1)';
+    element.style.color = 'var(--accent, #4CAF50)';
+    element.textContent = formatScore(newValue);
+    
+    setTimeout(() => {
+      element.style.transform = 'scale(1)';
+      element.style.color = 'white';
+    }, 300);
+  }
+
+  function updateScoresDisplay(animated = false) {
+    const lastScore = localStorage.getItem("lastScore") || "0";
+    const bestScore = localStorage.getItem("bestScore") || "0";
+    
+    const lastScoreElement = document.getElementById("lastScore");
+    const bestScoreElement = document.getElementById("bestScore");
+    
+    if (lastScoreElement) {
+      if (animated) {
+        animateScoreUpdate(lastScoreElement, lastScore);
+      } else {
+        lastScoreElement.textContent = formatScore(lastScore);
+      }
+    }
+    if (bestScoreElement) {
+      bestScoreElement.textContent = formatScore(bestScore);
+    }
+  }
+
+  function updateBestScore(newScore) {
+    const currentBest = parseInt(localStorage.getItem("bestScore") || "0");
+    const score = parseInt(newScore);
+    
+    if (score > currentBest) {
+      localStorage.setItem("bestScore", score.toString());
+      return true;
+    }
+    return false;
+  }
+
+  function generateCustomSkinId() {
+    return "custom_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
   }
 
   function renderSkins() {
     skinsList.innerHTML = "";
     
     let skins = JSON.parse(localStorage.getItem("availableSkins") || "[]");
-
-    const customSkin = localStorage.getItem("customSkin");
-    if (customSkin && !skins.some(s => s.url === customSkin)) {
-      skins.unshift({ name: "Custom", url: customSkin });
-      localStorage.setItem("availableSkins", JSON.stringify(skins));
-    }
-    
-    const selectedSkin = localStorage.getItem("selectedSkin") || skins[0]?.url;
+    const selectedSkinId = localStorage.getItem("selectedSkin") || skins[0]?.id;
     
     skins.forEach(skin => {
-      if (!skin || !skin.url) return; 
+      if (!skin || !skin.image) return; 
+      
+      const skinContainer = document.createElement("div");
+      skinContainer.className = "skin-container";
       
       const img = document.createElement("img");
-      img.src = skin.url;
-      img.className = "skin-option" + (skin.url === selectedSkin ? " selected" : "");
+      img.src = skin.image;
+      img.className = "skin-option" + (skin.id === selectedSkinId ? " selected" : "");
       img.title = skin.name || "Skin";
       img.alt = skin.name || "Skin";
       img.onerror = () => {
-        img.src = defaultSkins[0].url; 
+        img.src = defaultSkins[0].image; 
         console.warn("Failed to load skin, using default instead");
       };
       img.onclick = () => {
-        localStorage.setItem("selectedSkin", skin.url);
+        localStorage.setItem("selectedSkin", skin.id);
         updateAvatar();
         renderSkins();
       };
-      skinsList.appendChild(img);
+      
+      skinContainer.appendChild(img);
+      
+      if (skin.isDefault) {
+        const defaultLabel = document.createElement("div");
+        skinContainer.appendChild(defaultLabel);
+      }
+      if (!skin.isDefault && skin.id.startsWith("custom_")) {
+        const deleteBtn = document.createElement("button");
+        deleteBtn.onclick = (e) => {
+          e.stopPropagation();
+          deleteSkin(skin.id);
+        };
+        skinContainer.appendChild(deleteBtn);
+      }
+      
+      skinsList.appendChild(skinContainer);
     });
   }
 
+  function deleteSkin(skinId) {
+    if (confirm("Are you sure you want to delete this custom skin?")) {
+      let skins = JSON.parse(localStorage.getItem("availableSkins") || "[]");
+      skins = skins.filter(s => s.id !== skinId);
+      localStorage.setItem("availableSkins", JSON.stringify(skins));
+      
+      if (localStorage.getItem("selectedSkin") === skinId) {
+        localStorage.setItem("selectedSkin", defaultSkins[0].id);
+        updateAvatar();
+      }
+      
+      renderSkins();
+    }
+  }
+
   function updateAvatar() {
-    const selectedSkin = localStorage.getItem("selectedSkin");
-    if (selectedSkin) {
+    const selectedSkinId = localStorage.getItem("selectedSkin");
+    const skins = JSON.parse(localStorage.getItem("availableSkins") || "[]");
+    const selectedSkin = skins.find(s => s.id === selectedSkinId);
+    const nickname = nicknameInput.value.trim() || localStorage.getItem("playerName") || "";
+    
+    if (selectedSkin && selectedSkin.image) {
       avatarDiv.classList.add("skin");
-      avatarDiv.style.backgroundImage = `url('${selectedSkin}')`;
+      avatarDiv.style.backgroundImage = `url('${selectedSkin.image}')`;
       avatarDiv.textContent = "";
     } else {
       avatarDiv.classList.remove("skin");
@@ -93,42 +190,53 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  nicknameInput.addEventListener('input', function() {
+    localStorage.setItem("playerName", this.value.trim());
+    updateAvatar();
+  });
+
   addCustomSkinBtn.addEventListener("click", () => {
     const file = customSkinInput.files[0];
     if (!file) {
-      alert("Будь ласка, виберіть файл зображення.");
+      alert("Please select the file.");
       return;
     }
     if (file.size > 500000) {
-      alert("Файл занадто великий. Максимальний розмір: 500KB.");
+      alert("File is too big. Max size: 500KB.");
       return;
     }
     
     const reader = new FileReader();
     reader.onload = function(e) {
       const base64 = e.target.result;
-      
-      localStorage.setItem("customSkin", base64);
-      localStorage.setItem("selectedSkin", base64);
+      const newSkinId = generateCustomSkinId();
+      const fileName = file.name.split('.')[0] || "Custom";
       
       let skins = JSON.parse(localStorage.getItem("availableSkins") || "[]");
-      if (!skins.some(s => s.url === base64)) {
-        skins.unshift({ name: "Custom", url: base64 });
-        localStorage.setItem("availableSkins", JSON.stringify(skins));
-      }
-      if (socket && socket.readyState === WebSocket.OPEN) {
-        socket.send(JSON.stringify({
-          type: "updateSkin",
-          customSkin: base64  
-        }));
-      }
+      const newSkin = {
+        id: newSkinId,
+        image: base64,
+        name: fileName,
+        isDefault: false
+      };
+    
+      skins.push(newSkin);
+      localStorage.setItem("availableSkins", JSON.stringify(skins));
+      localStorage.setItem("selectedSkin", newSkinId);
       
       updateAvatar();
       renderSkins();
-      skinModal.style.display = "none";
       customSkinInput.value = "";
+      alert("Custom skin added successfully!");
     };
     reader.readAsDataURL(file);
+  });
+
+  resetSkinBtn.addEventListener("click", () => {
+    localStorage.setItem("selectedSkin", defaultSkins[0].id);
+    updateAvatar();
+    renderSkins();
+    skinModal.style.display = "none";
   });
 
   skinsBtn.addEventListener("click", () => {
@@ -144,78 +252,6 @@ document.addEventListener("DOMContentLoaded", function () {
     if (e.target === skinModal) skinModal.style.display = "none";
   });
 
-  loginBtn.addEventListener("click", tryLogin);
-  nicknameInput.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") tryLogin();
-  });
-
-  function tryLogin() {
-    nickname = nicknameInput.value.trim() || localStorage.getItem("playerName");
-    if (!nickname) {
-      alert("Please enter a nickname!");
-      nicknameInput.focus();
-      return;
-    }
-    localStorage.setItem("playerName", nickname);
-    startGame(nickname);
-  }
-
-  function getWsHost() {
-    const isLocal = location.hostname === "localhost" 
-    || location.hostname.startsWith("192.168.") 
-    || location.hostname === "127.0.0.1";
-    return isLocal ? location.hostname + ":8080" : "161.35.75.14:8080";
-  }
-
-  function startGame(nick) {
-    loginScreen.style.display = "none";
-    document.querySelector(".wrapper").style.display = "block";
-    document.querySelector(".nick").textContent = nick;
-    updateAvatar();
-    const wsHost = getWsHost();
-    socket = new WebSocket("ws://" + wsHost);
-
-    socket.addEventListener("open", () => {
-      const selectedSkin = localStorage.getItem("selectedSkin") || defaultSkins[0].url;
-      const customSkin = localStorage.getItem("customSkin");
-      
-      const joinMessage = { 
-        type: "join", 
-        nickname: nick
-      };
-      
-      if (customSkin === selectedSkin) {
-        joinMessage.customSkin = customSkin;
-      }
-      
-      socket.send(JSON.stringify(joinMessage));
-    });
-
-    socket.addEventListener("message", (event) => {
-      const data = JSON.parse(event.data);
-      
-      if (data.availableSkins) {
-        if (Array.isArray(data.availableSkins) && data.availableSkins.length > 0) {
-          console.log("Отримано список скінів від сервера:", data.availableSkins);
-          localStorage.setItem("availableSkins", JSON.stringify(data.availableSkins));
-        }
-      }
-      
-      if (data.type === "playerData") {
-        if (data.roomId) currentRoomId = data.roomId;
-      } else if (data.type === "gameState") {
-        if (window.updateGameState) {
-          window.updateGameState(data);
-        }
-      } else if (data.type === "error") {
-        alert(data.message || "An error occurred");
-      }
-    });
-
-    socket.addEventListener("close", () => { alert("Disconnected from server"); location.reload(); });
-    socket.addEventListener("error", (err) => { alert("WebSocket error!"); console.error(err); });
-  }
-
   closeModal.addEventListener("click", () =>
      { roomCodeModal.style.display = "none"; resetModal(); });
   window.addEventListener("click", (event) => 
@@ -230,11 +266,6 @@ document.addEventListener("DOMContentLoaded", function () {
     { if (e.key === "Enter") joinRoom(); });
   
   function showRoomModal() { 
-    if (!nickname) { 
-      alert("Please enter a nickname and join the game first!"); 
-      return; 
-    } 
-    
     const modalTitle = document.querySelector("#roomCodeModal h2");
     if (currentGameMode === "teams") {
       modalTitle.textContent = "Join Teams Room";
@@ -245,17 +276,32 @@ document.addEventListener("DOMContentLoaded", function () {
     roomCodeModal.style.display = "flex"; 
   }
   
-  function resetModal() { createdRoomInfo.style.display = "none"; roomCodeInput.value = ""; displayRoomCode.textContent = ""; currentRoomId = null; }
+  function resetModal() { 
+    createdRoomInfo.style.display = "none"; 
+    roomCodeInput.value = ""; 
+    displayRoomCode.textContent = ""; 
+    currentRoomId = null; 
+  }
   
   function createRoom() { 
     localStorage.setItem('privateRoomId', 'true'); 
     localStorage.setItem('gameMode', currentGameMode);
     playSound("success"); 
-    const customSkin = localStorage.getItem("customSkin");
-    const selectedSkin = localStorage.getItem("selectedSkin");
-    if (customSkin === selectedSkin) {
-      localStorage.setItem('gameCustomSkin', customSkin);
+    
+    const selectedSkinId = localStorage.getItem("selectedSkin");
+    const skins = JSON.parse(localStorage.getItem("availableSkins") || "[]");
+    const selectedSkin = skins.find(s => s.id === selectedSkinId);
+    
+    if (selectedSkin && selectedSkin.image) {
+      if (selectedSkin.isDefault) {
+        localStorage.setItem('gameSelectedSkinId', selectedSkinId);
+        localStorage.removeItem('gameCustomSkin');
+      } else {
+        localStorage.setItem('gameCustomSkin', selectedSkin.image);
+        localStorage.removeItem('gameSelectedSkinId');
+      }
     }
+    
     window.location.href = `gamePage.html`;
   }
   
@@ -268,19 +314,55 @@ document.addEventListener("DOMContentLoaded", function () {
     } 
     localStorage.setItem('privateRoomId', roomCode);
     localStorage.setItem('gameMode', currentGameMode);
-    const customSkin = localStorage.getItem("customSkin");
-    const selectedSkin = localStorage.getItem("selectedSkin");
-    if (customSkin === selectedSkin) {
-      localStorage.setItem('gameCustomSkin', customSkin);
+    
+    const selectedSkinId = localStorage.getItem("selectedSkin");
+    const skins = JSON.parse(localStorage.getItem("availableSkins") || "[]");
+    const selectedSkin = skins.find(s => s.id === selectedSkinId);
+    
+    if (selectedSkin && selectedSkin.image) {
+      if (selectedSkin.isDefault) {
+        localStorage.setItem('gameSelectedSkinId', selectedSkinId);
+        localStorage.removeItem('gameCustomSkin');
+      } else {
+        localStorage.setItem('gameCustomSkin', selectedSkin.image);
+        localStorage.removeItem('gameSelectedSkinId');
+      }
     }
     
     playSound("success"); 
+    const nickname = nicknameInput.value.trim() || localStorage.getItem("playerName") || "";
     window.location.href = `gamePage.html?nickname=${encodeURIComponent(nickname)}&mode=${currentGameMode}&roomId=${roomCode}`; 
   }
   
-  function copyRoomCode() { const code = displayRoomCode.textContent; if (navigator.clipboard) { navigator.clipboard.writeText(code).then(() => { copyCodeBtn.textContent = "Copied!"; setTimeout(() => { copyCodeBtn.textContent = "Copy"; }, 2000); }); } else { const textArea = document.createElement("textarea"); textArea.value = code; document.body.appendChild(textArea); textArea.select(); document.execCommand("copy"); document.body.removeChild(textArea); copyCodeBtn.textContent = "Copied!"; setTimeout(() => { copyCodeBtn.textContent = "Copy"; }, 2000); } playSound("click"); }
+  function copyRoomCode() { 
+    const code = displayRoomCode.textContent; 
+    if (navigator.clipboard) { 
+      navigator.clipboard.writeText(code).then(() => { 
+        copyCodeBtn.textContent = "Copied!"; 
+        setTimeout(() => { copyCodeBtn.textContent = "Copy"; }, 2000); 
+      }); 
+    } else { 
+      const textArea = document.createElement("textarea"); 
+      textArea.value = code; 
+      document.body.appendChild(textArea); 
+      textArea.select(); 
+      document.execCommand("copy"); 
+      document.body.removeChild(textArea); 
+      copyCodeBtn.textContent = "Copied!"; 
+      setTimeout(() => { copyCodeBtn.textContent = "Copy"; }, 2000); 
+    } 
+    playSound("click"); 
+  }
   
-  function startTeamsGame() { if (!currentRoomId) { alert("No room selected!"); return; } roomCodeModal.style.display = "none"; resetModal(); window.location.href = `gamePage.html`; }
+  function startTeamsGame() { 
+    if (!currentRoomId) { 
+      alert("No room selected!"); 
+      return; 
+    } 
+    roomCodeModal.style.display = "none"; 
+    resetModal(); 
+    window.location.href = `gamePage.html`; 
+  }
   
   const modeButtons = document.querySelectorAll(".mode-btn");
   let selectedMode = "ffa";
@@ -295,25 +377,36 @@ document.addEventListener("DOMContentLoaded", function () {
       if (selectedMode === "ffa") { 
         localStorage.removeItem('privateRoomId');
         localStorage.setItem('gameMode', 'ffa');
-        const nicknameValue = nicknameInput.value.trim() || document.querySelector(".nick").textContent; 
-        if (!nicknameValue || nicknameValue === "Nickname") { 
-          alert("Please enter a nickname and click Join Game first!"); 
+        const nicknameValue = nicknameInput.value.trim() || localStorage.getItem("playerName") || "";
+        if (!nicknameValue) { 
+          alert("Please enter a nickname first!"); 
+          nicknameInput.focus();
           return; 
         } 
-        window.location.href = `gamePage.html?nickname=${encodeURIComponent(nicknameValue)}`; 
+        window.location.href = `gamePage.html?nickname=${encodeURIComponent(nicknameValue)}`;
       } else if (selectedMode === "teams") { 
         showRoomModal(); 
       } else if (selectedMode === "deathmatch") {
-        const nicknameValue = nicknameInput.value.trim() || document.querySelector(".nick").textContent; 
-        if (!nicknameValue || nicknameValue === "Nickname") { 
-          alert("Please enter a nickname and click Join Game first!"); 
+        const nicknameValue = nicknameInput.value.trim() || localStorage.getItem("playerName") || "";
+        if (!nicknameValue) { 
+          alert("Please enter a nickname first!"); 
+          nicknameInput.focus();
           return; 
         }
         localStorage.setItem('gameMode', 'deathmatch');
-        const customSkin = localStorage.getItem("customSkin");
-        const selectedSkin = localStorage.getItem("selectedSkin");
-        if (customSkin === selectedSkin) {
-          localStorage.setItem('gameCustomSkin', customSkin);
+        
+        const selectedSkinId = localStorage.getItem("selectedSkin");
+        const skins = JSON.parse(localStorage.getItem("availableSkins") || "[]");
+        const selectedSkin = skins.find(s => s.id === selectedSkinId);
+        
+        if (selectedSkin && selectedSkin.image) {
+          if (selectedSkin.isDefault) {
+            localStorage.setItem('gameSelectedSkinId', selectedSkinId);
+            localStorage.removeItem('gameCustomSkin');
+          } else {
+            localStorage.setItem('gameCustomSkin', selectedSkin.image);
+            localStorage.removeItem('gameSelectedSkinId');
+          }
         }
         
         window.location.href = `gamePage.html?nickname=${encodeURIComponent(nicknameValue)}&mode=deathmatch&deathMatch=true`;
@@ -322,9 +415,69 @@ document.addEventListener("DOMContentLoaded", function () {
   });
   
   const allButtons = document.querySelectorAll("button");
-  allButtons.forEach((button) => { button.addEventListener("mouseenter", function () { this.style.transform = "translateY(-3px)"; playSound("hover"); }); button.addEventListener("mouseleave", function () { this.style.transform = "translateY(0)"; }); });
-  document.getElementById("settingsBtn").addEventListener("click", function () { playSound("click"); alert("Settings panel will open here"); });
-  document.getElementById("logoutBtn").addEventListener("click", function () { playSound("click"); if (confirm("Are you sure you want to log out?")) { if (socket && socket.readyState === WebSocket.OPEN) { socket.send(JSON.stringify({ type: "leave" })); socket.close(); } localStorage.removeItem('privateRoomId'); document.querySelector(".wrapper").style.display = "none"; loginScreen.style.display = "block"; nicknameInput.value = ""; resetModal(); } });
+  allButtons.forEach((button) => { 
+    button.addEventListener("mouseenter", function () { 
+      this.style.transform = "translateY(-3px)"; 
+      playSound("hover"); 
+    }); 
+    button.addEventListener("mouseleave", function () { 
+      this.style.transform = "translateY(0)"; 
+    }); 
+  });
+  
+  document.getElementById("settingsBtn").addEventListener("click", function () { 
+    playSound("click"); 
+    alert("Settings panel will open here"); 
+  });
+  
+  document.getElementById("logoutBtn").addEventListener("click", function () { 
+    playSound("click"); 
+    if (confirm("Are you sure you want to log out?")) { 
+      localStorage.removeItem('privateRoomId'); 
+      nicknameInput.value = ""; 
+      localStorage.removeItem("playerName");
+      updateAvatar();
+      resetModal(); 
+    } 
+  });
+
+  updateScoresDisplay();
+
+  window.addEventListener('storage', function(e) {
+    if (e.key === 'lastScore') {
+      updateScoresDisplay(true);
+    } else if (e.key === 'bestScore') {
+      updateScoresDisplay(false);
+    }
+  });
+  window.addEventListener('focus', function() {
+    updateScoresDisplay(false);
+  });
+
+  window.handleGameResult = function(finalScore) {
+    localStorage.setItem("lastScore", finalScore.toString());
+    const isNewRecord = updateBestScore(finalScore);
+    
+    setTimeout(() => {
+      const lastScoreElement = document.getElementById("lastScore");
+      if (lastScoreElement) {
+        animateScoreUpdate(lastScoreElement, finalScore);
+      }
+      
+      if (isNewRecord) {
+        const bestScoreElement = document.getElementById("bestScore");
+        if (bestScoreElement) {
+          bestScoreElement.textContent = formatScore(finalScore);
+          bestScoreElement.style.color = '#FFD700';
+          setTimeout(() => {
+            bestScoreElement.style.color = 'white';
+          }, 1000);
+        }
+      }
+    }, 500);
+    
+    return isNewRecord;
+  };
 
   updateAvatar();
 });
