@@ -68,7 +68,7 @@ public partial class Game
                 if (distance <= slime.Radius)
                 {
                     bushId = slime.ID;
-                    break; // stop after first slime
+                    break; // stop after first slime !! delete if slimes overlap
                 }
             }
 
