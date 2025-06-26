@@ -129,14 +129,26 @@ document.addEventListener("DOMContentLoaded", function () {
     const skins = JSON.parse(localStorage.getItem("availableSkins") || "[]");
     const selectedSkin = skins.find(s => s.id === selectedSkinId);
     
+    console.log("💾 Saving skin for game:", selectedSkin?.name, selectedSkin?.isDefault ? "(Default)" : "(Custom)");
+    
     if (selectedSkin && selectedSkin.image) {
+      localStorage.setItem('customSkin', selectedSkin.image);
+      
       if (selectedSkin.isDefault) {
         localStorage.setItem('gameSelectedSkinId', selectedSkinId);
         localStorage.removeItem('gameCustomSkin');
+        console.log("✅ Saved default skin as customSkin:", selectedSkinId);
       } else {
         localStorage.setItem('gameCustomSkin', selectedSkin.image);
         localStorage.removeItem('gameSelectedSkinId');
+        console.log("✅ Saved custom skin as customSkin");
       }
+    } else {
+      console.warn("⚠️ No valid skin found, using fallback");
+      const fallbackSkin = defaultSkins.find(s => s.id === 'green') || defaultSkins[0];
+      localStorage.setItem('customSkin', fallbackSkin.image);
+      localStorage.setItem('gameSelectedSkinId', fallbackSkin.id);
+      localStorage.removeItem('gameCustomSkin');
     }
   }
 
@@ -162,6 +174,7 @@ document.addEventListener("DOMContentLoaded", function () {
         console.warn("Failed to load skin, using default instead");
       };
       img.onclick = () => {
+        console.log("🎨 Selecting skin:", skin.name, skin.isDefault ? "(Default)" : "(Custom)");
         localStorage.setItem("selectedSkin", skin.id);
         updateAvatar();
         renderSkins();
@@ -217,11 +230,32 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function resetSkinsToDefault() {
-    console.log("Resetting skins to default...");
+    console.log("🔄 Resetting skins to default...");
     localStorage.setItem("selectedSkin", "green");
     updateAvatar();
     renderSkins();
   }
+  function testSkinSelection() {
+    const selectedSkinId = localStorage.getItem("selectedSkin");
+    const skins = JSON.parse(localStorage.getItem("availableSkins") || "[]");
+    const selectedSkin = skins.find(s => s.id === selectedSkinId);
+    
+    console.log("🎨 Skin Debug Info:");
+    console.log("Selected Skin ID:", selectedSkinId);
+    console.log("Selected Skin Object:", selectedSkin);
+    console.log("Available Skins:", skins.length);
+    console.log("CustomSkin in localStorage:", localStorage.getItem('customSkin') ? "SET" : "NOT SET");
+    console.log("Game Custom Skin:", localStorage.getItem('gameCustomSkin') ? "SET" : "NOT SET");
+    console.log("Game Selected Skin ID:", localStorage.getItem('gameSelectedSkinId'));
+    
+    if (selectedSkin) {
+      console.log("✅ Skin is valid:", selectedSkin.name, selectedSkin.isDefault ? "(Default)" : "(Custom)");
+    } else {
+      console.log("❌ Skin not found! Resetting...");
+      resetSkinsToDefault();
+    }
+  }
+  window.testSkins = testSkinSelection;
 
   nicknameInput.addEventListener('input', function() {
     localStorage.setItem("playerName", this.value.trim());
@@ -477,5 +511,6 @@ document.addEventListener("DOMContentLoaded", function () {
     
     return isNewRecord;
   };
+
   updateAvatar();
 });
