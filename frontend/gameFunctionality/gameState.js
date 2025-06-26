@@ -28,7 +28,7 @@ const state = {
     }
     const player = this.playersSkins.find((p) => p.id === id);
     if (player) {
-      player.skin = image;
+      player.image = image;
     } else {
       this.playersSkins.push({ id: id, skin: image });
     }

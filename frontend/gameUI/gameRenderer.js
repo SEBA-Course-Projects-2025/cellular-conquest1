@@ -15,13 +15,13 @@ function getSkinImage(playerId) {
   if (!skinEntry) return null;
 
   let base64;
-  if (typeof skinEntry.skin === "number") {
+  if (typeof skinEntry.image === "number") {
     const available = gameState.availableSkins.find(
-      (s) => s.id === skinEntry.skin
+      (s) => s.id === skinEntry.image
     );
-    base64 = available?.skin;
+    base64 = available?.image;
   } else {
-    base64 = skinEntry.skin;
+    base64 = skinEntry.image;
   }
 
   if (!base64) return null;
