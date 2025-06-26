@@ -5,7 +5,6 @@ const ctx = canvas.getContext("2d");
 const skinImageCache = new Map();
 const cellMovementCache = new Map();
 const blobCache = new Map();
-const semiVisible = 30;
 let currentScale = gameState.camera.scale;
 let lastRenderTime = performance.now();
 
@@ -16,13 +15,13 @@ function getSkinImage(playerId) {
   if (!skinEntry) return null;
 
   let base64;
-  if (typeof skinEntry.skin === "number") {
+  if (typeof skinEntry.image === "number") {
     const available = gameState.availableSkins.find(
-      (s) => s.id === skinEntry.skin
+      (s) => s.id === skinEntry.image
     );
-    base64 = available?.skin;
+    base64 = available?.image;
   } else {
-    base64 = skinEntry.skin;
+    base64 = skinEntry.image;
   }
 
   if (!base64) return null;
@@ -34,105 +33,26 @@ function getSkinImage(playerId) {
   return img;
 }
 
-export const resizeCanvas = () => {
-  canvas.width = window.innerWidth;
-  canvas.height = window.innerHeight;
-};
+function getMiddlePoint(p1, p2) {
+  return {
+    x: (p1.x + p2.x) / 2,
+    y: (p1.y + p2.y) / 2,
+  };
+}
 
-export const render = () => {
-  ctx.fillStyle = "#111111";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  ctx.save();
-  ctx.translate(canvas.width / 2, canvas.height / 2);
-
-  const now = performance.now();
-  const deltaTime = (now - lastRenderTime) / 1000;
-  lastRenderTime = now;
-
-  const smoothingSpeed = 5;
-  if (Math.abs(currentScale - gameState.camera.scale) > 0.001) {
-    currentScale = lerp(
-      currentScale,
-      gameState.camera.scale,
-      1 - Math.exp(-smoothingSpeed * deltaTime)
-    );
-  }
-
-  ctx.scale(currentScale, currentScale);
-  ctx.translate(-gameState.camera.x, -gameState.camera.y);
-
-  drawGrid();
-
-  for (const food of gameState.food) {
-    drawCircle(food.x, food.y, food.radius, food.color, food.visibility ?? 100);
-  }
-
-  for (const player of gameState.players) {
-    for (const cell of player.cells) {
-      const key = `${player.id}_${player.cells.indexOf(cell)}`;
-      const lastPos = cellMovementCache.get(key) || { x: cell.x, y: cell.y };
-      const dx = cell.x - lastPos.x;
-      const dy = cell.y - lastPos.y;
-      cellMovementCache.set(key, { x: cell.x, y: cell.y });
-
-      if (gameState.speedupActive && player.id === gameState.playerId) {
-        drawTrail(cell.x, cell.y, cell.radius, dx, dy, cell.color);
-      }
-
-      const skinImg = getSkinImage(player.id);
-
-      drawWavyBlob(
-        cell.x,
-        cell.y,
-        cell.radius,
-        cell.color,
-        Date.now(),
-        player.id,
-        skinImg?.complete && skinImg.naturalWidth ? skinImg : null
-      );
-
-      drawText(player.nickname, cell.x, cell.y, cell.radius, "white");
-    }
-  }
-
-  for (const bush of gameState.bushes) {
-    let visibility = 100;
-    if (gameState.bushIds.includes(bush.id)) visibility = semiVisible;
-    for (const player of gameState.players) {
-      for (const cell of player.cells) {
-        const dx = bush.x - cell.x;
-        const dy = bush.y - cell.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < cell.radius) {
-          const overlapArea =
-            Math.PI * bush.radius ** 2 * ((cell.radius - dist) / bush.radius);
-          const bushArea = Math.PI * bush.radius * bush.radius;
-          if (overlapArea > bushArea / 2) {
-            visibility = semiVisible;
-            break;
-          }
-        }
-      }
-      if (visibility < 100) break;
-    }
-    drawCircle(bush.x, bush.y, bush.radius, bush.color, visibility, "#336633");
-  }
-
-  ctx.restore();
-};
-
-const drawCircle = (x, y, radius, fillColor, visibility = 100, borderColor) => {
+function drawCircle(x, y, radius, fillColor, visibility = 100, borderColor) {
   ctx.save();
   ctx.globalAlpha = Math.max(0, Math.min(visibility, 100)) / 100;
   ctx.beginPath();
   ctx.arc(x, y, radius, 0, Math.PI * 2);
   ctx.fillStyle = fillColor;
-  if (borderColor) ctx.strokeStyle = borderColor;
+  if (borderColor) {
+    ctx.strokeStyle = borderColor;
+    ctx.stroke();
+  }
   ctx.fill();
-  ctx.stroke();
   ctx.restore();
-};
+}
 
 function drawRoundedRect(x, y, width, height, radius, fillStyle) {
   ctx.beginPath();
@@ -150,7 +70,7 @@ function drawRoundedRect(x, y, width, height, radius, fillStyle) {
   ctx.fill();
 }
 
-const drawText = (text, x, y, radius, color) => {
+function drawText(text, x, y, radius, color) {
   const fontSize = Math.max(10, Math.min(radius * 0.8, 24));
   ctx.font = `${fontSize}px Inter`;
   ctx.textAlign = "center";
@@ -175,9 +95,9 @@ const drawText = (text, x, y, radius, color) => {
 
   ctx.fillStyle = color;
   ctx.fillText(text, x, y);
-};
+}
 
-const drawGrid = () => {
+function drawGrid() {
   const gridSize = 50;
   const lineColor = "rgb(15, 66, 85)";
   ctx.strokeStyle = lineColor;
@@ -219,25 +139,14 @@ const drawGrid = () => {
     ctx.lineTo(Math.min(gameState.worldSize.width, endX), y);
     ctx.stroke();
   }
-};
-
-function getMiddlePoint(p1, p2) {
-  return {
-    x: (p1.x + p2.x) / 2,
-    y: (p1.y + p2.y) / 2,
-  };
 }
 
-function drawWavyBlob(x, y, radius, color, timestamp, blobId, image = null) {
-  const points = Math.max(8, Math.min(16, Math.floor(radius / 10)));
-  const wobbleAmount = radius * 0.04;
-  const wobbleSpeed = 0.008;
-
+function generateBlobControlPoints(blobId, radius, pointsCount) {
   let controlPoints = blobCache.get(blobId);
   if (!controlPoints) {
     controlPoints = [];
-    const angleStep = (Math.PI * 2) / points;
-    for (let i = 0; i < points; i++) {
+    const angleStep = (Math.PI * 2) / pointsCount;
+    for (let i = 0; i < pointsCount; i++) {
       const angle = i * angleStep;
       const phaseOffset = Math.random() * Math.PI * 2;
       controlPoints.push({
@@ -249,7 +158,18 @@ function drawWavyBlob(x, y, radius, color, timestamp, blobId, image = null) {
     }
     blobCache.set(blobId, controlPoints);
   }
+  return controlPoints;
+}
 
+function updateBlobPoints(
+  controlPoints,
+  x,
+  y,
+  radius,
+  wobbleAmount,
+  timestamp,
+  wobbleSpeed
+) {
   for (let i = 0; i < controlPoints.length; i++) {
     const point = controlPoints[i];
     const wobble =
@@ -259,37 +179,75 @@ function drawWavyBlob(x, y, radius, color, timestamp, blobId, image = null) {
     point.x = x + adjustedRadius * point.baseX;
     point.y = y + adjustedRadius * point.baseY;
   }
+}
+
+function createBlobPath(controlPoints) {
+  if (controlPoints.length === 0) return;
+
+  const firstMidpoint = getMiddlePoint(
+    controlPoints[controlPoints.length - 1],
+    controlPoints[0]
+  );
+  ctx.moveTo(firstMidpoint.x, firstMidpoint.y);
+
+  for (let i = 0; i < controlPoints.length; i++) {
+    const current = controlPoints[i];
+    const next = controlPoints[(i + 1) % controlPoints.length];
+    const midPoint = getMiddlePoint(current, next);
+    ctx.quadraticCurveTo(current.x, current.y, midPoint.x, midPoint.y);
+  }
+}
+
+function drawWavyBlob(x, y, radius, color, timestamp, blobId, options = {}) {
+  const {
+    image = null,
+    visibility = 100,
+    borderColor = null,
+    wobbleIntensity = 0.04,
+    wobbleSpeed = 0.008,
+    breatheEffect = false,
+    minPoints = 8,
+    maxPoints = 16,
+    pointDensity = 10,
+  } = options;
+
+  const points = Math.max(
+    minPoints,
+    Math.min(maxPoints, Math.floor(radius / pointDensity))
+  );
+  const wobbleAmount = radius * wobbleIntensity;
+
+  const controlPoints = generateBlobControlPoints(blobId, radius, points);
+  updateBlobPoints(
+    controlPoints,
+    x,
+    y,
+    radius,
+    wobbleAmount,
+    timestamp,
+    wobbleSpeed
+  );
 
   ctx.save();
+  ctx.globalAlpha = Math.max(0, Math.min(visibility, 100)) / 100;
 
   ctx.beginPath();
-  if (controlPoints.length > 0) {
-    const firstMidpoint = getMiddlePoint(
-      controlPoints[controlPoints.length - 1],
-      controlPoints[0]
-    );
-    ctx.moveTo(firstMidpoint.x, firstMidpoint.y);
-
-    for (let i = 0; i < controlPoints.length; i++) {
-      const current = controlPoints[i];
-      const next = controlPoints[(i + 1) % controlPoints.length];
-      const midPoint = getMiddlePoint(current, next);
-      ctx.quadraticCurveTo(current.x, current.y, midPoint.x, midPoint.y);
-    }
-  }
+  createBlobPath(controlPoints);
   ctx.closePath();
 
   if (image) {
     ctx.clip();
 
-    const imgSize = radius * 2;
+    let imgSize = radius * 2;
+    if (breatheEffect) {
+      const breathe = 1 + Math.sin(timestamp * 0.003) * 0.02;
+      imgSize *= breathe;
+    }
 
-    const breathe = 1 + Math.sin(timestamp * 0.003) * 0.02;
-    const scaledSize = imgSize * breathe;
-    const scaledX = x - scaledSize / 2;
-    const scaledY = y - scaledSize / 2;
+    const scaledX = x - imgSize / 2;
+    const scaledY = y - imgSize / 2;
 
-    ctx.drawImage(image, scaledX, scaledY, scaledSize, scaledSize);
+    ctx.drawImage(image, scaledX, scaledY, imgSize, imgSize);
 
     ctx.globalCompositeOperation = "multiply";
     ctx.fillStyle = color;
@@ -307,8 +265,8 @@ function drawWavyBlob(x, y, radius, color, timestamp, blobId, image = null) {
     ctx.fill();
   }
 
-  ctx.globalAlpha = 0.3;
-  ctx.strokeStyle = color;
+  ctx.globalAlpha = (Math.max(0, Math.min(visibility, 100)) / 100) * 0.3;
+  ctx.strokeStyle = borderColor || color;
   ctx.lineWidth = Math.max(1, radius * 0.02);
   ctx.stroke();
 
@@ -329,3 +287,104 @@ function drawTrail(x, y, radius, dx, dy, color) {
     drawCircle(x + dirX * offset, y + dirY * offset, size, color, 100 * alpha);
   }
 }
+
+function renderFood() {
+  for (const food of gameState.food) {
+    drawCircle(food.x, food.y, food.radius, food.color, food.visibility ?? 100);
+  }
+}
+
+function renderPlayers() {
+  for (const player of gameState.players) {
+    for (const cell of player.cells) {
+      const key = `${player.id}_${player.cells.indexOf(cell)}`;
+      const lastPos = cellMovementCache.get(key) || { x: cell.x, y: cell.y };
+      const dx = cell.x - lastPos.x;
+      const dy = cell.y - lastPos.y;
+      cellMovementCache.set(key, { x: cell.x, y: cell.y });
+
+      if (gameState.speedupActive && player.id === gameState.playerId) {
+        drawTrail(cell.x, cell.y, cell.radius, dx, dy, cell.color);
+      }
+
+      const skinImg = getSkinImage(player.id);
+      const validSkinImg =
+        skinImg?.complete && skinImg.naturalWidth ? skinImg : null;
+
+      drawWavyBlob(
+        cell.x,
+        cell.y,
+        cell.radius,
+        cell.color,
+        Date.now(),
+        `player_${player.id}_${player.cells.indexOf(cell)}`,
+        {
+          image: validSkinImg,
+          breatheEffect: true,
+        }
+      );
+
+      drawText(player.nickname, cell.x, cell.y, cell.radius, "white");
+    }
+  }
+}
+
+function renderBushes() {
+  for (const bush of gameState.bushes) {
+    const visibility = gameState.bushIds?.includes(bush.id) ? 30 : 100;
+
+    drawWavyBlob(
+      bush.x,
+      bush.y,
+      bush.radius,
+      bush.color,
+      Date.now(),
+      `bush_${bush.id}`,
+      {
+        visibility,
+        borderColor: "#336633",
+        wobbleIntensity: 0.02,
+        wobbleSpeed: 0.004,
+        minPoints: 12,
+        maxPoints: 20,
+        pointDensity: 8,
+      }
+    );
+  }
+}
+
+export const resizeCanvas = () => {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+};
+
+export const render = () => {
+  ctx.fillStyle = "#111111";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.save();
+  ctx.translate(canvas.width / 2, canvas.height / 2);
+
+  const now = performance.now();
+  const deltaTime = (now - lastRenderTime) / 1000;
+  lastRenderTime = now;
+
+  const smoothingSpeed = 5;
+  if (Math.abs(currentScale - gameState.camera.scale) > 0.001) {
+    currentScale = lerp(
+      currentScale,
+      gameState.camera.scale,
+      1 - Math.exp(-smoothingSpeed * deltaTime)
+    );
+  }
+
+  ctx.scale(currentScale, currentScale);
+  ctx.translate(-gameState.camera.x, -gameState.camera.y);
+
+  drawGrid();
+  renderFood();
+  renderPlayers();
+  renderBushes();
+
+  ctx.restore();
+};

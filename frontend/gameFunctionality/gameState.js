@@ -22,15 +22,16 @@ const state = {
   playersSkins: [],
 
   updatePlayerSkin(id, image) {
+    console.log(id, image);
     if (!image) {
       this.playersSkins = this.playersSkins.filter((p) => p.id !== id);
       return;
     }
     const player = this.playersSkins.find((p) => p.id === id);
     if (player) {
-      player.skin = image;
+      player.image = image;
     } else {
-      this.playersSkins.push({ id: id, skin: image });
+      this.playersSkins.push({ id: id, image: image });
     }
   },
   removePlayerSkin(id) {
