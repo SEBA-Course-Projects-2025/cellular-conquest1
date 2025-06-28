@@ -1,17 +1,6 @@
 import gameState from "../gameFunctionality/gameState.js";
 import { canvas } from "./gameRenderer.js";
-
-const zoomSettings = {
-  minRadius: 20,
-  maxRadius: 500,
-  minCoverage: 1 / 9,
-  maxCoverage: 3 / 4,
-  zoomStep: 0.1,
-  manualZoomThreshold: 100,
-  minManualScale: 1,
-  maxManualScale: 4,
-  smoothness: 0.1,
-};
+import { ZOOM_CONFIG } from "../gameConfig/zoomConfig.js";
 
 let manualZoom = false;
 let manualScale = 1;
@@ -29,13 +18,13 @@ const getTotalRadius = () =>
 const getTargetScale = (r) => {
   const screenSize = Math.min(canvas.width, canvas.height);
   const normRadius = lerpClamp(
-    zoomSettings.minRadius,
-    zoomSettings.maxRadius,
+    ZOOM_CONFIG.MIN_RADIUS,
+    ZOOM_CONFIG.MAX_RADIUS,
     r
   );
   const coverage = lerp(
-    zoomSettings.minCoverage,
-    zoomSettings.maxCoverage,
+    ZOOM_CONFIG.MIN_COVERAGE,
+    ZOOM_CONFIG.MAX_COVERAGE,
     normRadius
   );
   return (screenSize * coverage) / (2 * r);
@@ -43,14 +32,14 @@ const getTargetScale = (r) => {
 
 export const handleZoomWheel = (e) => {
   const radius = getTotalRadius();
-  if (radius < zoomSettings.manualZoomThreshold) return;
+  if (radius < ZOOM_CONFIG.MANUAL_ZOOM_THRESHOLD) return;
 
   e.preventDefault();
   const factor =
-    e.deltaY > 0 ? 1 - zoomSettings.zoomStep : 1 + zoomSettings.zoomStep;
+    e.deltaY > 0 ? 1 - ZOOM_CONFIG.ZOOM_STEP : 1 + ZOOM_CONFIG.ZOOM_STEP;
   manualScale = Math.min(
-    zoomSettings.maxManualScale,
-    Math.max(zoomSettings.minManualScale, manualScale * factor)
+    ZOOM_CONFIG.MAX_MANUAL_SCALE,
+    Math.max(ZOOM_CONFIG.MIN_MANUAL_SCALE, manualScale * factor)
   );
   manualZoom = true;
 };
@@ -79,9 +68,9 @@ export const updateCamera = () => {
   if (manualZoom) scale *= manualScale;
 
   gameState.camera.scale +=
-    (scale - gameState.camera.scale) * zoomSettings.smoothness;
+    (scale - gameState.camera.scale) * ZOOM_CONFIG.SMOOTHNESS;
 
-  if (r < zoomSettings.minRadius * 0.5) {
+  if (r < ZOOM_CONFIG.MIN_RADIUS * 0.5) {
     manualZoom = false;
     manualScale = 1;
   }

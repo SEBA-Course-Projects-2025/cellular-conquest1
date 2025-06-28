@@ -1,4 +1,7 @@
-export function copyToClipboard(getText) {
+export function copyToClipboard(
+  getText,
+  message = "Copied to clipboard successfully!"
+) {
   return () => {
     const text = getText();
 
@@ -13,7 +16,7 @@ export function copyToClipboard(getText) {
         });
     } else {
       fallbackCopy(text);
-      showCopyPopup();
+      showCopyPopup(message);
     }
   };
 }
@@ -37,10 +40,11 @@ function fallbackCopy(text) {
   document.body.removeChild(textarea);
 }
 
-function showCopyPopup() {
+function showCopyPopup(message) {
   const popup = document.getElementById("copyPopup");
   if (!popup) return;
 
+  popup.innerText = message;
   popup.classList.add("visible");
   setTimeout(() => popup.classList.remove("visible"), 2000);
 }

@@ -1,8 +1,18 @@
+import { MAX_PLAYER_NAME_LENGTH } from "../commonConfig.js";
+import { LOCAL_STORAGE_KEYS } from "../gameConfig/localStorageKeys.js";
 const defaultWorldSize = 2000;
+
+function trimWithEllipsis(str, maxLength) {
+  return str.length > maxLength ? str.slice(0, maxLength - 3) + "..." : str;
+}
 
 const state = {
   isTouch: false,
-  playerName: localStorage.getItem("playerName") || "YourNickname",
+  playerName:
+    trimWithEllipsis(
+      localStorage.getItem(LOCAL_STORAGE_KEYS.PLAYER_NAME),
+      MAX_PLAYER_NAME_LENGTH
+    ) || "YourNickname",
   playerId: null,
   playerScore: 0,
   roomId: null,
@@ -18,11 +28,11 @@ const state = {
   inactive: false,
   connected: false,
   camera: { x: defaultWorldSize / 2, y: defaultWorldSize / 2, scale: 1 },
-  availableSkins: localStorage.getItem("availableSkins") || [],
+  availableSkins:
+    localStorage.getItem(LOCAL_STORAGE_KEYS.AVAILABLE_SKINS) || [],
   playersSkins: [],
 
   updatePlayerSkin(id, image) {
-    console.log(id, image);
     if (!image) {
       this.playersSkins = this.playersSkins.filter((p) => p.id !== id);
       return;

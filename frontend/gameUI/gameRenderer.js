@@ -1,19 +1,15 @@
 import gameState from "../gameFunctionality/gameState.js";
+import { RENDER_CONFIG } from "../gameConfig/rendererConfig.js";
 
-export const canvas = document.getElementById("gameCanvas");
+export const canvas = document.getElementById(RENDER_CONFIG.CANVAS_ID);
 const ctx = canvas.getContext("2d");
 const skinImageCache = new Map();
 const cellMovementCache = new Map();
 const blobCache = new Map();
-let currentScale = gameState.camera.scale;
-let lastRenderTime = performance.now();
-
-const lerp = (start, end, t) => start + (end - start) * t;
 
 function getSkinImage(playerId) {
   const skinEntry = gameState.playersSkins.find((p) => p.id === playerId);
   if (!skinEntry) return null;
-
   let base64;
   if (typeof skinEntry.image === "number") {
     const available = gameState.availableSkins.find(
@@ -23,10 +19,8 @@ function getSkinImage(playerId) {
   } else {
     base64 = skinEntry.image;
   }
-
   if (!base64) return null;
   if (skinImageCache.has(base64)) return skinImageCache.get(base64);
-
   const img = new Image();
   img.src = base64;
   skinImageCache.set(base64, img);
@@ -70,39 +64,47 @@ function drawRoundedRect(x, y, width, height, radius, fillStyle) {
   ctx.fill();
 }
 
-function drawText(text, x, y, radius, color) {
-  const fontSize = Math.max(10, Math.min(radius * 0.8, 24));
-  ctx.font = `${fontSize}px Inter`;
+function drawText(
+  text,
+  x,
+  y,
+  radius,
+  color = RENDER_CONFIG.TEXT.DEFAULT_COLOR
+) {
+  const fontSize = Math.max(
+    RENDER_CONFIG.TEXT.MIN_FONT_SIZE,
+    Math.min(
+      radius * RENDER_CONFIG.TEXT.FONT_SIZE_RATIO,
+      RENDER_CONFIG.TEXT.MAX_FONT_SIZE
+    )
+  );
+  ctx.font = `${fontSize}px ${RENDER_CONFIG.TEXT.FONT_FAMILY}`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-
-  const padding = 4;
+  const padding = RENDER_CONFIG.TEXT.PADDING;
   const textMetrics = ctx.measureText(text);
   const textWidth = textMetrics.width + padding * 2;
   const textHeight = fontSize + padding * 2;
   const rectX = x - textWidth / 2;
   const rectY = y - textHeight / 2;
   const borderRadius = textHeight / 2;
-
   drawRoundedRect(
     rectX,
     rectY,
     textWidth,
     textHeight,
     borderRadius,
-    "rgba(0, 0, 0, 0.5)"
+    RENDER_CONFIG.TEXT.BACKGROUND_COLOR
   );
-
   ctx.fillStyle = color;
   ctx.fillText(text, x, y);
 }
 
 function drawGrid() {
-  const gridSize = 50;
-  const lineColor = "rgb(15, 66, 85)";
+  const gridSize = RENDER_CONFIG.GRID.SIZE;
+  const lineColor = RENDER_CONFIG.GRID.LINE_COLOR;
   ctx.strokeStyle = lineColor;
-  ctx.lineWidth = 1;
-
+  ctx.lineWidth = RENDER_CONFIG.GRID.LINE_WIDTH;
   const startX =
     Math.floor(
       (gameState.camera.x - canvas.width / 2 / gameState.camera.scale) /
@@ -123,7 +125,6 @@ function drawGrid() {
       (gameState.camera.y + canvas.height / 2 / gameState.camera.scale) /
         gridSize
     ) * gridSize;
-
   for (let x = startX; x <= endX; x += gridSize) {
     if (x < 0 || x > gameState.worldSize.width) continue;
     ctx.beginPath();
@@ -131,7 +132,6 @@ function drawGrid() {
     ctx.lineTo(x, Math.min(gameState.worldSize.height, endY));
     ctx.stroke();
   }
-
   for (let y = startY; y <= endY; y += gridSize) {
     if (y < 0 || y > gameState.worldSize.height) continue;
     ctx.beginPath();
@@ -183,13 +183,11 @@ function updateBlobPoints(
 
 function createBlobPath(controlPoints) {
   if (controlPoints.length === 0) return;
-
   const firstMidpoint = getMiddlePoint(
     controlPoints[controlPoints.length - 1],
     controlPoints[0]
   );
   ctx.moveTo(firstMidpoint.x, firstMidpoint.y);
-
   for (let i = 0; i < controlPoints.length; i++) {
     const current = controlPoints[i];
     const next = controlPoints[(i + 1) % controlPoints.length];
@@ -203,20 +201,18 @@ function drawWavyBlob(x, y, radius, color, timestamp, blobId, options = {}) {
     image = null,
     visibility = 100,
     borderColor = null,
-    wobbleIntensity = 0.04,
-    wobbleSpeed = 0.008,
+    wobbleIntensity = RENDER_CONFIG.BLOB.DEFAULT_WOBBLE_INTENSITY,
+    wobbleSpeed = RENDER_CONFIG.BLOB.DEFAULT_WOBBLE_SPEED,
     breatheEffect = false,
-    minPoints = 8,
-    maxPoints = 16,
-    pointDensity = 10,
+    minPoints = RENDER_CONFIG.BLOB.DEFAULT_MIN_POINTS,
+    maxPoints = RENDER_CONFIG.BLOB.DEFAULT_MAX_POINTS,
+    pointDensity = RENDER_CONFIG.BLOB.DEFAULT_POINT_DENSITY,
   } = options;
-
   const points = Math.max(
     minPoints,
     Math.min(maxPoints, Math.floor(radius / pointDensity))
   );
   const wobbleAmount = radius * wobbleIntensity;
-
   const controlPoints = generateBlobControlPoints(blobId, radius, points);
   updateBlobPoints(
     controlPoints,
@@ -227,70 +223,76 @@ function drawWavyBlob(x, y, radius, color, timestamp, blobId, options = {}) {
     timestamp,
     wobbleSpeed
   );
-
   ctx.save();
   ctx.globalAlpha = Math.max(0, Math.min(visibility, 100)) / 100;
-
   ctx.beginPath();
   createBlobPath(controlPoints);
   ctx.closePath();
-
   if (image) {
     ctx.clip();
-
     let imgSize = radius * 2;
     if (breatheEffect) {
-      const breathe = 1 + Math.sin(timestamp * 0.003) * 0.02;
+      const breathe =
+        1 +
+        Math.sin(timestamp * RENDER_CONFIG.BLOB.BREATHE_SPEED) *
+          RENDER_CONFIG.BLOB.BREATHE_AMPLITUDE;
       imgSize *= breathe;
     }
-
     const scaledX = x - imgSize / 2;
     const scaledY = y - imgSize / 2;
-
     ctx.drawImage(image, scaledX, scaledY, imgSize, imgSize);
-
     ctx.globalCompositeOperation = "multiply";
     ctx.fillStyle = color;
-    ctx.globalAlpha = 0.1;
+    ctx.globalAlpha = RENDER_CONFIG.BLOB.MULTIPLY_ALPHA;
     ctx.fill();
-
     ctx.globalCompositeOperation = "screen";
-    ctx.fillStyle = "rgba(255, 255, 255, 0.05)";
+    ctx.fillStyle = `rgba(255, 255, 255, ${RENDER_CONFIG.BLOB.SCREEN_ALPHA})`;
     ctx.globalAlpha = 1;
     ctx.fill();
-
     ctx.globalCompositeOperation = "source-over";
   } else {
     ctx.fillStyle = color;
     ctx.fill();
   }
-
-  ctx.globalAlpha = (Math.max(0, Math.min(visibility, 100)) / 100) * 0.3;
+  ctx.globalAlpha =
+    (Math.max(0, Math.min(visibility, 100)) / 100) *
+    RENDER_CONFIG.BLOB.BORDER_ALPHA;
   ctx.strokeStyle = borderColor || color;
-  ctx.lineWidth = Math.max(1, radius * 0.02);
+  ctx.lineWidth = Math.max(
+    RENDER_CONFIG.BLOB.MIN_BORDER_WIDTH,
+    radius * RENDER_CONFIG.BLOB.BORDER_WIDTH_RATIO
+  );
   ctx.stroke();
-
   ctx.restore();
 }
 
 function drawTrail(x, y, radius, dx, dy, color) {
-  const trailLength = 5;
+  const trailLength = RENDER_CONFIG.TRAIL.LENGTH;
   const distance = Math.sqrt(dx * dx + dy * dy);
   const dirX = distance > 0 ? -dx / distance : 0;
   const dirY = distance > 0 ? -dy / distance : 0;
-
   for (let i = 0; i < trailLength; i++) {
     const t = 1 - i / trailLength;
-    const alpha = t * 0.3;
-    const size = radius * (0.5 + t * 0.5);
-    const offset = (i / trailLength) * radius * 1.5;
+    const alpha = t * RENDER_CONFIG.TRAIL.MAX_ALPHA;
+    const size =
+      radius *
+      (RENDER_CONFIG.TRAIL.MIN_SIZE_RATIO +
+        t * (1 - RENDER_CONFIG.TRAIL.MIN_SIZE_RATIO));
+    const offset =
+      (i / trailLength) * radius * RENDER_CONFIG.TRAIL.OFFSET_MULTIPLIER;
     drawCircle(x + dirX * offset, y + dirY * offset, size, color, 100 * alpha);
   }
 }
 
 function renderFood() {
   for (const food of gameState.food) {
-    drawCircle(food.x, food.y, food.radius, food.color, food.visibility ?? 100);
+    drawCircle(
+      food.x,
+      food.y,
+      food.radius,
+      food.color,
+      food.visibility ?? RENDER_CONFIG.FOOD.DEFAULT_VISIBILITY
+    );
   }
 }
 
@@ -302,15 +304,12 @@ function renderPlayers() {
       const dx = cell.x - lastPos.x;
       const dy = cell.y - lastPos.y;
       cellMovementCache.set(key, { x: cell.x, y: cell.y });
-
       if (gameState.speedupActive && player.id === gameState.playerId) {
         drawTrail(cell.x, cell.y, cell.radius, dx, dy, cell.color);
       }
-
       const skinImg = getSkinImage(player.id);
       const validSkinImg =
         skinImg?.complete && skinImg.naturalWidth ? skinImg : null;
-
       drawWavyBlob(
         cell.x,
         cell.y,
@@ -320,19 +319,24 @@ function renderPlayers() {
         `player_${player.id}_${player.cells.indexOf(cell)}`,
         {
           image: validSkinImg,
-          breatheEffect: true,
+          breatheEffect: RENDER_CONFIG.PLAYER_BLOB.BREATHE_EFFECT,
+          wobbleIntensity: RENDER_CONFIG.PLAYER_BLOB.WOBBLE_INTENSITY,
+          wobbleSpeed: RENDER_CONFIG.PLAYER_BLOB.WOBBLE_SPEED,
+          minPoints: RENDER_CONFIG.PLAYER_BLOB.MIN_POINTS,
+          maxPoints: RENDER_CONFIG.PLAYER_BLOB.MAX_POINTS,
+          pointDensity: RENDER_CONFIG.PLAYER_BLOB.POINT_DENSITY,
         }
       );
-
-      drawText(player.nickname, cell.x, cell.y, cell.radius, "white");
+      drawText(player.nickname, cell.x, cell.y, cell.radius);
     }
   }
 }
 
 function renderBushes() {
   for (const bush of gameState.bushes) {
-    const visibility = gameState.bushIds?.includes(bush.id) ? 30 : 100;
-
+    const visibility = gameState.bushIds?.includes(bush.id)
+      ? RENDER_CONFIG.BUSH_BLOB.HIDDEN_VISIBILITY
+      : RENDER_CONFIG.BUSH_BLOB.VISIBLE_VISIBILITY;
     drawWavyBlob(
       bush.x,
       bush.y,
@@ -342,12 +346,12 @@ function renderBushes() {
       `bush_${bush.id}`,
       {
         visibility,
-        borderColor: "#336633",
-        wobbleIntensity: 0.02,
-        wobbleSpeed: 0.004,
-        minPoints: 12,
-        maxPoints: 20,
-        pointDensity: 8,
+        borderColor: RENDER_CONFIG.BUSH_BLOB.BORDER_COLOR,
+        wobbleIntensity: RENDER_CONFIG.BUSH_BLOB.WOBBLE_INTENSITY,
+        wobbleSpeed: RENDER_CONFIG.BUSH_BLOB.WOBBLE_SPEED,
+        minPoints: RENDER_CONFIG.BUSH_BLOB.MIN_POINTS,
+        maxPoints: RENDER_CONFIG.BUSH_BLOB.MAX_POINTS,
+        pointDensity: RENDER_CONFIG.BUSH_BLOB.POINT_DENSITY,
       }
     );
   }
@@ -359,32 +363,15 @@ export const resizeCanvas = () => {
 };
 
 export const render = () => {
-  ctx.fillStyle = "#111111";
+  ctx.fillStyle = RENDER_CONFIG.BACKGROUND_COLOR;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
-
   ctx.save();
   ctx.translate(canvas.width / 2, canvas.height / 2);
-
-  const now = performance.now();
-  const deltaTime = (now - lastRenderTime) / 1000;
-  lastRenderTime = now;
-
-  const smoothingSpeed = 5;
-  if (Math.abs(currentScale - gameState.camera.scale) > 0.001) {
-    currentScale = lerp(
-      currentScale,
-      gameState.camera.scale,
-      1 - Math.exp(-smoothingSpeed * deltaTime)
-    );
-  }
-
-  ctx.scale(currentScale, currentScale);
+  ctx.scale(gameState.camera.scale, gameState.camera.scale);
   ctx.translate(-gameState.camera.x, -gameState.camera.y);
-
   drawGrid();
   renderFood();
   renderPlayers();
   renderBushes();
-
   ctx.restore();
 };

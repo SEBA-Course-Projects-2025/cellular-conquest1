@@ -1,30 +1,40 @@
 :root {
-  --bg-color: #0b1a2c;
-  --panel-color: rgba(0, 0, 0, 0.4);
-  --accent: #7aff99;
-  --text-light: #cfe8f3;
-  --text-secondary: #a0d8ff;
-  --font: "Segoe UI", sans-serif;
+  --color-bg: #012345cc;
+  --color-primary: #d5ffe9;
+  --color-primary-bg: #7aff991a;
+  --color-primary-bg-hover: #adffc01a;
+  --color-error: #ff5d5d;
+  --color-accent: #7aff99;
+
+  --border: 1px solid #7aff9955;
+
   --transition: all 0.3s ease;
-  --glow: 0 0 10px rgba(122, 255, 153, 0.5);
+  --transition-fade: top 0.5s ease;
+  --transition-canvas: filter 1.8s ease-out;
+  --blur: blur(5px);
+
+  --glow: 0 0 10px rgba(122, 255, 153, 0.3);
+  --glow-focused: 0 0 15px rgba(122, 255, 153, 0.6);
 }
 
 * {
   margin: 0;
   box-sizing: border-box;
-  font-family: var(--font);
-  color: #fff;
+  font-family: "Segoe UI", sans-serif;
+  color: var(--color-primary);
 }
+
 html {
   scrollbar-width: none;
 }
+
 body {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+  background-color: var(--color-bg);
 }
 
-/* Common */
 .allScreen {
   position: absolute;
   display: flex;
@@ -34,24 +44,25 @@ body {
   padding: 1rem;
   height: 100%;
 }
+
 .row {
   display: flex;
   justify-content: space-between;
   flex-direction: row;
 }
+
 .styledDiv {
   border-radius: 1rem;
-  border: 1px solid #0f4255;
-  background: #012345cc;
+  border: var(--border);
+  background: var(--color-bg);
   padding: 1rem;
   height: fit-content;
 }
 
 .special {
-  color: #3dda83;
+  color: var(--color-accent);
 }
 
-/* Game Info */
 #gameInfo {
   flex-direction: column;
   justify-content: space-between;
@@ -68,40 +79,41 @@ body {
   flex-shrink: 0;
 }
 
-/* Exit Popup */
 #exitPopup,
 #deathPopup {
   justify-content: center;
   align-items: center;
 }
+
 .popupNotice {
   position: fixed;
   left: 50%;
   transform: translateX(-50%);
-  transition: top 0.5s ease;
+  transition: var(--transition-fade);
   z-index: 1000;
   top: -10rem;
 }
 .popupNotice.visible {
   top: 1rem;
 }
+
 .error {
-  border-color: #ff4d4d;
-  color: #ff4d4d;
+  border-color: var(--color-error);
+  color: var(--color-error);
 }
 
 #autoCloseNotice {
-  color: rgb(255, 94, 0);
+  color: var(--color-error);
   font-weight: bold;
   margin-top: 10px;
   transition: opacity 0.3s ease;
 }
 
 .btn {
-  background: rgba(160, 216, 255, 0.1);
-  border: 1px solid rgba(160, 216, 255, 0.3);
+  background: none;
+  border: var(--border);
   border-radius: 6px;
-  color: var(--text-light);
+  color: var(--color-primary);
   font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
@@ -110,18 +122,20 @@ body {
   min-width: 150px;
 }
 .btn:hover {
-  background: rgba(160, 216, 255, 0.2);
   transform: translateY(-2px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+  box-shadow: var(--glow);
 }
 .btn:active {
   transform: scale(0.97);
-  box-shadow: 0 2px 6px #0003;
+  box-shadow: var(--glow-focused);
 }
 
 #confirmExit {
-  background-color: #a73737;
+  color: var(--color-error);
+  border-color: var(--color-error);
+  background: none;
 }
+
 .exitButtons {
   display: flex;
   flex-direction: row;
@@ -129,10 +143,12 @@ body {
   justify-content: center;
   gap: 10px;
 }
+
 .blur {
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: var(--blur);
+  -webkit-backdrop-filter: var(--blur);
 }
+
 .popupContent {
   z-index: 2;
   display: flex;
@@ -144,6 +160,7 @@ body {
 .hidden {
   display: none !important;
 }
+
 .fadeIn {
   animation: fadeIn 0.5s ease-out forwards;
   opacity: 0;
@@ -155,7 +172,7 @@ body {
 }
 
 #gameCanvas {
-  transition: filter 1.8s ease-out;
+  transition: var(--transition-canvas);
 }
 
 .copyable {
@@ -175,7 +192,7 @@ body {
 #speedBarBackground {
   width: 100%;
   height: 10px;
-  background: rgba(160, 216, 255, 0.3);
+  background: var(--color-primary-bg);
   border-radius: 5px;
   overflow: hidden;
   margin: 5px;
@@ -183,9 +200,10 @@ body {
 #speedBarFill {
   height: 100%;
   width: 0%;
-  background-color: #76c7c0;
+  background-color: var(--color-accent);
   transition: width 0.3s ease;
 }
+
 #roomId {
   display: flex;
   flex-direction: row;

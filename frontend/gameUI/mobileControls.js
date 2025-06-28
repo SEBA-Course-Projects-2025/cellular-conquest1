@@ -5,35 +5,49 @@ import {
   handleSplit,
 } from "../gameFunctionality/eventHandlers.js";
 import gameState from "../gameFunctionality/gameState.js";
+import {
+  JOYSTICK_CONFIG,
+  MOBILE_BUTTONS,
+  CONTAINER_IDS,
+} from "../gameConfig/mobileControlsConfig.js";
 
 const $ = (id) => document.getElementById(id);
-const mobileControls = $("mobileControls");
-const joystickContainer = $("joystickContainer");
-const joystickKnob = $("joystickHandle");
-const splitBtn = $("splitBtn");
-const speedupBtn = $("speedupBtn");
-const feedBtn = $("feedBtn");
-const buttons = [
-  { el: splitBtn, action: handleSplit },
-  { el: feedBtn, action: handleFeed },
-  { el: speedupBtn, action: handleSpeedup },
-];
+const mobileControls = $(CONTAINER_IDS.CONTROLS);
+const joystickContainer = $(CONTAINER_IDS.JOYSTICK);
+const joystickKnob = $(CONTAINER_IDS.KNOB);
+
+const buttons = MOBILE_BUTTONS.map(({ id, action }) => ({
+  el: $(id),
+  action: getActionHandler(action),
+}));
+
+function getActionHandler(actionName) {
+  switch (actionName) {
+    case "split":
+      return handleSplit;
+    case "feed":
+      return handleFeed;
+    case "speedup":
+      return handleSpeedup;
+    default:
+      console.warn(`No handler for action: ${actionName}`);
+      return () => {};
+  }
+}
 
 gameState.isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
 mobileControls.classList.toggle("hidden", !gameState.isTouch);
 
-// === Joystick ===
 let joystickActive = false;
 let joystickCenter = { x: 0, y: 0 };
 let joystickPointerId = null;
-const joystickRadius = 40;
 
 const clamp = (dx, dy) => {
   const dist = Math.hypot(dx, dy);
-  if (dist > joystickRadius) {
+  if (dist > JOYSTICK_CONFIG.RADIUS) {
     const angle = Math.atan2(dy, dx);
-    dx = Math.cos(angle) * joystickRadius;
-    dy = Math.sin(angle) * joystickRadius;
+    dx = Math.cos(angle) * JOYSTICK_CONFIG.RADIUS;
+    dy = Math.sin(angle) * JOYSTICK_CONFIG.RADIUS;
   }
   return { dx, dy };
 };
@@ -46,10 +60,13 @@ const updateJoystick = (x, y) => {
   joystickKnob.style.left = `${50 + cdx}px`;
   joystickKnob.style.top = `${50 + cdy}px`;
 
-  const norm = { x: cdx / joystickRadius, y: cdy / joystickRadius };
+  const norm = {
+    x: cdx / JOYSTICK_CONFIG.RADIUS,
+    y: cdy / JOYSTICK_CONFIG.RADIUS,
+  };
   handleInput({
-    x: gameState.camera.x + norm.x * 100,
-    y: gameState.camera.y + norm.y * 100,
+    x: gameState.camera.x + norm.x * JOYSTICK_CONFIG.MOVE_INTENSITY,
+    y: gameState.camera.y + norm.y * JOYSTICK_CONFIG.MOVE_INTENSITY,
   });
 };
 
@@ -72,6 +89,7 @@ const onJoystickStart = (e) => {
   updateJoystick(t.clientX, t.clientY);
   e.preventDefault();
 };
+
 const onJoystickMove = (e) => {
   if (!joystickActive) return;
   const t = getTouch(e);
@@ -79,6 +97,7 @@ const onJoystickMove = (e) => {
   updateJoystick(t.clientX, t.clientY);
   e.preventDefault();
 };
+
 const onJoystickEnd = (e) => {
   if (!joystickActive) return;
   const t = getTouch(e);
@@ -86,8 +105,8 @@ const onJoystickEnd = (e) => {
 
   joystickActive = false;
   joystickPointerId = null;
-  joystickKnob.style.left = "50%";
-  joystickKnob.style.top = "50%";
+  joystickKnob.style.left = JOYSTICK_CONFIG.RESET_POS;
+  joystickKnob.style.top = JOYSTICK_CONFIG.RESET_POS;
   handleInput({ x: gameState.camera.x, y: gameState.camera.y });
   e.preventDefault();
 };
@@ -100,18 +119,17 @@ attach(joystickContainer, ["touchmove"], onJoystickMove, { passive: false });
 attach(joystickContainer, ["touchend", "touchcancel"], onJoystickEnd, {
   passive: false,
 });
-
 attach(joystickContainer, ["mousedown"], onJoystickStart);
 attach(window, ["mousemove"], onJoystickMove);
 attach(window, ["mouseup"], onJoystickEnd);
 
-// Buttons & Highlight
 attach(joystickContainer, ["touchstart", "mousedown", "click"], () =>
   joystickContainer.classList.add("pressed")
 );
 attach(joystickContainer, ["touchend", "mouseup", "click"], () =>
   joystickContainer.classList.remove("pressed")
 );
+
 for (const { el, action } of buttons) {
   attach(el, ["touchend", "mouseup"], () => el.classList.remove("pressed"));
   attach(el, ["touchstart", "mousedown", "click"], (e) => {
