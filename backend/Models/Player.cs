@@ -1,6 +1,8 @@
 using System;
 using System.Net.WebSockets;
 using System.Numerics;
+using GameConfig;
+
 
 public class Player
 {

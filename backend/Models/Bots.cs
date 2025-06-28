@@ -1,12 +1,14 @@
 using System;
 using System.Numerics;
 using System.Collections.Generic;
+using GameConfig;
+
 
 public class Bot: Player
 {
     private static Random rng = new();
     public int AntibodyHits { get; set; } = 0;
-    public int MaxAntibodyHits { get; set; } = 5;
+    public int MaxAntibodyHits { get; set; } = Config.MaxAntiHits;
     public Bot(string name, Guid roomId)
     {
         Id = Guid.NewGuid();
@@ -16,10 +18,10 @@ public class Bot: Player
         Cells = new List<Cell> {
             new Cell {
                 Position = new Vector2(
-                    rng.Next(0, Game.WorldWidth),
-                    rng.Next(0, Game.WorldHeight)
+                    rng.Next(0, Config.WorldWidth),
+                    rng.Next(0, Config.WorldHeight)
                 ),
-                Radius = 45f
+                Radius = Config.BotRadius
             }
         };
     }

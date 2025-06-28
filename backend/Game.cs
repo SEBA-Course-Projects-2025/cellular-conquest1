@@ -8,6 +8,7 @@ using System.Text.Json.Nodes;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using GameConfig;
 
 public partial class Game
 {
@@ -21,9 +22,6 @@ public partial class Game
     
     private HttpListener httpListener = new();
     private Random rng = new();
-    public const int WorldWidth = 2000;
-    public const int WorldHeight = 2000;
-    private const float PlayerSpeed = 150f;
     private Timer? gameLoopTimer;
     private Timer? leaderboardTimer;
 
@@ -35,8 +33,8 @@ public partial class Game
         httpListener.Start();
         Console.WriteLine("Server started on ws://localhost:8080");
 
-        SpawnSlimes(PublicRoomId, 3);
-        SpawnFood(PublicRoomId, 100);
+        SpawnSlimes(PublicRoomId, Config.SpawnNumSlimes);
+        SpawnFood(PublicRoomId, Config.SpawnNumFood);
         
 
         gameLoopTimer = new Timer(SendGameState, null, 0, 1000 / 60);
@@ -58,9 +56,9 @@ public partial class Game
             slimes = new List<Slime>();
 
         for (int i = 0; i < count; i++) {
-            bool isBoost = rng.NextDouble() < 0.1;
+            bool isBoost = rng.NextDouble() < Config.PosSpeedBonus;
 
-            var food_pos = new Vector2(rng.Next(0, WorldWidth), rng.Next(0, WorldHeight));
+            var food_pos = new Vector2(rng.Next(0, Config.WorldWidth), rng.Next(0, Config.WorldHeight));
             int? bushId = null;
             foreach (var slime in slimes)
             {
@@ -68,14 +66,13 @@ public partial class Game
                 if (distance <= slime.Radius)
                 {
                     bushId = slime.ID;
-                    break; // stop after first slime !! delete if slimes overlap
                 }
             }
 
             list.Add(new Food
             {
                 Position = food_pos,
-                Radius = isBoost ? 9f : 5f,
+                Radius = isBoost ? Config.SpeedBonusRadius : Config.FoodRadius,
                 Color = isBoost ? "#00cfff" : "#3dda83",
                 IsSpeedBoost = isBoost,
                 Bush_ID = bushId
@@ -88,11 +85,10 @@ public partial class Game
 
         for (int i = 0; i < count; i++) {
             var slime = new Slime {
-                Position = new Vector2(rng.Next(0, WorldWidth), rng.Next(0, WorldHeight)),
+                Position = new Vector2(rng.Next(0, Config.WorldWidth), rng.Next(0, Config.WorldHeight)),
                 ID = i
             };
             slimes.Add(slime);
-            Console.WriteLine("Slime is created.");
         }
     }
 
