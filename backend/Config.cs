@@ -3,6 +3,9 @@ namespace GameConfig {
     public static class Config {
         public const int WorldWidth = 2000;
         public const int WorldHeight = 2000;
+        public const float MinPlayerDistance = 100f; 
+        public const float MinBushDistance = 100f;   
+        public const float Margin = 100f;    
 
         public const string AntiColor = "#3dda83";
         public const string FoodColor = "#3dda83";

@@ -92,6 +92,42 @@ public partial class Game
         }
     }
 
+    private Vector2 FindSafeSpawnPosition(Guid roomId, int maxAttempts = 1000)
+    {  
+
+        float minX = Config.Margin;
+        float maxX = Config.WorldWidth - Config.Margin;
+        float minY = Config.Margin;
+        float maxY = Config.WorldHeight - Config.Margin;
+
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            Vector2 position = new Vector2(
+                (float)(rng.NextDouble() * (maxX - minX) + minX),
+                (float)(rng.NextDouble() * (maxY - minY) + minY)
+            );
+
+            if (rooms.TryGetValue(roomId, out var roomPlayers))
+            {
+                bool tooCloseToPlayer = roomPlayers.Values
+                    .Any(p => p.Cells.Any(c => Vector2.Distance(position, c.Position) < Config.MinPlayerDistance));
+                if (tooCloseToPlayer) continue;
+            }
+
+            if (roomSlimes.TryGetValue(roomId, out var slimes))
+            {
+                bool tooCloseToBush = slimes
+                    .Any(b => Vector2.Distance(position, b.Position) < b.Radius + Config.MinBushDistance);
+                if (tooCloseToBush) continue;
+            }
+
+            return position;
+        }
+
+        return new Vector2(Config.WorldWidth / 2, Config.WorldHeight / 2); //no safe place => center
+    }
+
+
     private async Task SendLeaderboardAsync()
     {
         foreach (var roomEntry in rooms)

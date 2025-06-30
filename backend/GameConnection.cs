@@ -106,7 +106,7 @@ public partial class Game
                             {
                                 new Cell
                                 {
-                                    Position = new Vector2(random.Next(0, 2000), random.Next(0, 2000)),
+                                    Position =  FindSafeSpawnPosition(roomId),
                                 }
                             }
                         };
