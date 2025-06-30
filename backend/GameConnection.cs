@@ -224,13 +224,26 @@ public partial class Game
                             player.LastFeedTime = now;
                             Console.WriteLine($"[{player.Nickname}] Feed activated.");
                             var bigCell = GetBiggestCell(player);
-                            if (bigCell.Radius > 10f) {
+                            if (bigCell.Radius >= 11f) {
                                 float antiRadius = bigCell.Radius * 0.1f;
                                 bigCell.Radius *= Config.FeedSizeDecreaze;
 
                                 Vector2 direction = Vector2.Normalize(player.Direction == Vector2.Zero ? new Vector2(1, 0) : player.Direction);
                                 Vector2 offset = direction * (bigCell.Radius + antiRadius + Config.AntiOffset); 
                                 Vector2 spawnPos = bigCell.Position + offset;
+
+                                if (spawnPos.X < 0 || spawnPos.X > Config.WorldWidth){
+                                    direction.X *= -1;
+                                    offset = direction * (antiRadius + Config.AntiOffset);
+                                    spawnPos = bigCell.Position + offset;
+                                }
+                                    
+                                if (spawnPos.Y < 0 || spawnPos.Y > Config.WorldHeight){
+                                    direction.Y *= -1;
+                                    offset = direction * (antiRadius + Config.AntiOffset);
+                                    spawnPos = bigCell.Position + offset;
+                                }
+
 
                                 var newAntibody = new AntiBody {
                                     Position = spawnPos,
