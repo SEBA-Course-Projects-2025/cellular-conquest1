@@ -168,23 +168,35 @@ public partial class Game
                             var newCells = new List<Cell>();
                             foreach (var cell in player.Cells)
                             {
-                                if (cell.Radius > Config.MinCellRadius) 
+                                if (cell.Radius > Config.MinCellRadius && player.Cells.Count + newCells.Count < Config.MaxCellCount) 
                                 {
                                     var splitRadius = cell.Radius / Config.SplitRadius; 
                                     var direction = Vector2.Normalize(player.Direction == Vector2.Zero ? new Vector2(1, 0) : player.Direction);
                                     var offset = direction * (splitRadius + Config.CellOffset);
+                                    var newPos = cell.Position + offset;
+
+                                    if (newPos.X < 0 || newPos.X > Config.WorldWidth){
+                                        direction.X *= -1;
+                                        offset = direction * (splitRadius + Config.CellOffset);
+                                        newPos = cell.Position + offset;
+                                    }
+                                        
+                                    if (newPos.Y < 0 || newPos.Y > Config.WorldHeight){
+                                        direction.Y *= -1;
+                                        offset = direction * (splitRadius + Config.CellOffset);
+                                        newPos = cell.Position + offset;
+                                    }
 
                                     newCells.Add(new Cell
                                     {
-                                        Position = cell.Position + offset,
+                                        Position = newPos,
                                         Radius = splitRadius,
                                         Velocity = direction * Config.CellDirection 
                                     });
 
-                                    cell.Position -= offset;
                                     cell.Radius = splitRadius;
 
-                                    if (player.Cells.Count + newCells.Count == Config.MaxCellCount) break;
+                                    if (player.Cells.Count + newCells.Count >= Config.MaxCellCount) break;
                                 }
                             }
                             player.Cells.AddRange(newCells);

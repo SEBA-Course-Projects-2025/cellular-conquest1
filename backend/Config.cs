@@ -45,9 +45,9 @@ namespace GameConfig {
 
         public const float MinCellRadius = 10f;
         public const float SplitRadius = 1.414f;
-        public const int CellOffset = 2;
+        public const int CellOffset = 90;
         public const int CellDirection = 200;
-        public const int MaxCellCount = 8;
+        public const int MaxCellCount = 4;
 
         public const int AntiOffset = 5;
 
