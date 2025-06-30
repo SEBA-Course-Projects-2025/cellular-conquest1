@@ -54,6 +54,8 @@ namespace GameConfig {
         public const float FeedSizeDecreaze = 0.9f;
 
         public const int MaxAntiHits = 5;
+
+        public const float FeedDelay = 0.5f;
     }
 
 }

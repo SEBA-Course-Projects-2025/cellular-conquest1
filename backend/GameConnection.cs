@@ -204,6 +204,12 @@ public partial class Game
                         
                     case "feed":
                         if (player != null && player.Cells.Count() > 0) {
+                            var now = DateTime.UtcNow;
+                            if ((now - player.LastFeedTime).TotalSeconds < Config.FeedDelay) {
+                                Console.WriteLine($"[{player.Nickname}] Tried to feed too soon.");
+                                break;
+                            }
+                            player.LastFeedTime = now;
                             Console.WriteLine($"[{player.Nickname}] Feed activated.");
                             var bigCell = GetBiggestCell(player);
                             if (bigCell.Radius > 10f) {

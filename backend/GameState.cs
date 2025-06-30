@@ -177,7 +177,7 @@ public partial class Game {
                 foreach (var prey in players.Values)
                 {
                     if (hunter.IsBot && prey.IsBot) continue;
-                    if (hunter.Id == prey.Id) {
+                    if (hunter.Id == prey.Id) { //merge case
                     var merged = new List<(Cell, Cell)>();
 
                     for (int i = 0; i < hunter.Cells.Count; i++) {
