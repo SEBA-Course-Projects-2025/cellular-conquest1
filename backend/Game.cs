@@ -85,7 +85,7 @@ public partial class Game
 
         for (int i = 0; i < count; i++) {
             var slime = new Slime {
-                Position = new Vector2(rng.Next(0, Config.WorldWidth), rng.Next(0, Config.WorldHeight)),
+                Position = new Vector2(rng.Next(0 + (int)Config.SlimeRadius, Config.WorldWidth - (int)Config.SlimeRadius), rng.Next(0 + (int)Config.SlimeRadius, Config.WorldHeight - (int)Config.SlimeRadius)),
                 ID = i
             };
             slimes.Add(slime);
