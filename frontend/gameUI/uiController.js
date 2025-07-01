@@ -20,20 +20,8 @@ export const confirmExitBtn = document.getElementById(ELEMENT_IDS.CONFIRM_EXIT);
 const exitPopup = document.getElementById(ELEMENT_IDS.EXIT_POPUP);
 const deathPopup = document.getElementById(ELEMENT_IDS.DEATH_POPUP);
 const finalScoreSpan = document.getElementById(ELEMENT_IDS.FINAL_SCORE);
-const rulesPopup = document.getElementById("rulesPopup");
-const rulesBtn = document.getElementById("rulesBtn");
-const closeRulesBtn = document.getElementById("closeRules");
 
 let hideTimeout;
-
-rulesBtn.addEventListener("click", showRulesPopup);
-closeRulesBtn.addEventListener("click", hideRulesPopup);
-
-rulesPopup.addEventListener("click", (e) => {
-  if (e.target === rulesPopup || e.target.classList.contains("blur")) {
-    hideRulesPopup();
-  }
-});
 
 export function showGameError(message) {
   clearTimeout(hideTimeout);
@@ -68,12 +56,4 @@ export const hideExitPopup = () => {
 
 export function showExitPopup() {
   exitPopup.classList.remove("hidden");
-}
-
-export function showRulesPopup() {
-  rulesPopup.classList.remove("hidden");
-}
-
-export function hideRulesPopup() {
-  rulesPopup.classList.add("hidden");
 }
