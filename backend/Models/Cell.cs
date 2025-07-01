@@ -9,4 +9,6 @@ public class Cell
     public float Radius { get; set; } = Config.CellRadius;
     public Vector2 Velocity { get; set; } = Vector2.Zero;
     public int? Bush_ID {get; set; } = null;
+    public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
 }

@@ -192,7 +192,9 @@ public partial class Game
                                     {
                                         Position = newPos,
                                         Radius = splitRadius,
-                                        Velocity = direction * Config.CellDirection 
+                                        Velocity = direction * Config.CellDirection, 
+										CreatedAt = DateTime.UtcNow
+
                                     });
 
                                     cell.Radius = splitRadius;

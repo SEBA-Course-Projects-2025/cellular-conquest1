@@ -48,10 +48,9 @@ public partial class Game {
             foreach (var player in players.Values)
             {
                 var mainCell = GetBiggestCell(player);
-                float allowedRadius = 50f;
+                float allowedRadius = 80f; 
 
-                foreach (var cell in player.Cells)
-                {
+                foreach (var cell in player.Cells) {
                     float baseSpeed = player.HasSpeedBoost ? Config.PlayerHighSpeed : (player.IsBot ? Config.BotSpeed : Config.PlayerSpeed);
                     float sizeFactor = cell.Radius / Config.SizeFactor;
                     float speed = baseSpeed / sizeFactor;
@@ -59,28 +58,32 @@ public partial class Game {
                     Vector2 dir = Vector2.Normalize(player.Direction);
                     if (float.IsNaN(dir.X) || float.IsNaN(dir.Y)) dir = Vector2.Zero;
 
-                    if (cell == mainCell)
-                    {
+                    if (cell == mainCell) {
                         cell.Velocity = dir * speed;
                         cell.Position += cell.Velocity * deltaTime;
                     }
                     else
                     {
-                        Vector2 toMain = mainCell.Position - cell.Position;
-                        float distance = toMain.Length();
-
-                        Vector2 targetPosition;
-                        if (distance >= allowedRadius)
-                        {
-                            targetPosition = mainCell.Position - Vector2.Normalize(toMain) * allowedRadius;
-                        }
+                        if ((DateTime.UtcNow - cell.CreatedAt).TotalSeconds < 0.5)
+                        { cell.Position += cell.Velocity * deltaTime; }
                         else
-                        {
-                            targetPosition = mainCell.Position - Vector2.Normalize(toMain) * distance;
-                        }
+                        { int index = player.Cells.IndexOf(cell);
+                            int slavesCount = player.Cells.Count - 1;
 
-                        float lerpFactor = MathF.Min(1f, speed / 500f) * 0.1f; 
-                        cell.Position = Vector2.Lerp(cell.Position, targetPosition, lerpFactor);
+                            if (slavesCount > 0) {
+                                float angleStep = MathF.PI * 2f / slavesCount;
+                                
+                                if (index > 0) index -= 1; 
+
+                                float angle = angleStep * index;
+                                Vector2 offset = new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * allowedRadius;
+                                Vector2 targetPosition = mainCell.Position + offset;
+                                
+                                float lerpFactor = MathF.Min(1f, speed / 500f) * 0.1f;
+                                cell.Position = Vector2.Lerp(cell.Position, targetPosition, lerpFactor); 
+                            }
+                            
+                        }
                     }
 
                     cell.Position = Vector2.Clamp(cell.Position, Vector2.Zero, new Vector2(Config.WorldWidth, Config.WorldHeight));
