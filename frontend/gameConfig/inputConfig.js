@@ -1,11 +1,14 @@
-export const INPUT_KEYS = {
-  FEED: "w",
-  SPEEDUP: "Shift",
-  SPLIT: " ",
-  MASK_SKIN: "a",
-  RESET_SKIN: "r",
+export const INPUT_CODES = {
+  FEED: "KeyW",
+  SPLIT: "Space",
+  MASK_SKIN: "KeyA",
+  RESET_SKIN: "KeyR",
   CLEAR_KEYWORD: "Backspace",
   TOGGLE_PAUSE: "Escape",
+};
+
+export const INPUT_KEYS = {
+  SPEEDUP: "Shift",
 };
 
 export const DEV_KEYWORDS = {

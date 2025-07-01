@@ -1,3 +1,5 @@
+`‼️NEW‼️` will imply the feature is being worked on, so extra attention is required
+
 <table>
 <tr>
   <th>Message Type</th>
@@ -125,6 +127,7 @@
       "id": Guid,
       "nickname": string,
       "score": number,
+      "isBot": boolean, // ‼️NEW‼️
       "cells": [
         {
           "x": number,
