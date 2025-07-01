@@ -54,6 +54,7 @@ public partial class Game
                             (obj?["deathMatch"]?.GetValue<bool>() ?? false)
                             || (obj?["mode"]?.ToString()?.ToLower() == "deathmatch");
                         string? customSkin = obj?["customSkin"]?.ToString();
+                        Console.WriteLine(customSkin);
                         
                         Guid roomId;
                         if (isDeathMatch) {
@@ -249,7 +250,7 @@ public partial class Game
                                     Position = spawnPos,
                                     Velocity = direction * Config.AntiVelocityInit,
                                     Radius = antiRadius,
-                                    CreatedAt = DateTime.UtcNow
+                                    CreatedAt = DateTime.UtcNow,
                                 };
 
                                 var roomAntiList = antibodys.GetOrAdd(player.RoomId, _ => new List<AntiBody>());

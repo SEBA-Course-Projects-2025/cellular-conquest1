@@ -73,7 +73,7 @@ public partial class Game
             {
                 Position = food_pos,
                 Radius = isBoost ? Config.SpeedBonusRadius : Config.FoodRadius,
-                Color = isBoost ? "#00cfff" : "#3dda83",
+                Color = isBoost ? Config.BoostColor : Config.FoodColor,
                 IsSpeedBoost = isBoost,
                 Bush_ID = bushId
             });
