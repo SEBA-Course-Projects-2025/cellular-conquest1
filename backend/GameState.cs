@@ -8,6 +8,8 @@ using System.Text.Json.Nodes;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using GameConfig;
+
 
 public partial class Game {
     private async void SendGameState(object? state)
@@ -26,7 +28,7 @@ public partial class Game {
 
             
             var now = DateTime.UtcNow;
-            antibodyItems.RemoveAll(a => (now - a.CreatedAt).TotalSeconds > 10);
+            antibodyItems.RemoveAll(a => (now - a.CreatedAt).TotalSeconds > Config.SecForAnti);
             
             var deltaTime = 1f / 60f;
             var eatenCells = new List<(Player victim, Cell cell)>();
@@ -47,8 +49,8 @@ public partial class Game {
             {
                 foreach (var cell in player.Cells)
                 {
-                    float baseSpeed = player.HasSpeedBoost ? 450f : (player.IsBot ? 180f : 300F);
-                    float sizeFactor = cell.Radius / 15f;
+                    float baseSpeed = player.HasSpeedBoost ? Config.PlayerHighSpeed : (player.IsBot ? Config.BotSpeed : Config.PlayerSpeed);
+                    float sizeFactor = cell.Radius / Config.SizeFactor;
                     float speed = baseSpeed / sizeFactor;
 
                     Vector2 dir = Vector2.Normalize(player.Direction);
@@ -57,15 +59,14 @@ public partial class Game {
                     cell.Velocity = dir * speed;
 
                     cell.Position += cell.Velocity * deltaTime;
-                    cell.Position = Vector2.Clamp(cell.Position, Vector2.Zero, new Vector2(WorldWidth, WorldHeight));
-                    cell.Velocity *= 0.9f;
+                    cell.Position = Vector2.Clamp(cell.Position, Vector2.Zero, new Vector2(Config.WorldWidth, Config.WorldHeight));
+                    cell.Velocity *= Config.CellVelocity;
 
                     cell.Bush_ID = null; // Reset before checking
                     foreach (var slime in slimeItems) {
                         float dist = Vector2.Distance(cell.Position, slime.Position);
                         if (dist <= slime.Radius) {
                             cell.Bush_ID = slime.ID;
-                            break; //same as food
                         }
                     }
                 }
@@ -75,15 +76,14 @@ public partial class Game {
             foreach (var antibody in antibodyItems)
             {
                 antibody.Position += antibody.Velocity * deltaTime;
-                antibody.Position = Vector2.Clamp(antibody.Position, Vector2.Zero, new Vector2(WorldWidth, WorldHeight));
-                antibody.Velocity *= 0.9f; 
+                antibody.Position = Vector2.Clamp(antibody.Position, Vector2.Zero, new Vector2(Config.WorldWidth, Config.WorldHeight));
+                antibody.Velocity *= Config.AntiVelocityMove; 
 
                 antibody.Bush_ID = null;
                 foreach (var slime in slimeItems) {
                     float dist = Vector2.Distance(antibody.Position, slime.Position);
                     if (dist <= slime.Radius) {
                         antibody.Bush_ID = slime.ID;
-                        break; //same as food
                     }
                 }
             }
@@ -106,14 +106,14 @@ public partial class Game {
 
                             float currentArea = MathF.PI * cell.Radius * cell.Radius;
                             float foodArea = MathF.PI * food.Radius * food.Radius;
-                            int points = (int)(foodArea / 10f);
+                            int points = (int)(foodArea / Config.PointPerFood);
                             player.Score += points;
                             float newArea = currentArea + foodArea;
                             cell.Radius = MathF.Sqrt(newArea / MathF.PI);
 
                             if (food.IsSpeedBoost)
                             {
-                                player.SpeedBoostPoints = Math.Min(player.SpeedBoostPoints + 1, 5);
+                                player.SpeedBoostPoints = Math.Min(player.SpeedBoostPoints + 1, Config.MaxSpeedPoints);
                                 Console.WriteLine($"[{player.Nickname}] Boost is eaten");
                             }
 
@@ -146,7 +146,7 @@ public partial class Game {
 
                                 float currentArea = MathF.PI * cell.Radius * cell.Radius;
                                 float antiArea = MathF.PI * anti.Radius * anti.Radius;
-                                int points = (int)(antiArea / 10f);
+                                int points = (int)(antiArea / Config.PointPerFood);
                                 player.Score += points;
                                 float newArea = currentArea + antiArea;
                                 cell.Radius = MathF.Sqrt(newArea / MathF.PI);
@@ -163,14 +163,7 @@ public partial class Game {
                     foodItems.Remove(food);
 
                     bool isBoost = food.IsSpeedBoost;
-
-                    foodItems.Add(new Food
-                    {
-                        Position = new Vector2(rng.Next(0, WorldWidth), rng.Next(0, WorldHeight)),
-                        Radius = isBoost ? 9f : 5f,
-                        Color = isBoost ? "#00cfff" : "#3dda83",
-                        IsSpeedBoost = isBoost
-                    });
+                    SpawnFood(roomId, 1);
                 }
 
                 foreach (var anti in eatenAnti) {
@@ -184,7 +177,7 @@ public partial class Game {
                 foreach (var prey in players.Values)
                 {
                     if (hunter.IsBot && prey.IsBot) continue;
-                    if (hunter.Id == prey.Id) {
+                    if (hunter.Id == prey.Id) { //merge case
                     var merged = new List<(Cell, Cell)>();
 
                     for (int i = 0; i < hunter.Cells.Count; i++) {
@@ -220,16 +213,16 @@ public partial class Game {
                     foreach (var preyCell in prey.Cells) {
                             float distance = Vector2.Distance(hunterCell.Position, preyCell.Position);
                             if (prey.IsBot) continue; 
-                            if (((hunterCell.Radius > preyCell.Radius * 1.1f && distance < hunterCell.Radius &&
+                            if (((hunterCell.Radius > preyCell.Radius * Config.OneCellAreaToKill && distance < hunterCell.Radius &&
                                  hunter.Cells.Count() == 1)
-                                || (hunterCell.Radius > preyCell.Radius * 1.33f && distance < hunterCell.Radius &&
+                                || (hunterCell.Radius > preyCell.Radius * Config.ManyCellAreaToKill && distance < hunterCell.Radius &&
                                     hunter.Cells.Count() > 1)) && hunterCell.Bush_ID == preyCell.Bush_ID)
                             {
                                 float hunterArea = MathF.PI * hunterCell.Radius * hunterCell.Radius;
                                 float preyArea = MathF.PI * preyCell.Radius * preyCell.Radius;
                                 float newArea = hunterArea + preyArea;
                                 hunterCell.Radius = MathF.Sqrt(newArea / MathF.PI);
-                                int points = (int)(preyArea / 35f);
+                                int points = (int)(preyArea / Config.PointPerCell);
                                 hunter.Score += points;
                                 if (prey.Cells.Count() > 1)
                                 {
@@ -326,7 +319,7 @@ public partial class Game {
                             x = c.Position.X,
                             y = c.Position.Y,
                             radius = c.Radius,
-                            color = p.IsBot ? "#ffe600" : "#3d78dd"
+                            color = p.IsBot ? Config.BotColor : "#3d78dd"
                         }).ToList(),
                     abilities = p.SpeedBoostPoints > 0
                         ? new

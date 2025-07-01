@@ -8,6 +8,7 @@ using System.Text.Json.Nodes;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using GameConfig;
 
 public partial class Game
 {
@@ -21,9 +22,6 @@ public partial class Game
     
     private HttpListener httpListener = new();
     private Random rng = new();
-    public const int WorldWidth = 2000;
-    public const int WorldHeight = 2000;
-    private const float PlayerSpeed = 150f;
     private Timer? gameLoopTimer;
     private Timer? leaderboardTimer;
 
@@ -35,8 +33,8 @@ public partial class Game
         httpListener.Start();
         Console.WriteLine("Server started on ws://localhost:8080");
 
-        SpawnSlimes(PublicRoomId, 3);
-        SpawnFood(PublicRoomId, 100);
+        SpawnSlimes(PublicRoomId, Config.SpawnNumSlimes);
+        SpawnFood(PublicRoomId, Config.SpawnNumFood);
         
 
         gameLoopTimer = new Timer(SendGameState, null, 0, 1000 / 60);
@@ -58,9 +56,9 @@ public partial class Game
             slimes = new List<Slime>();
 
         for (int i = 0; i < count; i++) {
-            bool isBoost = rng.NextDouble() < 0.1;
+            bool isBoost = rng.NextDouble() < Config.PosSpeedBonus;
 
-            var food_pos = new Vector2(rng.Next(0, WorldWidth), rng.Next(0, WorldHeight));
+            var food_pos = new Vector2(rng.Next(0, Config.WorldWidth), rng.Next(0, Config.WorldHeight));
             int? bushId = null;
             foreach (var slime in slimes)
             {
@@ -68,15 +66,14 @@ public partial class Game
                 if (distance <= slime.Radius)
                 {
                     bushId = slime.ID;
-                    break; // stop after first slime !! delete if slimes overlap
                 }
             }
 
             list.Add(new Food
             {
                 Position = food_pos,
-                Radius = isBoost ? 9f : 5f,
-                Color = isBoost ? "#00cfff" : "#3dda83",
+                Radius = isBoost ? Config.SpeedBonusRadius : Config.FoodRadius,
+                Color = isBoost ? Config.BoostColor : Config.FoodColor,
                 IsSpeedBoost = isBoost,
                 Bush_ID = bushId
             });
@@ -88,13 +85,48 @@ public partial class Game
 
         for (int i = 0; i < count; i++) {
             var slime = new Slime {
-                Position = new Vector2(rng.Next(0, WorldWidth), rng.Next(0, WorldHeight)),
+                Position = new Vector2(rng.Next(0 + (int)Config.SlimeRadius, Config.WorldWidth - (int)Config.SlimeRadius), rng.Next(0 + (int)Config.SlimeRadius, Config.WorldHeight - (int)Config.SlimeRadius)),
                 ID = i
             };
             slimes.Add(slime);
-            Console.WriteLine("Slime is created.");
         }
     }
+
+    private Vector2 FindSafeSpawnPosition(Guid roomId, int maxAttempts = 1000)
+    {  
+
+        float minX = Config.Margin;
+        float maxX = Config.WorldWidth - Config.Margin;
+        float minY = Config.Margin;
+        float maxY = Config.WorldHeight - Config.Margin;
+
+        for (int attempt = 0; attempt < maxAttempts; attempt++)
+        {
+            Vector2 position = new Vector2(
+                (float)(rng.NextDouble() * (maxX - minX) + minX),
+                (float)(rng.NextDouble() * (maxY - minY) + minY)
+            );
+
+            if (rooms.TryGetValue(roomId, out var roomPlayers))
+            {
+                bool tooCloseToPlayer = roomPlayers.Values
+                    .Any(p => p.Cells.Any(c => Vector2.Distance(position, c.Position) < Config.MinPlayerDistance));
+                if (tooCloseToPlayer) continue;
+            }
+
+            if (roomSlimes.TryGetValue(roomId, out var slimes))
+            {
+                bool tooCloseToBush = slimes
+                    .Any(b => Vector2.Distance(position, b.Position) < b.Radius + Config.MinBushDistance);
+                if (tooCloseToBush) continue;
+            }
+
+            return position;
+        }
+
+        return new Vector2(Config.WorldWidth / 2, Config.WorldHeight / 2); //no safe place => center
+    }
+
 
     private async Task SendLeaderboardAsync()
     {
