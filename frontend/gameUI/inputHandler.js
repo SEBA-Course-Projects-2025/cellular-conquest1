@@ -12,9 +12,10 @@ import { hideExitPopup, showExitPopup } from "./uiController.js";
 import logger from "../gameFunctionality/logger.js";
 import { copyToClipboard } from "../gameUtils/copyToClipboard.js";
 import {
-  INPUT_KEYS,
+  INPUT_CODES,
   DEV_KEYWORDS,
   MESSAGES,
+  INPUT_KEYS,
 } from "../gameConfig/inputConfig.js";
 
 let keyword = "";
@@ -27,22 +28,23 @@ export function initializeInputHandlers() {
 }
 
 export function handleKeyDown(event) {
+  const code = event.code;
   const key = event.key;
 
   if (key === INPUT_KEYS.SPEEDUP) {
     handleSpeedup();
-  } else if (key === INPUT_KEYS.FEED) {
+  } else if (code === INPUT_CODES.FEED) {
     handleFeed();
-  } else if (key === INPUT_KEYS.MASK_SKIN && newSkin) {
+  } else if (code === INPUT_CODES.MASK_SKIN && newSkin) {
     handleMasking(newSkin);
-  } else if (key === INPUT_KEYS.RESET_SKIN && newSkin) {
+  } else if (code === INPUT_CODES.RESET_SKIN && newSkin) {
     handleSkinReset();
-  } else if (key === INPUT_KEYS.CLEAR_KEYWORD) {
+  } else if (code === INPUT_CODES.CLEAR_KEYWORD) {
     keyword = "";
-  } else if (key === INPUT_KEYS.TOGGLE_PAUSE) {
+  } else if (code === INPUT_CODES.TOGGLE_PAUSE) {
     gameState.inactive = !gameState.inactive;
     gameState.inactive ? showExitPopup() : hideExitPopup();
-  } else if (key === INPUT_KEYS.SPLIT) {
+  } else if (code === INPUT_CODES.SPLIT) {
     handleSplit();
   } else {
     keyword += key;
