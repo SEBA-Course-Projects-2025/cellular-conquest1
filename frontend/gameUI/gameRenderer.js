@@ -196,6 +196,113 @@ function createBlobPath(controlPoints) {
   }
 }
 
+function drawExponentialSpikyBlob(
+  x,
+  y,
+  radius,
+  color,
+  timestamp,
+  blobId,
+  options = {}
+) {
+  const {
+    image = null,
+    visibility = 100,
+    wobbleIntensity = 0.1,
+    wobbleSpeed = 0.5,
+    minPoints = 10,
+    maxPoints = 100,
+    pointDensity = 5,
+    spikeCount: explicitSpikeCount,
+  } = options;
+  const increasedRadius = radius * 1.2;
+
+  const spikeCount =
+    explicitSpikeCount !== undefined
+      ? explicitSpikeCount
+      : Math.max(
+          minPoints,
+          Math.min(maxPoints, Math.floor(increasedRadius / pointDensity))
+        );
+
+  const baseRotation = (timestamp * wobbleSpeed * 0.001) % (Math.PI * 2);
+  const wobbleAmount = increasedRadius * wobbleIntensity;
+
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.rotate(baseRotation);
+  ctx.globalAlpha = Math.max(0, Math.min(visibility, 100)) / 100;
+
+  ctx.beginPath();
+
+  const innerBaseRadius = increasedRadius;
+  const baseControlPointRadius = innerBaseRadius * 0.6;
+
+  for (let i = 0; i < spikeCount; i++) {
+    const radialWobbleTime = timestamp * 0.002 + i * 10;
+    const radialVariation = Math.sin(radialWobbleTime) * 0.5 + 0.5;
+    const spikeLength = wobbleAmount * 2 * radialVariation;
+    const spikeTipRadius = innerBaseRadius + spikeLength;
+
+    const tangentialWobbleTime = timestamp * 0.001 + i * 7;
+    const tangentialVariation =
+      Math.sin(tangentialWobbleTime) * (Math.PI / spikeCount) * 0.4;
+
+    const curveWobbleTime = timestamp * 0.0008 + i * 4;
+    const curveVariation = Math.sin(curveWobbleTime) * 0.2 + 1.0;
+    const dynamicControlPointRadius = baseControlPointRadius * curveVariation;
+
+    const angle = (i / spikeCount) * Math.PI * 2;
+    const nextAngle = ((i + 1) / spikeCount) * Math.PI * 2;
+    const midAngle = (angle + nextAngle) / 2 + tangentialVariation;
+
+    const pBaseStartX = Math.cos(angle) * innerBaseRadius;
+    const pBaseStartY = Math.sin(angle) * innerBaseRadius;
+    const pBaseEndX = Math.cos(nextAngle) * innerBaseRadius;
+    const pBaseEndY = Math.sin(nextAngle) * innerBaseRadius;
+
+    const spikeTipX = Math.cos(midAngle) * spikeTipRadius;
+    const spikeTipY = Math.sin(midAngle) * spikeTipRadius;
+
+    const cp1Angle = angle + (midAngle - angle) * 0.7;
+    const cp1X = Math.cos(cp1Angle) * dynamicControlPointRadius;
+    const cp1Y = Math.sin(cp1Angle) * dynamicControlPointRadius;
+
+    const cp2Angle = nextAngle - (nextAngle - midAngle) * 0.7;
+    const cp2X = Math.cos(cp2Angle) * dynamicControlPointRadius;
+    const cp2Y = Math.sin(cp2Angle) * dynamicControlPointRadius;
+
+    if (i === 0) {
+      ctx.moveTo(pBaseStartX, pBaseStartY);
+    }
+
+    ctx.quadraticCurveTo(cp1X, cp1Y, spikeTipX, spikeTipY);
+    ctx.quadraticCurveTo(cp2X, cp2Y, pBaseEndX, pBaseEndY);
+  }
+
+  ctx.closePath();
+
+  if (image) {
+    ctx.clip();
+    let imgSize = radius * 2;
+    ctx.drawImage(image, -imgSize / 2, -imgSize / 2, imgSize, imgSize);
+    ctx.globalCompositeOperation = "multiply";
+    ctx.fillStyle = color;
+    ctx.globalAlpha = 0.6;
+    ctx.fill();
+    ctx.globalCompositeOperation = "screen";
+    ctx.fillStyle = `rgba(255, 255, 255, 0.4)`;
+    ctx.globalAlpha = 1;
+    ctx.fill();
+    ctx.globalCompositeOperation = "source-over";
+  } else {
+    ctx.fillStyle = color;
+    ctx.fill();
+  }
+
+  ctx.restore();
+}
+
 function drawWavyBlob(x, y, radius, color, timestamp, blobId, options = {}) {
   const {
     image = null,
@@ -304,13 +411,18 @@ function renderPlayers() {
       const dx = cell.x - lastPos.x;
       const dy = cell.y - lastPos.y;
       cellMovementCache.set(key, { x: cell.x, y: cell.y });
+
       if (gameState.speedupActive && player.id === gameState.playerId) {
         drawTrail(cell.x, cell.y, cell.radius, dx, dy, cell.color);
       }
+
       const skinImg = getSkinImage(player.id);
       const validSkinImg =
         skinImg?.complete && skinImg.naturalWidth ? skinImg : null;
-      drawWavyBlob(
+
+      const drawFn = player.isBot ? drawExponentialSpikyBlob : drawWavyBlob;
+
+      drawFn(
         cell.x,
         cell.y,
         cell.radius,
@@ -327,6 +439,7 @@ function renderPlayers() {
           pointDensity: RENDER_CONFIG.PLAYER_BLOB.POINT_DENSITY,
         }
       );
+
       drawText(player.nickname, cell.x, cell.y, cell.radius);
     }
   }
