@@ -60,6 +60,8 @@ namespace GameConfig {
         public const int MaxAntiHits = 5;
 
         public const float FeedDelay = 0.5f;
+        
+        public const float MaxSplitDistanceFactor = 5.0f; 
     }
 
 }

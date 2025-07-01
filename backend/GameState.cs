@@ -43,10 +43,13 @@ public partial class Game {
                     bot.UpdateAI(realPlayer);
                 }
             }
-
+            
             //cell movements
             foreach (var player in players.Values)
             {
+                var mainCell = GetBiggestCell(player);
+                float allowedRadius = 50f;
+
                 foreach (var cell in player.Cells)
                 {
                     float baseSpeed = player.HasSpeedBoost ? Config.PlayerHighSpeed : (player.IsBot ? Config.BotSpeed : Config.PlayerSpeed);
@@ -56,9 +59,30 @@ public partial class Game {
                     Vector2 dir = Vector2.Normalize(player.Direction);
                     if (float.IsNaN(dir.X) || float.IsNaN(dir.Y)) dir = Vector2.Zero;
 
-                    cell.Velocity = dir * speed;
+                    if (cell == mainCell)
+                    {
+                        cell.Velocity = dir * speed;
+                        cell.Position += cell.Velocity * deltaTime;
+                    }
+                    else
+                    {
+                        Vector2 toMain = mainCell.Position - cell.Position;
+                        float distance = toMain.Length();
 
-                    cell.Position += cell.Velocity * deltaTime;
+                        Vector2 targetPosition;
+                        if (distance >= allowedRadius)
+                        {
+                            targetPosition = mainCell.Position - Vector2.Normalize(toMain) * allowedRadius;
+                        }
+                        else
+                        {
+                            targetPosition = mainCell.Position - Vector2.Normalize(toMain) * distance;
+                        }
+
+                        float lerpFactor = MathF.Min(1f, speed / 500f) * 0.1f; 
+                        cell.Position = Vector2.Lerp(cell.Position, targetPosition, lerpFactor);
+                    }
+
                     cell.Position = Vector2.Clamp(cell.Position, Vector2.Zero, new Vector2(Config.WorldWidth, Config.WorldHeight));
                     cell.Velocity *= Config.CellVelocity;
 
@@ -71,6 +95,7 @@ public partial class Game {
                     }
                 }
             }
+
 
             // move antibodys
             foreach (var antibody in antibodyItems)
