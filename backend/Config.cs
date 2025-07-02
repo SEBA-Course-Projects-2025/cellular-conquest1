@@ -3,7 +3,8 @@ namespace GameConfig {
     public static class Config {
         public const int WorldWidth = 2000;
         public const int WorldHeight = 2000;
-        public const float MinPlayerDistance = 100f; 
+        public const float MinPlayerDistance = 100f;
+ 		public const float MinBotDistance = 150f;
         public const float MinBushDistance = 100f;   
         public const float Margin = 100f;    
 

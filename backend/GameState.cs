@@ -95,6 +95,33 @@ public partial class Game {
                     }
                 }
             }
+            // bots overlap handling
+            if (botsList != null)
+            {
+                for (int i = 0; i < botsList.Count; i++)
+                {
+                    for (int j = i + 1; j < botsList.Count; j++)
+                    {
+                        var botA = botsList[i].Cells[0];
+                        var botB = botsList[j].Cells[0];
+
+                        float distance = Vector2.Distance(botA.Position, botB.Position);
+                        float minDistance = Config.MinBotDistance;
+
+                        if (distance < minDistance && distance > 0.01f)
+                        {
+                            Vector2 pushDir = Vector2.Normalize(botA.Position - botB.Position);
+                            float pushAmount = (minDistance - distance) / 2f;
+
+                            botA.Position += pushDir * pushAmount;
+                            botB.Position -= pushDir * pushAmount;
+
+                            botA.Position = Vector2.Clamp(botA.Position, Vector2.Zero, new Vector2(Config.WorldWidth, Config.WorldHeight));
+                            botB.Position = Vector2.Clamp(botB.Position, Vector2.Zero, new Vector2(Config.WorldWidth, Config.WorldHeight));
+                        }
+                    }
+                }
+            }
 
             // move antibodys
             foreach (var antibody in antibodyItems)
