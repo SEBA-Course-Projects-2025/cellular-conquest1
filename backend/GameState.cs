@@ -316,10 +316,23 @@ public partial class Game {
                         {
                             botList.Remove(botVictim);
 
-                            // create and add new bot
-                            var newBot = new Bot(roomId);
-                            players[newBot.Id] = newBot;
-                            botList.Add(newBot);
+                            int botsAlive = botList.Count;
+                            
+                            int botsToSpawn = 1;
+
+                            if (botsAlive < 5)
+                            {
+                                botsToSpawn = Math.Min(2, Config.NumBots - botsAlive);
+                            }
+                            
+                            for (int i = 0; i < botsToSpawn; i++)
+                            {
+                                if (botList.Count >= Config.NumBots) break;
+
+                                var newBot = new Bot(roomId);
+                                players[newBot.Id] = newBot;
+                                botList.Add(newBot);
+                            }
                         }
                     }
                 }
