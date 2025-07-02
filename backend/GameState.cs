@@ -43,62 +43,59 @@ public partial class Game {
                     bot.UpdateAI(realPlayer);
                 }
             }
-            
+
             //cell movements
+            
             foreach (var player in players.Values)
             {
                 var mainCell = GetBiggestCell(player);
-                float allowedRadius = 80f; 
 
-                foreach (var cell in player.Cells) {
+                foreach (var cell in player.Cells)
+                {
                     float baseSpeed = player.HasSpeedBoost ? Config.PlayerHighSpeed : (player.IsBot ? Config.BotSpeed : Config.PlayerSpeed);
                     float sizeFactor = cell.Radius / Config.SizeFactor;
-                    float speed = baseSpeed / sizeFactor;
+                    float naturalSpeed = baseSpeed / sizeFactor;
 
                     Vector2 dir = Vector2.Normalize(player.Direction);
                     if (float.IsNaN(dir.X) || float.IsNaN(dir.Y)) dir = Vector2.Zero;
 
-                    if (cell == mainCell) {
-                        cell.Velocity = dir * speed;
-                        cell.Position += cell.Velocity * deltaTime;
-                    }
-                    else
+                    float speed = naturalSpeed;
+
+                    if (cell != mainCell)
                     {
-                        if ((DateTime.UtcNow - cell.CreatedAt).TotalSeconds < 0.5)
-                        { cell.Position += cell.Velocity * deltaTime; }
-                        else
-                        { int index = player.Cells.IndexOf(cell);
-                            int slavesCount = player.Cells.Count - 1;
+                        float distance = Vector2.Distance(cell.Position, mainCell.Position);
+                        float maxDistance = Config.MaxAllowedRadiusSplit;
 
-                            if (slavesCount > 0) {
-                                float angleStep = MathF.PI * 2f / slavesCount;
-                                
-                                if (index > 0) index -= 1; 
+                        if (distance > Config.SlowDownDistance * maxDistance)
+                        {
+                            Vector2 toMain = Vector2.Normalize(mainCell.Position - cell.Position);
+                            float directionDot = Vector2.Dot(dir, toMain); // if direction to main cell -> natural speed
 
-                                float angle = angleStep * index;
-                                Vector2 offset = new Vector2(MathF.Cos(angle), MathF.Sin(angle)) * allowedRadius;
-                                Vector2 targetPosition = mainCell.Position + offset;
-                                
-                                float lerpFactor = MathF.Min(1f, speed / 500f) * 0.1f;
-                                cell.Position = Vector2.Lerp(cell.Position, targetPosition, lerpFactor); 
+                            if (directionDot < Config.MainCellDirectionAngle) 
+                            {
+                                float factor = 1f - ((distance - 0.5f * maxDistance) / (0.5f * maxDistance));
+                                factor = MathF.Max(0.1f, factor);
+                                speed *= factor;
                             }
-                            
                         }
                     }
 
+                    cell.Velocity = dir * speed;
+                    cell.Position += cell.Velocity * deltaTime;
                     cell.Position = Vector2.Clamp(cell.Position, Vector2.Zero, new Vector2(Config.WorldWidth, Config.WorldHeight));
                     cell.Velocity *= Config.CellVelocity;
 
-                    cell.Bush_ID = null; // Reset before checking
-                    foreach (var slime in slimeItems) {
+                    cell.Bush_ID = null;
+                    foreach (var slime in slimeItems)
+                    {
                         float dist = Vector2.Distance(cell.Position, slime.Position);
-                        if (dist <= slime.Radius) {
+                        if (dist <= slime.Radius)
+                        {
                             cell.Bush_ID = slime.ID;
                         }
                     }
                 }
             }
-
 
             // move antibodys
             foreach (var antibody in antibodyItems)
@@ -340,7 +337,6 @@ public partial class Game {
                     nickname = p.Nickname,
                     score = p.Score,
                     boost = p.RemainingBoostSeconds,
-                    isBot = p.IsBot,
                     cells = p.Cells
                         .Where(c => c.Bush_ID == null || playerBushIds.Contains(c.Bush_ID))
                         .Select(c => new

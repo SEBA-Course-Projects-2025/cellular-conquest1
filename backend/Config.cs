@@ -62,6 +62,8 @@ namespace GameConfig {
         public const float FeedDelay = 0.5f;
         
         public const float MaxSplitDistanceFactor = 5.0f; 
+        public const float MaxAllowedRadiusSplit = 500f;
+        public const float SlowDownDistance = 0.7f;
     }
 
 }
