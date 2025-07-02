@@ -7,7 +7,6 @@ namespace GameConfig {
         public const float MinBushDistance = 100f;   
         public const float Margin = 100f;    
 
-        public const string AntiColor = "#3dda83";
         public const string FoodColor = "#3dda83";
         public const string BoostColor = "#00cfff";
         public const string SlimeColor = "#2d6d51";

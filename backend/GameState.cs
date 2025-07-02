@@ -300,6 +300,7 @@ public partial class Game {
 
             // determine what bush_ids we have
             foreach ( var player in players.Values){
+                var antiColor = player.PopularSkinColor;
                 var playerBushIds = player.Cells
                     .Select(c => c.Bush_ID)
                     .Where(id => id != null)
@@ -326,7 +327,7 @@ public partial class Game {
                             x = a.Position.X,
                             y = a.Position.Y,
                             radius = a.Radius,
-                            color = a.Color
+                            color = antiColor ?? ""
                         }));
                 }
 
@@ -344,7 +345,7 @@ public partial class Game {
                             x = c.Position.X,
                             y = c.Position.Y,
                             radius = c.Radius,
-                            color = p.IsBot ? Config.BotColor : "#3d78dd"
+                            color = p.IsBot ? Config.BotColor : p.PopularSkinColor
                         }).ToList(),
                     abilities = p.SpeedBoostPoints > 0
                         ? new

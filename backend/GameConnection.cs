@@ -9,6 +9,7 @@ using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 using GameConfig;
+using ColorAnalyzer;
 
 
 public partial class Game
@@ -53,9 +54,8 @@ public partial class Game
                         bool isDeathMatch =
                             (obj?["deathMatch"]?.GetValue<bool>() ?? false)
                             || (obj?["mode"]?.ToString()?.ToLower() == "deathmatch");
-                        string? customSkin = obj?["customSkin"]?.ToString();
-                        Console.WriteLine(customSkin);
-                        
+                        string customSkin = obj?["customSkin"]?.ToString() ?? ""; 
+                                               
                         Guid roomId;
                         if (isDeathMatch) {
                             roomId = Guid.NewGuid();
@@ -111,6 +111,12 @@ public partial class Game
                                 }
                             }
                         };
+                         if (!string.IsNullOrEmpty(customSkin))
+                        {
+                            string? popularColor = ImageColorAnalyzer.GetMostPopularColorFromDataUrl(customSkin);
+                            Console.WriteLine($"[{player.Nickname}] Popular skin color: {popularColor}");
+                            player.PopularSkinColor = popularColor;
+                        }
 
                         Console.WriteLine($"[{player.Nickname}] Mode is {obj?["mode"]?.ToString()}");
 

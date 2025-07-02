@@ -15,6 +15,7 @@ public class Player
     public SemaphoreSlim SendLock = new SemaphoreSlim(1, 1);
     public DateTime? SpeedBoostUntil { get; set; } = null;
     public DateTime LastFeedTime { get; set; } = DateTime.MinValue;
+    public string? PopularSkinColor { get; set; }
 
     public bool HasSpeedBoost => SpeedBoostUntil.HasValue && SpeedBoostUntil.Value > DateTime.UtcNow;
     public int RemainingBoostSeconds => HasSpeedBoost ? (int)(SpeedBoostUntil!.Value - DateTime.UtcNow).TotalSeconds : 0;
