@@ -46,15 +46,14 @@
       </div>
       <div class="row">
         <div id="mobileControls" class="allScreen hidden">
-          <div id="joystickContainer">
-            <div id="joystickBase"></div>
-            <div id="joystickHandle"></div>
-          </div>
-
           <div id="actionButtons">
             <button id="speedupBtn" class="actionBtn">Speed up</button>
             <button id="splitBtn" class="actionBtn">Split</button>
             <button id="feedBtn" class="actionBtn">Feed</button>
+          </div>
+          <div id="joystickContainer">
+            <div id="joystickBase"></div>
+            <div id="joystickHandle"></div>
           </div>
         </div>
       </div>
@@ -65,7 +64,6 @@
     <div id="errorPopup" class="styledDiv popupNotice error">
       Something went wrong
     </div>
-
     <div id="exitPopup" class="allScreen hidden fadeIn">
       <div class="blur allScreen"></div>
       <div class="popupContent styledDiv">
@@ -103,13 +101,11 @@
       <div class="blur allScreen"></div>
       <div class="popupContent styledDiv rulesContent fadeIn">
         <h2>Game Rules</h2>
-
         <h3>🎯 Objective</h3>
         <p>
           Grow your cell by eating food and smaller players while avoiding being
           eaten by larger ones.
         </p>
-
         <h3>🎮 Controls</h3>
         <p><strong>Desktop:</strong></p>
         <ul>
@@ -140,7 +136,6 @@
             points)
           </li>
         </ul>
-
         <h3>📈 Gameplay</h3>
         <ul>
           <li>Eat colored dots to grow your cell</li>
@@ -152,7 +147,6 @@
             Feeding ejects 10% mass <strong>only from your biggest cell</strong>
           </li>
         </ul>
-
         <h3>💡 Tips</h3>
         <ul>
           <li>Stay near the edges when small to avoid larger players</li>
@@ -160,7 +154,6 @@
           <li>Team up with other players by feeding them</li>
           <li>Watch the leaderboard to track top players</li>
         </ul>
-
         <h3>⚠️ Important Notes</h3>
         <ul>
           <li class="important">
@@ -175,11 +168,9 @@
             In some game modes, feeding acts as projectiles that can damage bots
           </li>
         </ul>
-
         <button id="closeRules" class="btn">Close</button>
       </div>
     </div>
-
     <script src="rulesPopup.js"></script>
     <script type="module" src="./gameMain.js"></script>
   </body>

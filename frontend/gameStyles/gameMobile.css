@@ -2,22 +2,17 @@
   --joystick-size: 100px;
   --joystick-handle-size: 50px;
   --action-btn-size: 70px;
-
   --color-dark-bg: rgba(1, 35, 69, 0.6);
   --color-dark-border: rgba(15, 66, 85, 0.8);
   --color-light-bg: rgba(160, 216, 255, 0.8);
   --color-light-border: rgba(160, 216, 255, 1);
   --color-light-bg-active: rgba(160, 216, 255, 0.3);
   --color-pressed-bg: rgba(160, 216, 255, 0.4);
-
   --color-text: rgba(160, 216, 255, 1);
-
   --font-size-action: 14px;
   --font-weight-action: bold;
-
   --transition-fast: all 0.1s ease;
   --transition-medium: all 0.3s ease;
-
   --glow: 0 0 16px rgba(122, 255, 226, 0.2);
   --glow-focused: 0 0 5px rgba(122, 255, 226, 0.3);
   --action-gap: 1rem;
@@ -29,9 +24,35 @@
   flex-direction: row;
   justify-content: space-between;
   align-items: flex-end;
+  width: -webkit-fill-available;
 }
+
 #mobileControls.hidden {
   display: none;
+}
+
+#mobileControls.joystick-right {
+  flex-direction: row;
+}
+
+#mobileControls.joystick-right #actionButtons {
+  align-items: flex-start;
+}
+
+#mobileControls.joystick-right #joystickContainer {
+  order: 1;
+}
+
+#mobileControls.joystick-left {
+  flex-direction: row-reverse;
+}
+
+#mobileControls.joystick-left #actionButtons {
+  align-items: flex-end;
+}
+
+#mobileControls.joystick-left #joystickContainer {
+  order: 0;
 }
 
 #joystickContainer {
@@ -70,7 +91,6 @@
   flex-wrap: wrap-reverse;
   flex-direction: column;
   justify-content: flex-end;
-  align-items: flex-end;
   gap: var(--action-gap);
   pointer-events: auto;
   height: var(--action-height);
