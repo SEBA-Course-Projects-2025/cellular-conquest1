@@ -122,7 +122,6 @@ const onJoystickEnd = (e) => {
   joystickPointerId = null;
   joystickKnob.style.left = JOYSTICK_CONFIG.RESET_POS;
   joystickKnob.style.top = JOYSTICK_CONFIG.RESET_POS;
-  handleInput({ x: gameState.camera.x, y: gameState.camera.y });
   e.preventDefault();
 };
 
