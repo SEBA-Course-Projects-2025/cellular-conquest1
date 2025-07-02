@@ -13,7 +13,7 @@ import {
 
 const $ = (id) => document.getElementById(id);
 
-const joystickRight = localStorage.getItem("joystickRight") === "true" || false;
+const joystickRight = !(localStorage.getItem("joystickRight") === "false");
 
 const mobileControls = $(CONTAINER_IDS.CONTROLS);
 const joystickContainer = $(CONTAINER_IDS.JOYSTICK);
