@@ -12,10 +12,12 @@ import {
 } from "../gameConfig/mobileControlsConfig.js";
 
 const $ = (id) => document.getElementById(id);
+
+const joystickRight = !(localStorage.getItem("joystickRight") === "false");
+
 const mobileControls = $(CONTAINER_IDS.CONTROLS);
 const joystickContainer = $(CONTAINER_IDS.JOYSTICK);
 const joystickKnob = $(CONTAINER_IDS.KNOB);
-
 const buttons = MOBILE_BUTTONS.map(({ id, action }) => ({
   el: $(id),
   action: getActionHandler(action),
@@ -37,6 +39,16 @@ function getActionHandler(actionName) {
 
 gameState.isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
 mobileControls.classList.toggle("hidden", !gameState.isTouch);
+
+if (gameState.isTouch) {
+  if (joystickRight) {
+    mobileControls.classList.add("joystick-right");
+    mobileControls.classList.remove("joystick-left");
+  } else {
+    mobileControls.classList.add("joystick-left");
+    mobileControls.classList.remove("joystick-right");
+  }
+}
 
 let joystickActive = false;
 let joystickCenter = { x: 0, y: 0 };
@@ -64,6 +76,7 @@ const updateJoystick = (x, y) => {
     x: cdx / JOYSTICK_CONFIG.RADIUS,
     y: cdy / JOYSTICK_CONFIG.RADIUS,
   };
+
   handleInput({
     x: gameState.camera.x + norm.x * JOYSTICK_CONFIG.MOVE_INTENSITY,
     y: gameState.camera.y + norm.y * JOYSTICK_CONFIG.MOVE_INTENSITY,
@@ -85,6 +98,7 @@ const onJoystickStart = (e) => {
     x: rect.left + rect.width / 2,
     y: rect.top + rect.height / 2,
   };
+
   joystickActive = true;
   updateJoystick(t.clientX, t.clientY);
   e.preventDefault();
@@ -94,6 +108,7 @@ const onJoystickMove = (e) => {
   if (!joystickActive) return;
   const t = getTouch(e);
   if (!t) return;
+
   updateJoystick(t.clientX, t.clientY);
   e.preventDefault();
 };
@@ -107,7 +122,6 @@ const onJoystickEnd = (e) => {
   joystickPointerId = null;
   joystickKnob.style.left = JOYSTICK_CONFIG.RESET_POS;
   joystickKnob.style.top = JOYSTICK_CONFIG.RESET_POS;
-  handleInput({ x: gameState.camera.x, y: gameState.camera.y });
   e.preventDefault();
 };
 
@@ -119,6 +133,7 @@ attach(joystickContainer, ["touchmove"], onJoystickMove, { passive: false });
 attach(joystickContainer, ["touchend", "touchcancel"], onJoystickEnd, {
   passive: false,
 });
+
 attach(joystickContainer, ["mousedown"], onJoystickStart);
 attach(window, ["mousemove"], onJoystickMove);
 attach(window, ["mouseup"], onJoystickEnd);
