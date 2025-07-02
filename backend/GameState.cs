@@ -340,6 +340,7 @@ public partial class Game {
                     nickname = p.Nickname,
                     score = p.Score,
                     boost = p.RemainingBoostSeconds,
+                    isBot = p.IsBot,
                     cells = p.Cells
                         .Where(c => c.Bush_ID == null || playerBushIds.Contains(c.Bush_ID))
                         .Select(c => new
