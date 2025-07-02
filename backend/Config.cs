@@ -64,6 +64,7 @@ namespace GameConfig {
         public const float MaxSplitDistanceFactor = 5.0f; 
         public const float MaxAllowedRadiusSplit = 500f;
         public const float SlowDownDistance = 0.7f;
+        public const float MainCellDirectionAngle = 0.7f;
     }
 
 }
