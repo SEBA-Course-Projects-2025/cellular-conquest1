@@ -89,7 +89,7 @@ public partial class Game
         					int botCount = Config.NumBots;
         					var bots = new List<Bot>();
         					for (int i = 0; i < botCount; i++) {
-            					var bot = new Bot($"Bot {i+1}", roomId);
+            					var bot = new Bot(roomId);
             					roomPlayers[bot.Id] = bot;
             					bots.Add(bot);
         					}

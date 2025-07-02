@@ -317,7 +317,7 @@ public partial class Game {
                             botList.Remove(botVictim);
 
                             // create and add new bot
-                            var newBot = new Bot(botVictim.Nickname, roomId);
+                            var newBot = new Bot(roomId);
                             players[newBot.Id] = newBot;
                             botList.Add(newBot);
                         }

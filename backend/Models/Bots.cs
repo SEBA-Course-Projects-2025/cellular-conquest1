@@ -9,12 +9,37 @@ public class Bot: Player
     private static Random rng = new();
     public int AntibodyHits { get; set; } = 0;
     public int MaxAntibodyHits { get; set; } = Config.MaxAntiHits;
-    public Bot(string name, Guid roomId)
+
+	private static readonly List<string> AllBotNames = new()
+    {
+    	"Virus-X", "Ebola", "CellSlicer", "Corona", "Job", "Deadline", "Procrastination", "Bug",
+    	"404", "Anxiety", "Amoeba", "Zombirus", "VirusPrime", "Cholera", "Burnout", "Stress"
+	};
+
+	private static readonly HashSet<string> UsedNames = new();
+
+	private static string GetUniqueName()
+    {
+        var availableNames = AllBotNames.Except(UsedNames).ToList();
+
+        if (availableNames.Count == 0)
+        {
+            UsedNames.Clear();
+            availableNames = AllBotNames;
+        }
+
+        string name = availableNames[rng.Next(availableNames.Count)];
+        UsedNames.Add(name);
+        return name;
+    }
+
+    public Bot(Guid roomId)
     {
         Id = Guid.NewGuid();
-        Nickname = name;
+        Nickname = GetUniqueName();
         RoomId = roomId;
         IsBot = true;
+
         Cells = new List<Cell> {
             new Cell {
                 Position = new Vector2(

@@ -7,6 +7,7 @@ namespace GameConfig {
  		public const float MinBotDistance = 150f;
         public const float MinBushDistance = 100f;   
         public const float Margin = 100f;    
+		public const float MinBotDistanceToPlayer = 150f;
 
         public const string FoodColor = "#3dda83";
         public const string BoostColor = "#00cfff";
