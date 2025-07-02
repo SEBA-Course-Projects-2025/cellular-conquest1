@@ -7,7 +7,6 @@ namespace GameConfig {
         public const float MinBushDistance = 100f;   
         public const float Margin = 100f;    
 
-        public const string AntiColor = "#3dda83";
         public const string FoodColor = "#3dda83";
         public const string BoostColor = "#00cfff";
         public const string SlimeColor = "#2d6d51";
@@ -60,6 +59,11 @@ namespace GameConfig {
         public const int MaxAntiHits = 5;
 
         public const float FeedDelay = 0.5f;
+        
+        public const float MaxSplitDistanceFactor = 5.0f; 
+        public const float MaxAllowedRadiusSplit = 500f;
+        public const float SlowDownDistance = 0.7f;
+        public const float MainCellDirectionAngle = 0.7f;
     }
 
 }
