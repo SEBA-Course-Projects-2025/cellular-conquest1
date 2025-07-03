@@ -86,14 +86,11 @@ public partial class Game
 						var roomPlayers = rooms.GetOrAdd(roomId, _ => new ConcurrentDictionary<Guid, Player>());
 
 						if (isDeathMatch) {
-        					int botCount = Config.NumBots;
         					var bots = new List<Bot>();
-        					for (int i = 0; i < botCount; i++) {
-            					var bot = new Bot($"Bot {i+1}", roomId);
-            					roomPlayers[bot.Id] = bot;
-            					bots.Add(bot);
-        					}
-        					roomBots[roomId] = bots;
+    						var bot = new Bot(roomId);  
+    						roomPlayers[bot.Id] = bot;
+    						bots.Add(bot);
+    						roomBots[roomId] = bots;
     					}
 
                         player = new Player

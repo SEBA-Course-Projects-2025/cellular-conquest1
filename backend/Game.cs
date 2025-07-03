@@ -123,6 +123,13 @@ public partial class Game
                 if (tooCloseToBush) continue;
             }
 
+			if (roomBots.TryGetValue(roomId, out var bots))
+        	{
+            	bool tooCloseToBot = bots
+					.Any(b => Vector2.Distance(position, b.Cells[0].Position) < Config.MinBotDistanceToPlayer);
+            	if (tooCloseToBot) continue;
+        	}
+
             return position;
         }
 
@@ -138,6 +145,7 @@ public partial class Game
             var playersList = roomPlayers.Values.ToList();
             
             var topPlayers = playersList
+				.Where(p => !p.IsBot) 
                 .OrderByDescending(p => p.Score)
                 .Take(10)
                 .Select(p => new {
@@ -151,6 +159,7 @@ public partial class Game
                     continue;
 
                 int rank = playersList
+					.Where(p => !p.IsBot)
                     .OrderByDescending(p => p.Score)
                     .ToList()
                     .FindIndex(p => p.Id == player.Id) + 1;

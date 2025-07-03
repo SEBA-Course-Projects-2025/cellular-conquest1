@@ -40,7 +40,7 @@ public partial class Game {
             {
                 foreach (var bot in botsList)
                 {
-                    bot.UpdateAI(realPlayer);
+                    bot.UpdateAI(realPlayer, botsList);
                 }
             }
 
@@ -91,6 +91,33 @@ public partial class Game {
                         if (dist <= slime.Radius)
                         {
                             cell.Bush_ID = slime.ID;
+                        }
+                    }
+                }
+            }
+            // bots overlap handling
+            if (botsList != null)
+            {
+                for (int i = 0; i < botsList.Count; i++)
+                {
+                    for (int j = i + 1; j < botsList.Count; j++)
+                    {
+                        var botA = botsList[i].Cells[0];
+                        var botB = botsList[j].Cells[0];
+
+                        float distance = Vector2.Distance(botA.Position, botB.Position);
+                        float minDistance = Config.MinBotDistance;
+
+                        if (distance < minDistance && distance > 0.01f)
+                        {
+                            Vector2 pushDir = Vector2.Normalize(botA.Position - botB.Position);
+                            float pushAmount = (minDistance - distance) / 2f;
+
+                            botA.Position += pushDir * pushAmount;
+                            botB.Position -= pushDir * pushAmount;
+
+                            botA.Position = Vector2.Clamp(botA.Position, Vector2.Zero, new Vector2(Config.WorldWidth, Config.WorldHeight));
+                            botB.Position = Vector2.Clamp(botB.Position, Vector2.Zero, new Vector2(Config.WorldWidth, Config.WorldHeight));
                         }
                     }
                 }
@@ -289,10 +316,23 @@ public partial class Game {
                         {
                             botList.Remove(botVictim);
 
-                            // create and add new bot
-                            var newBot = new Bot(botVictim.Nickname, roomId);
-                            players[newBot.Id] = newBot;
-                            botList.Add(newBot);
+                            int botsAlive = botList.Count;
+                            
+                            int botsToSpawn = 1;
+
+                            if (botsAlive < 5)
+                            {
+                                botsToSpawn = Math.Min(2, Config.NumBots - botsAlive);
+                            }
+                            
+                            for (int i = 0; i < botsToSpawn; i++)
+                            {
+                                if (botList.Count >= Config.NumBots) break;
+
+                                var newBot = new Bot(roomId);
+                                players[newBot.Id] = newBot;
+                                botList.Add(newBot);
+                            }
                         }
                     }
                 }
