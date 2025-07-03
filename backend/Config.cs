@@ -1,4 +1,6 @@
 // Config.cs
+using SixLabors.ImageSharp.PixelFormats;
+
 namespace GameConfig {
     public static class Config {
         public const int WorldWidth = 2000;
@@ -14,8 +16,8 @@ namespace GameConfig {
         public const string SlimeColor = "#2d6d51";
         public const string BotColor = "#ffe600";
 
-        public const float PlayerSpeed = 300f;
-        public const float PlayerHighSpeed = 450f;
+        public const float PlayerSpeed = 350f;
+        public const float PlayerHighSpeed = 500f;
         public const float BotSpeed = 180f;
 
         public const float CellVelocity = 0.9f;
@@ -66,6 +68,9 @@ namespace GameConfig {
         public const float MaxAllowedRadiusSplit = 500f;
         public const float SlowDownDistance = 0.7f;
         public const float MainCellDirectionAngle = 0.7f;
+
+        public static readonly Rgba32 MediumColor = new Rgba32(136, 136, 136); // #888888
+        public const float LightenFactor = 0.3f;
     }
 
 }
