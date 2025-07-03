@@ -40,7 +40,7 @@ public partial class Game {
             {
                 foreach (var bot in botsList)
                 {
-                    bot.UpdateAI(realPlayer);
+                    bot.UpdateAI(realPlayer, botsList);
                 }
             }
 
