@@ -7,6 +7,7 @@ using System.Xml.Linq;
 using SixLabors.ImageSharp;
 using SixLabors.ImageSharp.PixelFormats;
 using SixLabors.ImageSharp.Advanced;
+using GameConfig;
 
 namespace ColorAnalyzer
 {
@@ -24,6 +25,31 @@ namespace ColorAnalyzer
             }
             return null;
         }
+
+        private static float GetLuminance(Rgba32 color)
+        {
+            float Normalize(byte channel)
+            {
+                float c = channel / 255f;
+                return c <= 0.03928f ? c / 12.92f : MathF.Pow((c + 0.055f) / 1.055f, 2.4f);
+            }
+
+            return 0.2126f * Normalize(color.R) +
+                0.7152f * Normalize(color.G) +
+                0.0722f * Normalize(color.B);
+        }
+
+        private static Rgba32 LightenColor(Rgba32 color, float amount)
+        {
+            byte lighten(byte component) => (byte)(component + (255 - component) * amount);
+            return new Rgba32(
+                lighten(color.R),
+                lighten(color.G),
+                lighten(color.B),
+                color.A
+            );
+        }
+
 
         private static string? GetMostPopularColorFromSvgDataUrl(string dataUrl)
         {
@@ -79,6 +105,11 @@ namespace ColorAnalyzer
                 return null;
 
             var mostPopularColor = colorFrequency.OrderByDescending(kv => kv.Value).First().Key;
+            if (GetLuminance(mostPopularColor) < GetLuminance(Config.MediumColor))
+            {
+                mostPopularColor = LightenColor(mostPopularColor, Config.LightenFactor); 
+            }
+
             return $"#{mostPopularColor.R:X2}{mostPopularColor.G:X2}{mostPopularColor.B:X2}";
         }
     }
