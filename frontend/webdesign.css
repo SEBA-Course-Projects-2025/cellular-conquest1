@@ -82,6 +82,45 @@ body {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  background: linear-gradient(135deg, rgba(15, 30, 50, 0.95), rgba(25, 40, 60, 0.9));
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 20px;
+  padding: 25px 30px;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  backdrop-filter: blur(15px);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(122, 255, 153, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  position: relative;
+}
+
+.main-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(122, 255, 153, 0.1) 0%, 
+    rgba(160, 216, 255, 0.05) 50%, 
+    rgba(122, 255, 153, 0.1) 100%);
+  border-radius: 18px;
+  z-index: -1;
+}
+
+.main-panel:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(122, 255, 153, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 0 30px rgba(122, 255, 153, 0.2);
 }
 
 .side-panels {
@@ -98,28 +137,57 @@ body {
   min-width: 200px;
 }
 
-.panel {
-  background: linear-gradient(135deg, rgba(30, 30, 30, 0.9), rgba(40, 40, 40, 0.8));
-  border: 1px solid rgba(122, 255, 153, 0.2);
-  border-radius: 16px;
-  padding: 24px;
-  backdrop-filter: blur(10px);
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  transition: all 0.3s ease;
+.panel, .profile-panel, .play-panel {
+  background: linear-gradient(135deg, rgba(15, 30, 50, 0.95), rgba(25, 40, 60, 0.9));
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 20px;
+  padding: 25px 30px;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  backdrop-filter: blur(15px);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(122, 255, 153, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  position: relative;
 }
 
-.panel:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-  border-color: rgba(122, 255, 153, 0.4);
+.panel::before, .profile-panel::before, .play-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(122, 255, 153, 0.1) 0%, 
+    rgba(160, 216, 255, 0.05) 50%, 
+    rgba(122, 255, 153, 0.1) 100%);
+  border-radius: 18px;
+  z-index: -1;
+}
+
+.panel:hover, .profile-panel:hover, .play-panel:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(122, 255, 153, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 0 30px rgba(122, 255, 153, 0.2);
 }
 
 .title {
-  font-size: 1.4rem;
+  font-size: 1.5rem;
   font-weight: 600;
   margin-bottom: 20px;
   color: var(--accent);
   text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 10px rgba(122, 255, 153, 0.3);
 }
 
 .play-panel .modes {
@@ -133,18 +201,20 @@ body {
 .mode-btn {
   background: rgba(122, 255, 153, 0.1);
   border: 1px solid rgba(122, 255, 153, 0.3);
-  border-radius: 6px;
+  border-radius: 10px;
   color: var(--text-light);
   font-size: 1rem;
   cursor: pointer;
-  padding: 8px 16px;
-  transition: var(--transition);
+  padding: 10px 20px;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
 .play-panel .modes button:hover,
 .mode-btn:hover {
   background: rgba(122, 255, 153, 0.2);
   transform: translateY(-2px);
+  box-shadow: 0 0 15px rgba(122, 255, 153, 0.2);
 }
 
 .play-panel .modes button.active,
@@ -152,14 +222,14 @@ body {
   background: rgba(122, 255, 153, 0.3);
   color: var(--accent);
   border-color: var(--accent);
-  box-shadow: var(--glow);
+  box-shadow: 0 0 15px rgba(122, 255, 153, 0.3);
   font-weight: 500;
 }
 
 .mode-btn[data-mode="deathmatch"].active {
-  background-color: #ff5555; 
-  color: white;
-  border-color: #ff3333;
+  background-color: rgba(255, 85, 85, 0.3);
+  color: #ff7070;
+  border-color: #ff5555;
 }
 
 .mode-btn[data-mode="deathmatch"]:hover {
@@ -178,25 +248,28 @@ body {
   background: var(--accent);
   color: var(--bg-color);
   border: none;
-  padding: 8px 16px;
-  border-radius: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
   cursor: pointer;
   font-size: 14px;
+  font-weight: 600;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(122, 255, 153, 0.2);
 }
 
 .skins-btn:hover {
-  background: #90ff90;
-  transform: scale(1.05);
+  background: #5df18b;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(122, 255, 153, 0.3);
 }
 
 .avatar {
   width: 96px;
   height: 96px;
   border-radius: 50%;
-  background: #181f2a;
+  background: rgba(15, 30, 50, 0.8);
   margin: 0 auto 12px auto;
-  box-shadow: 0 0 16px 4px #2de37e33;
+  box-shadow: 0 0 20px rgba(122, 255, 153, 0.3);
   background-size: cover;
   background-position: center;
   display: flex;
@@ -206,6 +279,7 @@ body {
   font-size: 2.5rem;
   color: #fff;
   transition: var(--transition);
+  border: 2px solid rgba(122, 255, 153, 0.3);
 }
 
 .avatar.skin {
@@ -216,33 +290,40 @@ body {
 
 .profile-panel:hover .avatar {
   transform: rotate(10deg) scale(1.05);
+  box-shadow: 0 0 30px rgba(122, 255, 153, 0.4);
+  border-color: var(--accent);
 }
 
 .nick-input {
   padding: 12px;
   font-size: 1.1rem;
-  border-radius: 8px;
+  border-radius: 10px;
   margin-bottom: 15px;
   border: 1px solid rgba(122, 255, 153, 0.3);
-  background: rgba(122, 255, 153, 0.1);
+  background: rgba(15, 30, 50, 0.6);
   color: white;
   width: 100%;
   transition: var(--transition);
   text-align: center;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
 .nick-input:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: var(--glow);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2), 0 0 15px rgba(122, 255, 153, 0.3);
+  background: rgba(15, 30, 50, 0.8);
 }
 
 .level {
   font-size: 1rem;
   color: var(--text-secondary);
-  background: rgba(160, 216, 255, 0.1);
-  padding: 4px 12px;
+  background: rgba(15, 30, 50, 0.8);
+  padding: 8px 16px;
   border-radius: 12px;
+  border: 1px solid rgba(122, 255, 153, 0.2);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  display: inline-block;
 }
 
 .stats-panel {
@@ -279,19 +360,7 @@ body {
 }
 
 .stats-panel::after {
-  content: "";
-  position: absolute;
-  top: -2px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: linear-gradient(135deg, rgba(122, 255, 153, 0.9), rgba(76, 175, 80, 0.9));
-  color: var(--bg-color);
-  padding: 8px 20px;
-  border-radius: 0 0 12px 12px;
-  font-size: 14px;
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  box-shadow: 0 4px 12px rgba(122, 255, 153, 0.3);
+  display: none;
 }
 
 .stats-panel:hover {
@@ -375,7 +444,7 @@ body {
   gap: 20px;
   margin-top: 30px;
   padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  border-top: 1px solid rgba(122, 255, 153, 0.1);
 }
 
 .action-btn {
@@ -387,16 +456,26 @@ body {
   font-weight: 500;
   transition: all 0.3s ease;
   min-width: 140px;
+  background: rgba(122, 255, 153, 0.2);
+  color: var(--accent);
+  border: 1px solid rgba(122, 255, 153, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.action-btn:hover {
+  background: rgba(122, 255, 153, 0.3);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3), 0 0 15px rgba(122, 255, 153, 0.2);
 }
 
 .action-btn.secondary {
-  background: rgba(100, 100, 100, 0.3);
+  background: rgba(100, 100, 100, 0.2);
   color: var(--text-color);
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .action-btn.secondary:hover {
-  background: rgba(100, 100, 100, 0.5);
+  background: rgba(100, 100, 100, 0.3);
   transform: translateY(-2px);
 }
 
@@ -412,7 +491,46 @@ body {
 }
 
 .scores-panel {
-  display: none !important;
+  display: block !important;
+  background: linear-gradient(135deg, rgba(15, 30, 50, 0.95), rgba(25, 40, 60, 0.9));
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  border-radius: 20px;
+  padding: 25px 30px;
+  color: var(--text-secondary);
+  font-size: 1rem;
+  backdrop-filter: blur(15px);
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(122, 255, 153, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  position: relative;
+}
+
+.scores-panel::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(122, 255, 153, 0.1) 0%, 
+    rgba(160, 216, 255, 0.05) 50%, 
+    rgba(122, 255, 153, 0.1) 100%);
+  border-radius: 18px;
+  z-index: -1;
+}
+
+.scores-panel:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 
+    0 20px 60px rgba(0, 0, 0, 0.8),
+    0 0 0 1px rgba(122, 255, 153, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 0 30px rgba(122, 255, 153, 0.2);
 }
 
 .modal {
@@ -431,16 +549,20 @@ body {
 }
 
 .modal-content {
-  background-color: var(--panel-color);
+  background: linear-gradient(135deg, rgba(15, 30, 50, 0.95), rgba(25, 40, 60, 0.9));
   margin: auto;
   padding: 30px;
-  border-radius: 16px;
+  border-radius: 20px;
   width: 90%;
   max-width: 500px;
   position: relative;
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(15px);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(122, 255, 153, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   animation: modalSlideIn 0.3s ease-out;
 }
 
@@ -469,6 +591,9 @@ body {
   margin-bottom: 1.5em;
   font-size: 1.8rem;
   text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-shadow: 0 0 10px rgba(122, 255, 153, 0.3);
 }
 
 .modal h3 {
@@ -501,7 +626,7 @@ body {
   top: 50%;
   width: 40%;
   height: 1px;
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(122, 255, 153, 0.2);
 }
 
 .divider::before {
@@ -515,10 +640,10 @@ body {
 #roomCodeInput {
   padding: 12px;
   font-size: 1.1rem;
-  border-radius: 8px;
+  border-radius: 10px;
   margin-bottom: 15px;
   border: 1px solid rgba(122, 255, 153, 0.3);
-  background: rgba(122, 255, 153, 0.1);
+  background: rgba(15, 30, 50, 0.6);
   color: white;
   width: 100%;
   max-width: 200px;
@@ -526,18 +651,20 @@ body {
   text-align: center;
   text-transform: uppercase;
   letter-spacing: 2px;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
 #roomCodeInput:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: var(--glow);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2), 0 0 15px rgba(122, 255, 153, 0.3);
+  background: rgba(15, 30, 50, 0.8);
 }
 
 #createRoomBtn, #joinRoomBtn, #startGameBtn {
   padding: 12px 24px;
   font-size: 1.1rem;
-  border-radius: 8px;
+  border-radius: 10px;
   background-color: var(--accent);
   color: var(--bg-color);
   font-weight: bold;
@@ -545,11 +672,12 @@ body {
   border: none;
   transition: var(--transition);
   margin-top: 10px;
+  box-shadow: 0 4px 15px rgba(122, 255, 153, 0.2);
 }
 
 #createRoomBtn:hover, #joinRoomBtn:hover, #startGameBtn:hover {
   background-color: #5df18b;
-  box-shadow: var(--glow);
+  box-shadow: 0 0 20px rgba(122, 255, 153, 0.4);
   transform: translateY(-2px);
 }
 
@@ -560,9 +688,10 @@ body {
   gap: 15px;
   margin: 20px 0;
   padding: 15px;
-  background: rgba(122, 255, 153, 0.1);
-  border-radius: 8px;
+  background: rgba(15, 30, 50, 0.6);
+  border-radius: 10px;
   border: 1px solid rgba(122, 255, 153, 0.3);
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
 }
 
 #displayRoomCode {
@@ -577,16 +706,17 @@ body {
   padding: 8px 16px;
   font-size: 0.9rem;
   border-radius: 6px;
-  background: rgba(160, 216, 255, 0.2);
+  background: rgba(122, 255, 153, 0.2);
   color: var(--text-light);
-  border: 1px solid rgba(160, 216, 255, 0.3);
+  border: 1px solid rgba(122, 255, 153, 0.3);
   cursor: pointer;
   transition: var(--transition);
 }
 
 #copyCodeBtn:hover {
-  background: rgba(160, 216, 255, 0.3);
+  background: rgba(122, 255, 153, 0.3);
   transform: translateY(-1px);
+  box-shadow: 0 0 15px rgba(122, 255, 153, 0.2);
 }
 
 #skinModal {
@@ -604,26 +734,24 @@ body {
   width: 900px;
   max-width: 98vw;
   min-height: 400px;
-  background: #181f2a;
-  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(15, 30, 50, 0.95), rgba(25, 40, 60, 0.9));
+  border-radius: 20px;
   padding: 40px 32px 32px 32px;
-  box-shadow: 0 8px 32px #000a;
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(122, 255, 153, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   position: relative;
   text-align: center;
   overflow: visible;
 }
 
 #skinsList {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 15px;
-  max-height: 250px;
-  overflow-y: auto;
-  padding: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(15, 30, 50, 0.6);
+  border: 1px solid rgba(122, 255, 153, 0.2);
+  border-radius: 12px;
+  padding: 15px;
+  box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.3);
 }
 
 .skin-container {
@@ -640,11 +768,13 @@ body {
   border: 2px solid transparent;
   transition: all 0.3s ease;
   object-fit: cover;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
 }
 
 .skin-option:hover {
   transform: scale(1.1);
   border-color: rgba(122, 255, 153, 0.5);
+  box-shadow: 0 0 15px rgba(122, 255, 153, 0.3);
 }
 
 .skin-option.selected {
@@ -670,18 +800,20 @@ body {
   justify-content: center;
   transition: all 0.2s ease;
   z-index: 10;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.4);
 }
 
 .delete-skin-btn:hover {
   background: #ff0000;
   transform: scale(1.1);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.5);
 }
 
 #skinsBtn,
 #addCustomSkinBtn {
   padding: 10px 24px;
   font-size: 1.1rem;
-  border-radius: 8px;
+  border-radius: 10px;
   background-color: var(--accent);
   color: var(--bg-color);
   font-weight: bold;
@@ -690,14 +822,14 @@ body {
   transition: var(--transition);
   margin-bottom: 10px;
   margin-top: 10px;
-  box-shadow: 0 2px 8px rgba(122,255,153,0.08);
+  box-shadow: 0 4px 15px rgba(122, 255, 153, 0.2);
   display: inline-block;
 }
 
 #skinsBtn:hover,
 #addCustomSkinBtn:hover {
   background-color: #5df18b;
-  box-shadow: var(--glow);
+  box-shadow: 0 0 20px rgba(122, 255, 153, 0.4);
   transform: translateY(-2px);
 }
 
@@ -714,7 +846,7 @@ body {
 
 #customSkinInput::-webkit-file-upload-button {
   padding: 8px 18px;
-  border-radius: 8px;
+  border-radius: 10px;
   background-color: var(--accent);
   color: var(--bg-color);
   font-weight: bold;
@@ -722,16 +854,18 @@ body {
   cursor: pointer;
   transition: var(--transition);
   margin-right: 10px;
+  box-shadow: 0 4px 15px rgba(122, 255, 153, 0.2);
 }
 
 #customSkinInput:hover::-webkit-file-upload-button {
   background-color: #5df18b;
-  box-shadow: var(--glow);
+  box-shadow: 0 0 20px rgba(122, 255, 153, 0.3);
+  transform: translateY(-2px);
 }
 
 #customSkinInput::file-selector-button {
   padding: 8px 18px;
-  border-radius: 8px;
+  border-radius: 10px;
   background-color: var(--accent);
   color: var(--bg-color);
   font-weight: bold;
@@ -739,11 +873,13 @@ body {
   cursor: pointer;
   transition: var(--transition);
   margin-right: 10px;
+  box-shadow: 0 4px 15px rgba(122, 255, 153, 0.2);
 }
 
 #customSkinInput:hover::file-selector-button {
   background-color: #5df18b;
-  box-shadow: var(--glow);
+  box-shadow: 0 0 20px rgba(122, 255, 153, 0.3);
+  transform: translateY(-2px);
 }
 
 #resetSkinBtn {
@@ -755,11 +891,13 @@ body {
   border-radius: 5px;
   cursor: pointer;
   transition: var(--transition);
+  box-shadow: 0 2px 8px rgba(122, 255, 153, 0.2);
 }
 
 #resetSkinBtn:hover {
   background: #5df18b;
   transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(122, 255, 153, 0.3);
 }
 
 @keyframes fadeIn {
@@ -778,15 +916,36 @@ body {
 #loginScreen {
   text-align: center;
   padding: 40px;
-  background-color: var(--panel-color);
-  border-radius: 16px;
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.3);
+  background: linear-gradient(135deg, rgba(15, 30, 50, 0.95), rgba(25, 40, 60, 0.9));
+  border-radius: 20px;
+  backdrop-filter: blur(15px);
+  border: 2px solid transparent;
+  background-clip: padding-box;
+  box-shadow: 
+    0 12px 40px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(122, 255, 153, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
   max-width: 400px;
   width: 100%;
   margin: auto;
   animation: fadeIn 0.8s ease-out;
+  position: relative;
+  overflow: hidden;
+}
+
+#loginScreen::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(135deg, 
+    rgba(122, 255, 153, 0.1) 0%, 
+    rgba(160, 216, 255, 0.05) 50%, 
+    rgba(122, 255, 153, 0.1) 100%);
+  border-radius: 18px;
+  z-index: -1;
 }
 
 #loginScreen h1 {
@@ -794,44 +953,50 @@ body {
   margin-bottom: 1.2em;
   letter-spacing: 1px;
   font-size: 2.4rem;
-  text-shadow: var(--glow);
+  text-shadow: 0 0 15px rgba(122, 255, 153, 0.5);
+  text-transform: uppercase;
 }
 
 #nicknameInput {
   padding: 12px;
   font-size: 1.2rem;
-  border-radius: 8px;
+  border-radius: 10px;
   margin-bottom: 20px;
   border: 1px solid rgba(122, 255, 153, 0.3);
-  background: rgba(122, 255, 153, 0.1);
+  background: rgba(15, 30, 50, 0.6);
   color: white;
   width: 100%;
   max-width: 300px;
   transition: var(--transition);
   margin-right: 10px;
+  text-align: center;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
 }
 
 #nicknameInput:focus {
   outline: none;
   border-color: var(--accent);
-  box-shadow: var(--glow);
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2), 0 0 15px rgba(122, 255, 153, 0.3);
+  background: rgba(15, 30, 50, 0.8);
 }
 
 #loginBtn {
   padding: 10px 24px;
   font-size: 1.2rem;
-  border-radius: 8px;
+  border-radius: 10px;
   background-color: var(--accent);
   color: var(--bg-color);
   font-weight: bold;
   cursor: pointer;
   border: none;
   transition: var(--transition);
+  box-shadow: 0 4px 15px rgba(122, 255, 153, 0.2);
 }
 
 #loginBtn:hover {
   background-color: #5df18b;
-  box-shadow: var(--glow);
+  box-shadow: 0 0 20px rgba(122, 255, 153, 0.4);
+  transform: translateY(-2px);
 }
 
 @media (max-width: 768px) {
