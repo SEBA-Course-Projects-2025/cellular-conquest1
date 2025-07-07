@@ -12,6 +12,12 @@ using GameConfig;
 
 
 public partial class Game {
+    bool SharesBush(List<int> a, List<int> b)
+    {
+        if (!a.Any() && !b.Any()) return true;
+        return a.Intersect(b).Any();
+    }
+
     private async void SendGameState(object? state)
     {
         foreach (var roomEntry in rooms)
@@ -84,13 +90,13 @@ public partial class Game {
                     cell.Position = Vector2.Clamp(cell.Position, Vector2.Zero, new Vector2(Config.WorldWidth, Config.WorldHeight));
                     cell.Velocity *= Config.CellVelocity;
 
-                    cell.Bush_ID = null;
+                    cell.Bush_IDs.Clear();
                     foreach (var slime in slimeItems)
                     {
                         float dist = Vector2.Distance(cell.Position, slime.Position);
                         if (dist <= slime.Radius)
                         {
-                            cell.Bush_ID = slime.ID;
+                            cell.Bush_IDs.Add(slime.ID);
                         }
                     }
                 }
@@ -146,12 +152,13 @@ public partial class Game {
             {
                 var eaten = new List<Food>();
                 var eatenAnti = new List<AntiBody>();
+                var eatenSlimes = new List<Slime>();
 
                 foreach (var cell in player.Cells)
                 {
                     foreach (var food in foodItems)
                     {
-                        if (Vector2.Distance(cell.Position, food.Position) < cell.Radius && food.Bush_ID == cell.Bush_ID)
+                        if (Vector2.Distance(cell.Position, food.Position) < cell.Radius && (!food.Bush_ID.HasValue || cell.Bush_IDs.Contains(food.Bush_ID.Value)))
                         {
                             eaten.Add(food);
 
@@ -169,6 +176,27 @@ public partial class Game {
                             }
 
                             break;
+                        }
+                    }
+
+                    // eat a bush
+                    foreach (var slime in slimeItems)
+                    {
+                        float distance = Vector2.Distance(cell.Position, slime.Position);
+                        if (distance < cell.Radius && cell.Radius > slime.Radius * Config.SlimeAdreToKill)
+                        {
+                            eatenSlimes.Add(slime);
+
+                            float cellArea = MathF.PI * cell.Radius * cell.Radius;
+                            float slimeArea = MathF.PI * slime.Radius * slime.Radius;
+
+                            float newArea = cellArea + slimeArea;
+                            cell.Radius = MathF.Sqrt(newArea / MathF.PI);
+
+                            int points = (int)(slimeArea / Config.PointPerCell);
+                            player.Score += points;
+
+                            Console.WriteLine($"[{player.Nickname}] Ate a bush.");
                         }
                     }
 
@@ -191,7 +219,7 @@ public partial class Game {
                         }
                         else
                         {
-                            if (Vector2.Distance(cell.Position, anti.Position) < cell.Radius && anti.Bush_ID == cell.Bush_ID)
+                            if (Vector2.Distance(cell.Position, anti.Position) < cell.Radius && (!anti.Bush_ID.HasValue || cell.Bush_IDs.Contains(anti.Bush_ID.Value)))
                             {
                                 eatenAnti.Add(anti);
 
@@ -220,6 +248,12 @@ public partial class Game {
                 foreach (var anti in eatenAnti) {
                     antibodyItems.Remove(anti);
                 }
+
+                foreach (var slime in eatenSlimes)
+                {
+                    slimeItems.Remove(slime);
+                    SpawnSlimes(roomId, 1);
+                }
             }
 
             //handling cell VS cell
@@ -237,7 +271,7 @@ public partial class Game {
                             var cellB = hunter.Cells[j];
 
                             float distance = Vector2.Distance(cellA.Position, cellB.Position);
-                            if (distance < Math.Min(cellA.Radius, cellB.Radius) && cellA.Bush_ID == cellB.Bush_ID) {
+                            if (distance < Math.Min(cellA.Radius, cellB.Radius) && SharesBush(cellA.Bush_IDs, cellB.Bush_IDs)) {
                                 merged.Add((cellA, cellB));
                                 Console.WriteLine($"[{hunter.Nickname}] Merged.");
                             }
@@ -267,7 +301,7 @@ public partial class Game {
                             if (((hunterCell.Radius > preyCell.Radius * Config.OneCellAreaToKill && distance < hunterCell.Radius &&
                                  hunter.Cells.Count() == 1)
                                 || (hunterCell.Radius > preyCell.Radius * Config.ManyCellAreaToKill && distance < hunterCell.Radius &&
-                                    hunter.Cells.Count() > 1)) && hunterCell.Bush_ID == preyCell.Bush_ID)
+                                    hunter.Cells.Count() > 1)) && SharesBush(hunterCell.Bush_IDs, preyCell.Bush_IDs))
                             {
                                 float hunterArea = MathF.PI * hunterCell.Radius * hunterCell.Radius;
                                 float preyArea = MathF.PI * preyCell.Radius * preyCell.Radius;
@@ -342,15 +376,14 @@ public partial class Game {
             foreach ( var player in players.Values){
                 var antiColor = player.PopularSkinColor;
                 var playerBushIds = player.Cells
-                    .Select(c => c.Bush_ID)
-                    .Where(id => id != null)
+                    .SelectMany(c => c.Bush_IDs)
                     .Distinct()
                     .ToList();
 
                 //bool playerInBush = playerBushIds.Any();
 
                 var visibleFood = foodItems
-                    .Where(f => f.Bush_ID == null || playerBushIds.Contains(f.Bush_ID))
+                    .Where(f => !f.Bush_ID.HasValue || playerBushIds.Contains(f.Bush_ID.Value))
                     .Select(f => new {
                         x = f.Position.X,
                         y = f.Position.Y,
@@ -362,7 +395,7 @@ public partial class Game {
                 // add antibodys 
                 if (antibodys.TryGetValue(roomId, out var antibodyList)) {
                     visibleFood.AddRange(antibodyList
-                        .Where(a => a.Bush_ID == null || playerBushIds.Contains(a.Bush_ID))
+                        .Where(a => !a.Bush_ID.HasValue || playerBushIds.Contains(a.Bush_ID.Value))
                         .Select(a => new {
                             x = a.Position.X,
                             y = a.Position.Y,
@@ -379,7 +412,7 @@ public partial class Game {
                     boost = p.RemainingBoostSeconds,
                     isBot = p.IsBot,
                     cells = p.Cells
-                        .Where(c => c.Bush_ID == null || playerBushIds.Contains(c.Bush_ID))
+                        .Where(c => !c.Bush_IDs.Any() || c.Bush_IDs.Intersect(playerBushIds).Any())
                         .Select(c => new
                         {
                             x = c.Position.X,

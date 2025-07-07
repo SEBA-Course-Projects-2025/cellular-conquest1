@@ -29,6 +29,7 @@ namespace GameConfig {
 
         public const float OneCellAreaToKill = 1.1f;
         public const float ManyCellAreaToKill = 1.35f;
+        public const float SlimeAdreToKill = 1.1f;
 
         public const int SpeedSeconds = 5;
         public const int MaxSpeedPoints = 5;
