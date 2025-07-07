@@ -29,6 +29,7 @@ namespace GameConfig {
 
         public const float OneCellAreaToKill = 1.1f;
         public const float ManyCellAreaToKill = 1.35f;
+        public const float SlimeAdreToKill = 1.1f;
 
         public const int SpeedSeconds = 5;
         public const int MaxSpeedPoints = 5;
@@ -38,7 +39,8 @@ namespace GameConfig {
         public const float SizeFactor = 15f;
 
         public const int SpawnNumFood = 100;
-        public const int SpawnNumSlimes = 3;
+        public const int MinSpawnNumSlimes = 3;
+        public const int MaxSpawnNumSlimes = 9;
         public const int NumBots = 5;
 
         public const float PosSpeedBonus = 0.1f;
@@ -46,7 +48,8 @@ namespace GameConfig {
         public const float SpeedBonusRadius = 9f;
         public const float CellRadius = 20f;
         public const float BotRadius = 45f;
-        public const float SlimeRadius = 70f;
+        public const int MinSlimeRadius = 60;
+        public const int MaxSlimeRadius = 150;
 
         public const int BufferSize = 4096;
 
