@@ -34,8 +34,8 @@ public partial class Game
         httpListener.Prefixes.Add("http://+:8080/");
         httpListener.Start();
         Console.WriteLine("Server started on ws://localhost:8080");
-
-        SpawnSlimes(PublicRoomId, Config.SpawnNumSlimes);
+        var rng = new Random();
+        SpawnSlimes(PublicRoomId,  rng.Next(Config.MinSpawnNumSlimes, Config.MaxSpawnNumSlimes));
         SpawnFood(PublicRoomId, Config.SpawnNumFood);
         
 
@@ -86,8 +86,12 @@ public partial class Game
         var rng = new Random();
 
         for (int i = 0; i < count; i++) {
+            int radius = rng.Next(Config.MinSlimeRadius, Config.MaxSlimeRadius);
+            float x = rng.Next((int)radius, Config.WorldWidth - (int)radius);
+            float y = rng.Next((int)radius, Config.WorldHeight - (int)radius);
             var slime = new Slime {
-                Position = new Vector2(rng.Next(0 + (int)Config.SlimeRadius, Config.WorldWidth - (int)Config.SlimeRadius), rng.Next(0 + (int)Config.SlimeRadius, Config.WorldHeight - (int)Config.SlimeRadius)),
+                Radius = radius,
+                Position = new Vector2(x, y),
                 ID = i
             };
             slimes.Add(slime);
