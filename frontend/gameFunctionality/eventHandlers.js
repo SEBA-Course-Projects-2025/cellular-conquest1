@@ -24,7 +24,7 @@ import {
   SPEEDUP_CONFIG,
   UI,
 } from "../gameConfig.js";
-const { ELEMENT_IDS, MESSAGES } = UI;
+const { DEATH_POPUP, MESSAGES } = UI;
 
 export const gameLoop = () => {
   const dt = gameState.dt;
@@ -123,9 +123,9 @@ export const handleDeath = (data) => {
 
   showDeathPopup(data.score);
 
-  const inactivityDelay = ELEMENT_IDS.DEATH_POPUP.INACTIVITY_DELAY_MS;
-  const countdownSeconds = ELEMENT_IDS.DEATH_POPUP.COUNTDOWN_SECONDS;
-  const redirectUrl = ELEMENT_IDS.DEATH_POPUP.REDIRECT_URL;
+  const inactivityDelay = DEATH_POPUP.INACTIVITY_DELAY_MS;
+  const countdownSeconds = DEATH_POPUP.COUNTDOWN_SECONDS;
+  const redirectUrl = DEATH_POPUP.REDIRECT_URL;
 
   let inactivityTimer = setTimeout(() => {
     const notice = document.getElementById("autoCloseNotice");
