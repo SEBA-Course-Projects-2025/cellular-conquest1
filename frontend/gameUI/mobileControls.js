@@ -6,6 +6,7 @@ import {
 } from "../gameFunctionality/eventHandlers.js";
 import gameState from "../gameFunctionality/gameState.js";
 import { UI } from "../gameConfig.js";
+import { hideAllPopups, unhideButtons } from "./inputHandler.js";
 const { JOYSTICK, MOBILE_BUTTONS, CONTAINER_IDS } = UI;
 
 const $ = (id) => document.getElementById(id);
@@ -38,6 +39,8 @@ gameState.isTouch = "ontouchstart" in window || navigator.maxTouchPoints > 0;
 mobileControls.classList.toggle("hidden", !gameState.isTouch);
 
 if (gameState.isTouch) {
+  unhideButtons();
+  hideAllPopups();
   if (joystickRight) {
     mobileControls.classList.add("joystick-right");
     mobileControls.classList.remove("joystick-left");

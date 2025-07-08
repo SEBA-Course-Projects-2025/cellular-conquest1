@@ -6,11 +6,17 @@
     <title>Cellular conquest</title>
     <link rel="stylesheet" href="./gameStyles/gameStyles.css" />
     <link rel="stylesheet" href="./gameStyles/gameMobile.css" />
-    <link rel="stylesheet" href="./rulesStyles.css" />
+    <link rel="stylesheet" href="./gameStyles/popupStyles.css" />
   </head>
   <body>
     <canvas id="gameCanvas"></canvas>
-    <button id="rulesBtn" title="Game Rules">ⓘ</button>
+    <div id="topButtons">
+      <button id="playerInfoBtn" class="hidden" title="Player Info">0</button>
+      <button id="rulesBtn" title="Game Rules">ⓘ</button>
+      <button id="leaderboardBtn" class="hidden" title="Leaderboard">
+        # -
+      </button>
+    </div>
     <div id="gameInfo" class="allScreen">
       <div class="row">
         <div id="playerInfo" class="styledDiv">
@@ -174,7 +180,7 @@
         <button id="closeRules" class="btn">Close</button>
       </div>
     </div>
-    <script src="rulesPopup.js"></script>
+    <script src="./gameUI/popupManager.js"></script>
     <script type="module" src="./gameMain.js"></script>
   </body>
 </html>

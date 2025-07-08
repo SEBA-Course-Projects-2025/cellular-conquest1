@@ -8,7 +8,12 @@ import {
 } from "../gameFunctionality/eventHandlers.js";
 import { canvas } from "./gameRenderer.js";
 import gameState from "../gameFunctionality/gameState.js";
-import { hideExitPopup, showExitPopup } from "./uiController.js";
+import {
+  hideExitPopup,
+  leaderboardBtn,
+  playerInfoBtn,
+  showExitPopup,
+} from "./uiController.js";
 import logger from "../gameFunctionality/logger.js";
 import { copyToClipboard } from "../gameUtils/copyToClipboard.js";
 import { INPUT, DEV_KEYWORDS, UI } from "../gameConfig.js";
@@ -65,6 +70,10 @@ export const handleMouseMove = (event) => {
 };
 
 export function handleCanvasClick(event) {
+  if (gameState.isTouch) {
+    hideAllPopups();
+  }
+
   const rect = canvas.getBoundingClientRect();
   const screenX = event.clientX - rect.left;
   const screenY = event.clientY - rect.top;
@@ -87,3 +96,14 @@ export function handleCanvasClick(event) {
     }
   }
 }
+
+export const hideAllPopups = () => {
+  const $ = (id) => document.getElementById(id);
+  [$("playerInfo"), $("leaderboard"), $("rulesPopup")].forEach((p) =>
+    p.classList.add("hidden")
+  );
+};
+export const unhideButtons = () => {
+  playerInfoBtn.classList.remove("hidden");
+  leaderboardBtn.classList.remove("hidden");
+};

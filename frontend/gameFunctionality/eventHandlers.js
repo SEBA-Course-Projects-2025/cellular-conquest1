@@ -1,7 +1,9 @@
 import { render } from "../gameUI/gameRenderer.js";
 import {
   enemiesDefeated,
+  leaderboardBtn,
   leaderboardList,
+  playerInfoBtn,
   playerNameElement,
   playerScoreElement,
   showDeathPopup,
@@ -61,9 +63,9 @@ export const handleGameState = (data) => {
   const player = gameState.players.find((p) => p.id === gameState.playerId);
   if (player) {
     gameState.playerScore = player.score;
-    playerScoreElement.textContent = `Score: ${Math.floor(
-      gameState.playerScore
-    )}`;
+    const roundedScore = Math.floor(gameState.playerScore);
+    playerScoreElement.textContent = `Score: ${roundedScore}`;
+    playerInfoBtn.textContent = `${roundedScore}`;
     updateSpeedBar(player.abilities?.speed ?? 0);
     gameState.speedupAvailable = !!player.abilities?.speed;
 
@@ -85,13 +87,14 @@ export const handleLeaderboard = (data) => {
   const maxListLen = gameState.isTouch
     ? LEADERBOARD.MAX_LENGTH_TOUCH
     : LEADERBOARD.MAX_LENGTH_DESKTOP;
+  leaderboardBtn.textContent = `#${rank}`;
 
   for (let i = 0; i < Math.min(maxListLen, sortedPlayers.length); i++) {
     const player = sortedPlayers[i];
     const li = document.createElement("li");
     li.textContent = `${player.nickname}: ${Math.floor(player.score)}`;
 
-    if (i === data.personal.rank - 1) {
+    if (i === rank - 1) {
       li.classList.add("special");
     }
 
@@ -104,7 +107,7 @@ export const handleLeaderboard = (data) => {
       gameState.playerScore
     )}`;
     li.classList.add("special");
-    li.value = data.personal.rank;
+    li.value = rank;
     leaderboardList.appendChild(li);
   }
 };
