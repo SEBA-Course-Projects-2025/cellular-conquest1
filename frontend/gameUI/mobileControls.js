@@ -5,11 +5,8 @@ import {
   handleSplit,
 } from "../gameFunctionality/eventHandlers.js";
 import gameState from "../gameFunctionality/gameState.js";
-import {
-  JOYSTICK_CONFIG,
-  MOBILE_BUTTONS,
-  CONTAINER_IDS,
-} from "../gameConfig/mobileControlsConfig.js";
+import { UI } from "../gameConfig.js";
+const { JOYSTICK_CONFIG, MOBILE_BUTTONS, CONTAINER_IDS } = UI;
 
 const $ = (id) => document.getElementById(id);
 

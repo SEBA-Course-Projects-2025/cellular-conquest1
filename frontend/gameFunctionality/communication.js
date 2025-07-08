@@ -7,15 +7,15 @@ import {
 } from "./eventHandlers.js";
 import gameState from "./gameState.js";
 import logger from "./logger.js";
-import {
+import { NETWORK } from "../gameConfig.js";
+const {
   LOCAL_HOSTNAMES,
   LOCAL_PREFIXES,
   PRODUCTION_WS_URL,
   RECONNECT_DELAY,
   DEFAULTS,
-  MESSAGE_TYPES,
-} from "../gameConfig/networkConfig.js";
-import { LOCAL_STORAGE_KEYS } from "../gameConfig/localStorageKeys.js";
+} = NETWORK;
+import { MESSAGE_TYPES, LOCAL_STORAGE_KEYS } from "../gameConfig.js";
 
 const isLocal =
   LOCAL_HOSTNAMES.includes(location.hostname) ||

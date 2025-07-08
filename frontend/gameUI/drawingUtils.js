@@ -1,4 +1,4 @@
-import { RENDER_CONFIG } from "../gameConfig/rendererConfig.js";
+import { RENDER } from "../gameConfig.js";
 import gameState from "../gameFunctionality/gameState.js";
 
 const skinImageCache = new Map();
@@ -74,19 +74,16 @@ export function drawText(
   x,
   y,
   radius,
-  color = RENDER_CONFIG.TEXT.DEFAULT_COLOR
+  color = RENDER.TEXT.DEFAULT_COLOR
 ) {
   const fontSize = Math.max(
-    RENDER_CONFIG.TEXT.MIN_FONT_SIZE,
-    Math.min(
-      radius * RENDER_CONFIG.TEXT.FONT_SIZE_RATIO,
-      RENDER_CONFIG.TEXT.MAX_FONT_SIZE
-    )
+    RENDER.TEXT.MIN_FONT_SIZE,
+    Math.min(radius * RENDER.TEXT.FONT_SIZE_RATIO, RENDER.TEXT.MAX_FONT_SIZE)
   );
-  ctx.font = `${fontSize}px ${RENDER_CONFIG.TEXT.FONT_FAMILY}`;
+  ctx.font = `${fontSize}px ${RENDER.TEXT.FONT_FAMILY}`;
   ctx.textAlign = "center";
   ctx.textBaseline = "middle";
-  const padding = RENDER_CONFIG.TEXT.PADDING;
+  const padding = RENDER.TEXT.PADDING;
   const textMetrics = ctx.measureText(text);
   const textWidth = textMetrics.width + padding * 2;
   const textHeight = fontSize + padding * 2;
@@ -100,7 +97,7 @@ export function drawText(
     textWidth,
     textHeight,
     borderRadius,
-    RENDER_CONFIG.TEXT.BACKGROUND_COLOR
+    RENDER.TEXT.BACKGROUND_COLOR
   );
   ctx.fillStyle = color;
   ctx.fillText(text, x, y);

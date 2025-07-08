@@ -1,5 +1,5 @@
 import gameState from "../gameFunctionality/gameState.js";
-import { RENDER_CONFIG } from "../gameConfig/rendererConfig.js";
+import { RENDER } from "../gameConfig.js";
 import { drawCircle, drawText } from "./drawingUtils.js";
 import {
   drawWavyBlob,
@@ -7,7 +7,7 @@ import {
   drawFluffyBush,
 } from "./blobRenderer.js";
 
-export const canvas = document.getElementById(RENDER_CONFIG.CANVAS_ID);
+export const canvas = document.getElementById(RENDER.CANVAS_ID);
 const ctx = canvas.getContext("2d");
 
 const skinImageCache = new Map();
@@ -36,10 +36,10 @@ function getCachedSkinImage(playerId) {
 }
 
 function drawGrid() {
-  const gridSize = RENDER_CONFIG.GRID.SIZE;
-  const lineColor = RENDER_CONFIG.GRID.LINE_COLOR;
+  const gridSize = RENDER.GRID.SIZE;
+  const lineColor = RENDER.GRID.LINE_COLOR;
   ctx.strokeStyle = lineColor;
-  ctx.lineWidth = RENDER_CONFIG.GRID.LINE_WIDTH;
+  ctx.lineWidth = RENDER.GRID.LINE_WIDTH;
   const startX =
     Math.floor(
       (gameState.camera.x - canvas.width / 2 / gameState.camera.scale) /
@@ -86,7 +86,7 @@ function drawTrail(
   trailCount = null,
   cellKey = null
 ) {
-  const actualTrailLength = trailCount || RENDER_CONFIG.TRAIL.LENGTH;
+  const actualTrailLength = trailCount || RENDER.TRAIL.LENGTH;
 
   let actualColor = color;
   const currentTime = Date.now();
@@ -96,7 +96,7 @@ function drawTrail(
 
     if (
       outlineData &&
-      currentTime - outlineData.startTime < RENDER_CONFIG.OUTLINE.DURATION
+      currentTime - outlineData.startTime < RENDER.OUTLINE.DURATION
     ) {
       actualColor = outlineData.color;
     } else {
@@ -110,23 +110,22 @@ function drawTrail(
 
   for (let i = 0; i < actualTrailLength; i++) {
     const t = 1 - i / actualTrailLength;
-    let alpha = t * RENDER_CONFIG.TRAIL.MAX_ALPHA;
+    let alpha = t * RENDER.TRAIL.MAX_ALPHA;
 
     if (trailCount === 1 && cellKey) {
       const outlineData = cellOutlineCache.get(cellKey);
       if (outlineData) {
         const elapsed = currentTime - outlineData.startTime;
-        const fadeProgress = elapsed / RENDER_CONFIG.OUTLINE.DURATION;
-        alpha = RENDER_CONFIG.OUTLINE.ALPHA * (1 - fadeProgress);
+        const fadeProgress = elapsed / RENDER.OUTLINE.DURATION;
+        alpha = RENDER.OUTLINE.ALPHA * (1 - fadeProgress);
       }
     }
 
     const size =
       radius *
-      (RENDER_CONFIG.TRAIL.MIN_SIZE_RATIO +
-        t * (1 - RENDER_CONFIG.TRAIL.MIN_SIZE_RATIO));
+      (RENDER.TRAIL.MIN_SIZE_RATIO + t * (1 - RENDER.TRAIL.MIN_SIZE_RATIO));
     const offset =
-      (i / actualTrailLength) * radius * RENDER_CONFIG.TRAIL.OFFSET_MULTIPLIER;
+      (i / actualTrailLength) * radius * RENDER.TRAIL.OFFSET_MULTIPLIER;
     drawCircle(
       ctx,
       x + dirX * offset,
@@ -147,9 +146,9 @@ function updateOutlineState(cellKey, currentRadius) {
   if (radiusDiff > 0.1) {
     let outlineColor;
     if (currentRadius < lastRadius) {
-      outlineColor = RENDER_CONFIG.OUTLINE.DANGER_COLOR;
+      outlineColor = RENDER.OUTLINE.DANGER_COLOR;
     } else if (currentRadius > lastRadius) {
-      outlineColor = RENDER_CONFIG.OUTLINE.SUCCESS_COLOR;
+      outlineColor = RENDER.OUTLINE.SUCCESS_COLOR;
     }
 
     if (outlineColor) {
@@ -163,7 +162,7 @@ function updateOutlineState(cellKey, currentRadius) {
   const outlineData = cellOutlineCache.get(cellKey);
   if (
     outlineData &&
-    currentTime - outlineData.startTime >= RENDER_CONFIG.OUTLINE.DURATION
+    currentTime - outlineData.startTime >= RENDER.OUTLINE.DURATION
   ) {
     cellOutlineCache.delete(cellKey);
   }
@@ -181,7 +180,7 @@ function renderFood() {
       food.y,
       food.radius,
       food.color,
-      food.visibility ?? RENDER_CONFIG.FOOD.DEFAULT_VISIBILITY
+      food.visibility ?? RENDER.FOOD.DEFAULT_VISIBILITY
     );
   }
 }
@@ -220,12 +219,12 @@ function renderPlayers() {
         `player_${player.id}_${cellIndex}`,
         {
           image: validSkinImg,
-          breatheEffect: RENDER_CONFIG.PLAYER_BLOB.BREATHE_EFFECT,
-          wobbleIntensity: RENDER_CONFIG.PLAYER_BLOB.WOBBLE_INTENSITY,
-          wobbleSpeed: RENDER_CONFIG.PLAYER_BLOB.WOBBLE_SPEED,
-          minPoints: RENDER_CONFIG.PLAYER_BLOB.MIN_POINTS,
-          maxPoints: RENDER_CONFIG.PLAYER_BLOB.MAX_POINTS,
-          pointDensity: RENDER_CONFIG.PLAYER_BLOB.POINT_DENSITY,
+          breatheEffect: RENDER.PLAYER_BLOB.BREATHE_EFFECT,
+          wobbleIntensity: RENDER.PLAYER_BLOB.WOBBLE_INTENSITY,
+          wobbleSpeed: RENDER.PLAYER_BLOB.WOBBLE_SPEED,
+          minPoints: RENDER.PLAYER_BLOB.MIN_POINTS,
+          maxPoints: RENDER.PLAYER_BLOB.MAX_POINTS,
+          pointDensity: RENDER.PLAYER_BLOB.POINT_DENSITY,
         }
       );
 
@@ -237,8 +236,8 @@ function renderPlayers() {
 function renderBushes() {
   for (const bush of gameState.bushes) {
     const visibility = gameState.bushIds?.includes(bush.id)
-      ? RENDER_CONFIG.BUSH_BLOB.HIDDEN_VISIBILITY
-      : RENDER_CONFIG.BUSH_BLOB.VISIBLE_VISIBILITY;
+      ? RENDER.BUSH_BLOB.HIDDEN_VISIBILITY
+      : RENDER.BUSH_BLOB.VISIBLE_VISIBILITY;
     drawFluffyBush(
       ctx,
       bush.x,
@@ -249,9 +248,9 @@ function renderBushes() {
       `bush_${bush.id}`,
       {
         visibility,
-        borderColor: RENDER_CONFIG.BUSH_BLOB.BORDER_COLOR,
-        wobbleIntensity: RENDER_CONFIG.BUSH_BLOB.WOBBLE_INTENSITY,
-        wobbleSpeed: RENDER_CONFIG.BUSH_BLOB.WOBBLE_SPEED,
+        borderColor: RENDER.BUSH_BLOB.BORDER_COLOR,
+        wobbleIntensity: RENDER.BUSH_BLOB.WOBBLE_INTENSITY,
+        wobbleSpeed: RENDER.BUSH_BLOB.WOBBLE_SPEED,
       }
     );
   }
@@ -263,7 +262,7 @@ export const resizeCanvas = () => {
 };
 
 export const render = () => {
-  ctx.fillStyle = RENDER_CONFIG.BACKGROUND_COLOR;
+  ctx.fillStyle = RENDER.BACKGROUND_COLOR;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   ctx.save();
   ctx.translate(canvas.width / 2, canvas.height / 2);

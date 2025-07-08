@@ -1,11 +1,7 @@
 import gameState from "../gameFunctionality/gameState.js";
 import { copyToClipboard } from "../gameUtils/copyToClipboard.js";
-import {
-  SPEED_BAR_CONFIG,
-  ERROR_POPUP_CONFIG,
-  UI_MESSAGES,
-  ELEMENT_IDS,
-} from "../gameConfig/uiConfig.js";
+import { UI } from "../gameConfig.js";
+const { ELEMENT_IDS, ERROR_POPUP, MESSAGES, SPEED_BAR } = UI;
 
 export const playerNameElement = document.getElementById(
   ELEMENT_IDS.PLAYER_NAME
@@ -26,21 +22,21 @@ let hideTimeout;
 export function showGameError(message) {
   clearTimeout(hideTimeout);
   const popup = document.getElementById(ELEMENT_IDS.ERROR_POPUP);
-  popup.classList.add(ERROR_POPUP_CONFIG.CLASS_VISIBLE);
+  popup.classList.add(ERROR_POPUP.CLASS_VISIBLE);
   popup.innerText = message;
   setTimeout(() => {
-    popup.classList.remove(ERROR_POPUP_CONFIG.CLASS_VISIBLE);
-  }, ERROR_POPUP_CONFIG.TIMEOUT_MS);
+    popup.classList.remove(ERROR_POPUP.CLASS_VISIBLE);
+  }, ERROR_POPUP.TIMEOUT_MS);
 }
 
 export function updateSpeedBar(speedBars) {
   document.getElementById(ELEMENT_IDS.SPEED_BAR).style.width =
-    (speedBars / SPEED_BAR_CONFIG.MAX_SEGMENTS) * 100 + "%";
+    (speedBars / SPEED_BAR.MAX_SEGMENTS) * 100 + "%";
 }
 
 document.getElementById(ELEMENT_IDS.ROOM_ID).addEventListener(
   "click",
-  copyToClipboard(() => gameState.roomId, UI_MESSAGES.ROOM_ID_COPIED)
+  copyToClipboard(() => gameState.roomId, MESSAGES.ROOM_ID_COPIED)
 );
 
 export function showDeathPopup(score) {

@@ -1,4 +1,4 @@
-import { RENDER_CONFIG } from "../gameConfig/rendererConfig.js";
+import { RENDER } from "../gameConfig.js";
 import { getMiddlePoint, createSeededRandom } from "./drawingUtils.js";
 
 const blobCache = new Map();
@@ -163,8 +163,8 @@ function drawPathBasedBlob(
     if (breatheEffect) {
       const breathe =
         1 +
-        Math.sin(timestamp * RENDER_CONFIG.BLOB.BREATHE_SPEED) *
-          RENDER_CONFIG.BLOB.BREATHE_AMPLITUDE;
+        Math.sin(timestamp * RENDER.BLOB.BREATHE_SPEED) *
+          RENDER.BLOB.BREATHE_AMPLITUDE;
       imgSize *= breathe;
     }
 
@@ -172,11 +172,11 @@ function drawPathBasedBlob(
 
     ctx.globalCompositeOperation = "multiply";
     ctx.fillStyle = color;
-    ctx.globalAlpha = RENDER_CONFIG.BLOB.MULTIPLY_ALPHA;
+    ctx.globalAlpha = RENDER.BLOB.MULTIPLY_ALPHA;
     ctx.fill();
 
     ctx.globalCompositeOperation = "screen";
-    ctx.fillStyle = `rgba(255, 255, 255, ${RENDER_CONFIG.BLOB.SCREEN_ALPHA})`;
+    ctx.fillStyle = `rgba(255, 255, 255, ${RENDER.BLOB.SCREEN_ALPHA})`;
     ctx.globalAlpha = 1;
     ctx.fill();
 
@@ -188,12 +188,11 @@ function drawPathBasedBlob(
 
   if (borderColor) {
     ctx.globalAlpha =
-      (Math.max(0, Math.min(visibility, 100)) / 100) *
-      RENDER_CONFIG.BLOB.BORDER_ALPHA;
+      (Math.max(0, Math.min(visibility, 100)) / 100) * RENDER.BLOB.BORDER_ALPHA;
     ctx.strokeStyle = borderColor;
     ctx.lineWidth = Math.max(
-      RENDER_CONFIG.BLOB.MIN_BORDER_WIDTH,
-      radius * RENDER_CONFIG.BLOB.BORDER_WIDTH_RATIO
+      RENDER.BLOB.MIN_BORDER_WIDTH,
+      radius * RENDER.BLOB.BORDER_WIDTH_RATIO
     );
     ctx.stroke();
   }
@@ -249,11 +248,11 @@ export function drawWavyBlob(
   options = {}
 ) {
   const {
-    wobbleIntensity = RENDER_CONFIG.BLOB.DEFAULT_WOBBLE_INTENSITY,
-    wobbleSpeed = RENDER_CONFIG.BLOB.DEFAULT_WOBBLE_SPEED,
-    minPoints = RENDER_CONFIG.BLOB.DEFAULT_MIN_POINTS,
-    maxPoints = RENDER_CONFIG.BLOB.DEFAULT_MAX_POINTS,
-    pointDensity = RENDER_CONFIG.BLOB.DEFAULT_POINT_DENSITY,
+    wobbleIntensity = RENDER.BLOB.DEFAULT_WOBBLE_INTENSITY,
+    wobbleSpeed = RENDER.BLOB.DEFAULT_WOBBLE_SPEED,
+    minPoints = RENDER.BLOB.DEFAULT_MIN_POINTS,
+    maxPoints = RENDER.BLOB.DEFAULT_MAX_POINTS,
+    pointDensity = RENDER.BLOB.DEFAULT_POINT_DENSITY,
   } = options;
 
   const points = Math.max(
@@ -295,8 +294,8 @@ export function drawFluffyBush(
   const {
     visibility = 100,
     borderColor = null,
-    wobbleIntensity = RENDER_CONFIG.BUSH_BLOB.WOBBLE_INTENSITY,
-    wobbleSpeed = RENDER_CONFIG.BUSH_BLOB.WOBBLE_SPEED,
+    wobbleIntensity = RENDER.BUSH_BLOB.WOBBLE_INTENSITY,
+    wobbleSpeed = RENDER.BUSH_BLOB.WOBBLE_SPEED,
   } = options;
 
   const params = generateFluffyBushParams(blobId, radius);
@@ -328,10 +327,10 @@ export function drawFluffyBush(
   if (borderColor) {
     ctx.strokeStyle = borderColor;
     ctx.lineWidth = Math.max(
-      RENDER_CONFIG.BLOB.MIN_BORDER_WIDTH,
-      radius * RENDER_CONFIG.BLOB.BORDER_WIDTH_RATIO * 0.5
+      RENDER.BLOB.MIN_BORDER_WIDTH,
+      radius * RENDER.BLOB.BORDER_WIDTH_RATIO * 0.5
     );
-    ctx.globalAlpha = baseAlpha * RENDER_CONFIG.BLOB.BORDER_ALPHA;
+    ctx.globalAlpha = baseAlpha * RENDER.BLOB.BORDER_ALPHA;
 
     for (const param of params) {
       const wobbleAmount = param.radius * wobbleIntensity;

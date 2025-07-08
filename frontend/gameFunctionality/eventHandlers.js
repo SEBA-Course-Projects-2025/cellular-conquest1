@@ -15,13 +15,13 @@ import {
 } from "./communication.js";
 import gameState from "./gameState.js";
 import { copyToClipboard } from "../gameUtils/copyToClipboard.js";
-import { LOCAL_STORAGE_KEYS } from "../gameConfig/localStorageKeys.js";
 import {
-  LEADERBOARD_CONFIG,
-  DEATH_POPUP_CONFIG,
+  LOCAL_STORAGE_KEYS,
+  LEADERBOARD,
   SPEEDUP_CONFIG,
-  UI_MESSAGES,
-} from "../gameConfig/gamePlayConfig.js";
+  UI,
+} from "../gameConfig.js";
+const { ELEMENT_IDS, MESSAGES } = UI;
 
 export const gameLoop = () => {
   const dt = gameState.dt;
@@ -78,8 +78,8 @@ export const handleLeaderboard = (data) => {
 
   const sortedPlayers = data.topPlayers;
   const maxListLen = gameState.isTouch
-    ? LEADERBOARD_CONFIG.MAX_LENGTH_TOUCH
-    : LEADERBOARD_CONFIG.MAX_LENGTH_DESKTOP;
+    ? LEADERBOARD.MAX_LENGTH_TOUCH
+    : LEADERBOARD.MAX_LENGTH_DESKTOP;
 
   for (let i = 0; i < Math.min(maxListLen, sortedPlayers.length); i++) {
     const player = sortedPlayers[i];
@@ -115,9 +115,9 @@ export const handleDeath = (data) => {
 
   showDeathPopup(data.score);
 
-  const inactivityDelay = DEATH_POPUP_CONFIG.INACTIVITY_DELAY_MS;
-  const countdownSeconds = DEATH_POPUP_CONFIG.COUNTDOWN_SECONDS;
-  const redirectUrl = DEATH_POPUP_CONFIG.REDIRECT_URL;
+  const inactivityDelay = ELEMENT_IDS.DEATH_POPUP.INACTIVITY_DELAY_MS;
+  const countdownSeconds = ELEMENT_IDS.DEATH_POPUP.COUNTDOWN_SECONDS;
+  const redirectUrl = ELEMENT_IDS.DEATH_POPUP.REDIRECT_URL;
 
   let inactivityTimer = setTimeout(() => {
     const notice = document.getElementById("autoCloseNotice");
@@ -170,7 +170,7 @@ export const handleInput = (input) => {
 
 export const handleMasking = (newImage) => {
   gameState.updatePlayerSkin(gameState.playerId, newImage);
-  copyToClipboard(() => newImage, UI_MESSAGES.RESET_SKIN_HINT)();
+  copyToClipboard(() => newImage, MESSAGES.RESET_SKIN_HINT)();
 };
 
 export const handleSkinReset = () => {

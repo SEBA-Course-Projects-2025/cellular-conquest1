@@ -211,3 +211,7 @@ body {
   align-items: center;
   gap: 5px;
 }
+
+.svg {
+  color: var(--color-primary);
+}
