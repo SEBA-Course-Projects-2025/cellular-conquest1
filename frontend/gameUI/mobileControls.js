@@ -6,7 +6,7 @@ import {
 } from "../gameFunctionality/eventHandlers.js";
 import gameState from "../gameFunctionality/gameState.js";
 import { UI } from "../gameConfig.js";
-const { JOYSTICK_CONFIG, MOBILE_BUTTONS, CONTAINER_IDS } = UI;
+const { JOYSTICK, MOBILE_BUTTONS, CONTAINER_IDS } = UI;
 
 const $ = (id) => document.getElementById(id);
 
@@ -53,10 +53,10 @@ let joystickPointerId = null;
 
 const clamp = (dx, dy) => {
   const dist = Math.hypot(dx, dy);
-  if (dist > JOYSTICK_CONFIG.RADIUS) {
+  if (dist > JOYSTICK.RADIUS) {
     const angle = Math.atan2(dy, dx);
-    dx = Math.cos(angle) * JOYSTICK_CONFIG.RADIUS;
-    dy = Math.sin(angle) * JOYSTICK_CONFIG.RADIUS;
+    dx = Math.cos(angle) * JOYSTICK.RADIUS;
+    dy = Math.sin(angle) * JOYSTICK.RADIUS;
   }
   return { dx, dy };
 };
@@ -70,13 +70,13 @@ const updateJoystick = (x, y) => {
   joystickKnob.style.top = `${50 + cdy}px`;
 
   const norm = {
-    x: cdx / JOYSTICK_CONFIG.RADIUS,
-    y: cdy / JOYSTICK_CONFIG.RADIUS,
+    x: cdx / JOYSTICK.RADIUS,
+    y: cdy / JOYSTICK.RADIUS,
   };
 
   handleInput({
-    x: gameState.camera.x + norm.x * JOYSTICK_CONFIG.MOVE_INTENSITY,
-    y: gameState.camera.y + norm.y * JOYSTICK_CONFIG.MOVE_INTENSITY,
+    x: gameState.camera.x + norm.x * JOYSTICK.MOVE_INTENSITY,
+    y: gameState.camera.y + norm.y * JOYSTICK.MOVE_INTENSITY,
   });
 };
 
@@ -117,8 +117,8 @@ const onJoystickEnd = (e) => {
 
   joystickActive = false;
   joystickPointerId = null;
-  joystickKnob.style.left = JOYSTICK_CONFIG.RESET_POS;
-  joystickKnob.style.top = JOYSTICK_CONFIG.RESET_POS;
+  joystickKnob.style.left = JOYSTICK.RESET_POS;
+  joystickKnob.style.top = JOYSTICK.RESET_POS;
   e.preventDefault();
 };
 
