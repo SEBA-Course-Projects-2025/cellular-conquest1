@@ -12,6 +12,8 @@ const ctx = canvas.getContext("2d");
 
 const skinImageCache = new Map();
 const cellMovementCache = new Map();
+const cellRadiusCache = new Map();
+const cellOutlineCache = new Map();
 
 function getCachedSkinImage(playerId) {
   const skinEntry = gameState.playersSkins.find((p) => p.id === playerId);
@@ -74,29 +76,101 @@ function drawGrid() {
   }
 }
 
-function drawTrail(x, y, radius, dx, dy, color) {
-  const trailLength = RENDER_CONFIG.TRAIL.LENGTH;
+function drawTrail(
+  x,
+  y,
+  radius,
+  dx,
+  dy,
+  color,
+  trailCount = null,
+  cellKey = null
+) {
+  const actualTrailLength = trailCount || RENDER_CONFIG.TRAIL.LENGTH;
+
+  let actualColor = color;
+  const currentTime = Date.now();
+
+  if (trailCount === 1 && cellKey) {
+    const outlineData = cellOutlineCache.get(cellKey);
+
+    if (
+      outlineData &&
+      currentTime - outlineData.startTime < RENDER_CONFIG.OUTLINE.DURATION
+    ) {
+      actualColor = outlineData.color;
+    } else {
+      return;
+    }
+  }
+
   const distance = Math.sqrt(dx * dx + dy * dy);
   const dirX = distance > 0 ? -dx / distance : 0;
   const dirY = distance > 0 ? -dy / distance : 0;
-  for (let i = 0; i < trailLength; i++) {
-    const t = 1 - i / trailLength;
-    const alpha = t * RENDER_CONFIG.TRAIL.MAX_ALPHA;
+
+  for (let i = 0; i < actualTrailLength; i++) {
+    const t = 1 - i / actualTrailLength;
+    let alpha = t * RENDER_CONFIG.TRAIL.MAX_ALPHA;
+
+    if (trailCount === 1 && cellKey) {
+      const outlineData = cellOutlineCache.get(cellKey);
+      if (outlineData) {
+        const elapsed = currentTime - outlineData.startTime;
+        const fadeProgress = elapsed / RENDER_CONFIG.OUTLINE.DURATION;
+        alpha = RENDER_CONFIG.OUTLINE.ALPHA * (1 - fadeProgress);
+      }
+    }
+
     const size =
       radius *
       (RENDER_CONFIG.TRAIL.MIN_SIZE_RATIO +
         t * (1 - RENDER_CONFIG.TRAIL.MIN_SIZE_RATIO));
     const offset =
-      (i / trailLength) * radius * RENDER_CONFIG.TRAIL.OFFSET_MULTIPLIER;
+      (i / actualTrailLength) * radius * RENDER_CONFIG.TRAIL.OFFSET_MULTIPLIER;
     drawCircle(
       ctx,
       x + dirX * offset,
       y + dirY * offset,
       size,
-      color,
+      actualColor,
       100 * alpha
     );
   }
+}
+
+function updateOutlineState(cellKey, currentRadius) {
+  const currentTime = Date.now();
+  const lastRadius = cellRadiusCache.get(cellKey) || currentRadius;
+  cellRadiusCache.set(cellKey, currentRadius);
+
+  const radiusDiff = Math.abs(currentRadius - lastRadius);
+  if (radiusDiff > 0.1) {
+    let outlineColor;
+    if (currentRadius < lastRadius) {
+      outlineColor = RENDER_CONFIG.OUTLINE.DANGER_COLOR;
+    } else if (currentRadius > lastRadius) {
+      outlineColor = RENDER_CONFIG.OUTLINE.SUCCESS_COLOR;
+    }
+
+    if (outlineColor) {
+      cellOutlineCache.set(cellKey, {
+        color: outlineColor,
+        startTime: currentTime,
+      });
+    }
+  }
+
+  const outlineData = cellOutlineCache.get(cellKey);
+  if (
+    outlineData &&
+    currentTime - outlineData.startTime >= RENDER_CONFIG.OUTLINE.DURATION
+  ) {
+    cellOutlineCache.delete(cellKey);
+  }
+}
+
+function drawOutline(x, y, radius, dx, dy, color, cellKey) {
+  drawTrail(x, y, radius, dx, dy, color, 1, cellKey);
 }
 
 function renderFood() {
@@ -114,12 +188,17 @@ function renderFood() {
 
 function renderPlayers() {
   for (const player of gameState.players) {
-    for (const cell of player.cells) {
-      const key = `${player.id}_${player.cells.indexOf(cell)}`;
+    for (let cellIndex = 0; cellIndex < player.cells.length; cellIndex++) {
+      const cell = player.cells[cellIndex];
+      const key = `${player.id}_${cellIndex}`;
       const lastPos = cellMovementCache.get(key) || { x: cell.x, y: cell.y };
       const dx = cell.x - lastPos.x;
       const dy = cell.y - lastPos.y;
       cellMovementCache.set(key, { x: cell.x, y: cell.y });
+
+      updateOutlineState(key, cell.radius);
+
+      drawOutline(cell.x, cell.y, cell.radius, dx, dy, cell.color, key);
 
       if (gameState.speedupActive && player.id === gameState.playerId) {
         drawTrail(cell.x, cell.y, cell.radius, dx, dy, cell.color);
@@ -138,7 +217,7 @@ function renderPlayers() {
         cell.radius,
         cell.color,
         Date.now(),
-        `player_${player.id}_${player.cells.indexOf(cell)}`,
+        `player_${player.id}_${cellIndex}`,
         {
           image: validSkinImg,
           breatheEffect: RENDER_CONFIG.PLAYER_BLOB.BREATHE_EFFECT,

@@ -58,6 +58,13 @@ export const RENDER_CONFIG = {
     OFFSET_MULTIPLIER: 1.5,
   },
 
+  OUTLINE: {
+    DANGER_COLOR: "#ff4444",
+    SUCCESS_COLOR: "#44ff44",
+    ALPHA: 0.4,
+    DURATION: 2000,
+  },
+
   BACKGROUND_COLOR: "#111111",
 
   FOOD: {
