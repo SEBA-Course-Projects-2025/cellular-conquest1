@@ -127,7 +127,7 @@
       "id": Guid,
       "nickname": string,
       "score": number,
-      "isBot": boolean, // ‼️NEW‼️
+      "isBot": boolean,
       "cells": [
         {
           "x": number,
@@ -193,6 +193,7 @@
   "personal": {
     "rank": number,
     "score": number
+    "killed": number // ‼️NEW‼️
   }
 }</code></pre>
   </td>
