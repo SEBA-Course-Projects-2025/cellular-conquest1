@@ -141,19 +141,33 @@ function drawGrid() {
   }
 }
 
-function generateBlobControlPoints(blobId, radius, pointsCount) {
+function createSeededRandom(seed) {
+  let state = seed.split("").reduce((a, b) => {
+    a = (a << 5) - a + b.charCodeAt(0);
+    return a & a;
+  }, 0);
+  return function () {
+    let t = (state += 0x6d2b79f5);
+    t = Math.imul(t ^ (t >>> 15), t | 1);
+    t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+function generateWavyBlobControlPoints(blobId, pointsCount) {
   let controlPoints = blobCache.get(blobId);
   if (!controlPoints) {
     controlPoints = [];
     const angleStep = (Math.PI * 2) / pointsCount;
+    const seededRandom = createSeededRandom(blobId);
+
     for (let i = 0; i < pointsCount; i++) {
       const angle = i * angleStep;
-      const phaseOffset = Math.random() * Math.PI * 2;
       controlPoints.push({
         baseX: Math.cos(angle),
         baseY: Math.sin(angle),
-        phaseOffset: phaseOffset,
-        wobbleFreq: 0.9 + Math.random() * 0.2,
+        phaseOffset: seededRandom() * Math.PI * 2,
+        wobbleFreq: 0.9 + seededRandom() * 0.2,
       });
     }
     blobCache.set(blobId, controlPoints);
@@ -161,27 +175,48 @@ function generateBlobControlPoints(blobId, radius, pointsCount) {
   return controlPoints;
 }
 
-function updateBlobPoints(
-  controlPoints,
-  x,
-  y,
-  radius,
-  wobbleAmount,
-  timestamp,
-  wobbleSpeed
-) {
-  for (let i = 0; i < controlPoints.length; i++) {
-    const point = controlPoints[i];
-    const wobble =
-      Math.sin(timestamp * wobbleSpeed * point.wobbleFreq + point.phaseOffset) *
-      wobbleAmount;
-    const adjustedRadius = radius + wobble;
-    point.x = x + adjustedRadius * point.baseX;
-    point.y = y + adjustedRadius * point.baseY;
+function generateSpikyBlobParams(blobId, spikeCount) {
+  let params = blobCache.get(blobId);
+  if (!params) {
+    params = [];
+    const seededRandom = createSeededRandom(blobId);
+    for (let i = 0; i < spikeCount; i++) {
+      params.push({
+        radialVariationSeed: seededRandom() * 200,
+        tangentialVariationSeed: seededRandom() * 200,
+        curveVariationSeed: seededRandom() * 200,
+      });
+    }
+    blobCache.set(blobId, params);
   }
+  return params;
 }
 
-function createBlobPath(controlPoints) {
+function generateFluffyBushParams(blobId, baseRadius) {
+  let params = blobCache.get(blobId);
+  if (!params) {
+    params = [];
+    const seededRandom = createSeededRandom(blobId);
+    const numCircles = 5 + Math.floor(seededRandom() * 4);
+
+    for (let i = 0; i < numCircles; i++) {
+      const angle = seededRandom() * Math.PI * 2;
+      const offset = seededRandom() * baseRadius * 0.4;
+
+      params.push({
+        offsetX: Math.cos(angle) * offset,
+        offsetY: Math.sin(angle) * offset,
+        radius: baseRadius * (0.4 + seededRandom() * 0.3),
+        phaseOffset: seededRandom() * Math.PI * 2,
+        wobbleFreq: 0.9 + seededRandom() * 0.2,
+      });
+    }
+    blobCache.set(blobId, params);
+  }
+  return params;
+}
+
+function createWavyPath(ctx, controlPoints) {
   if (controlPoints.length === 0) return;
   const firstMidpoint = getMiddlePoint(
     controlPoints[controlPoints.length - 1],
@@ -196,59 +231,31 @@ function createBlobPath(controlPoints) {
   }
 }
 
-function drawExponentialSpikyBlob(
-  x,
-  y,
-  radius,
-  color,
-  timestamp,
-  blobId,
-  options = {}
-) {
-  const {
-    image = null,
-    visibility = 100,
-    wobbleIntensity = 0.1,
-    wobbleSpeed = 0.5,
-    minPoints = 10,
-    maxPoints = 100,
-    pointDensity = 5,
-    spikeCount: explicitSpikeCount,
-  } = options;
+function createSpikyPath(ctx, { radius, timestamp, options, cachedParams }) {
+  const { wobbleIntensity = 0.1, wobbleSpeed = 0.5 } = options;
+
+  const spikeCount = cachedParams.length;
   const increasedRadius = radius * 1.2;
-
-  const spikeCount =
-    explicitSpikeCount !== undefined
-      ? explicitSpikeCount
-      : Math.max(
-          minPoints,
-          Math.min(maxPoints, Math.floor(increasedRadius / pointDensity))
-        );
-
   const baseRotation = (timestamp * wobbleSpeed * 0.001) % (Math.PI * 2);
-  const wobbleAmount = increasedRadius * wobbleIntensity;
 
-  ctx.save();
-  ctx.translate(x, y);
   ctx.rotate(baseRotation);
-  ctx.globalAlpha = Math.max(0, Math.min(visibility, 100)) / 100;
-
-  ctx.beginPath();
 
   const innerBaseRadius = increasedRadius;
   const baseControlPointRadius = innerBaseRadius * 0.6;
 
   for (let i = 0; i < spikeCount; i++) {
-    const radialWobbleTime = timestamp * 0.002 + i * 10;
+    const param = cachedParams[i];
+    const radialWobbleTime = timestamp * 0.002 + param.radialVariationSeed;
     const radialVariation = Math.sin(radialWobbleTime) * 0.5 + 0.5;
-    const spikeLength = wobbleAmount * 2 * radialVariation;
+    const spikeLength = increasedRadius * wobbleIntensity * 2 * radialVariation;
     const spikeTipRadius = innerBaseRadius + spikeLength;
 
-    const tangentialWobbleTime = timestamp * 0.001 + i * 7;
+    const tangentialWobbleTime =
+      timestamp * 0.001 + param.tangentialVariationSeed;
     const tangentialVariation =
       Math.sin(tangentialWobbleTime) * (Math.PI / spikeCount) * 0.4;
 
-    const curveWobbleTime = timestamp * 0.0008 + i * 4;
+    const curveWobbleTime = timestamp * 0.0008 + param.curveVariationSeed;
     const curveVariation = Math.sin(curveWobbleTime) * 0.2 + 1.0;
     const dynamicControlPointRadius = baseControlPointRadius * curveVariation;
 
@@ -279,62 +286,27 @@ function drawExponentialSpikyBlob(
     ctx.quadraticCurveTo(cp1X, cp1Y, spikeTipX, spikeTipY);
     ctx.quadraticCurveTo(cp2X, cp2Y, pBaseEndX, pBaseEndY);
   }
-
-  ctx.closePath();
-
-  if (image) {
-    ctx.clip();
-    let imgSize = radius * 2;
-    ctx.drawImage(image, -imgSize / 2, -imgSize / 2, imgSize, imgSize);
-    ctx.globalCompositeOperation = "multiply";
-    ctx.fillStyle = color;
-    ctx.globalAlpha = 0.6;
-    ctx.fill();
-    ctx.globalCompositeOperation = "screen";
-    ctx.fillStyle = `rgba(255, 255, 255, 0.4)`;
-    ctx.globalAlpha = 1;
-    ctx.fill();
-    ctx.globalCompositeOperation = "source-over";
-  } else {
-    ctx.fillStyle = color;
-    ctx.fill();
-  }
-
-  ctx.restore();
 }
 
-function drawWavyBlob(x, y, radius, color, timestamp, blobId, options = {}) {
+function drawPathBasedBlob(
+  { x, y, radius, color, timestamp, options },
+  pathGenerator
+) {
   const {
     image = null,
     visibility = 100,
     borderColor = null,
-    wobbleIntensity = RENDER_CONFIG.BLOB.DEFAULT_WOBBLE_INTENSITY,
-    wobbleSpeed = RENDER_CONFIG.BLOB.DEFAULT_WOBBLE_SPEED,
     breatheEffect = false,
-    minPoints = RENDER_CONFIG.BLOB.DEFAULT_MIN_POINTS,
-    maxPoints = RENDER_CONFIG.BLOB.DEFAULT_MAX_POINTS,
-    pointDensity = RENDER_CONFIG.BLOB.DEFAULT_POINT_DENSITY,
   } = options;
-  const points = Math.max(
-    minPoints,
-    Math.min(maxPoints, Math.floor(radius / pointDensity))
-  );
-  const wobbleAmount = radius * wobbleIntensity;
-  const controlPoints = generateBlobControlPoints(blobId, radius, points);
-  updateBlobPoints(
-    controlPoints,
-    x,
-    y,
-    radius,
-    wobbleAmount,
-    timestamp,
-    wobbleSpeed
-  );
+
   ctx.save();
+  ctx.translate(x, y);
   ctx.globalAlpha = Math.max(0, Math.min(visibility, 100)) / 100;
+
   ctx.beginPath();
-  createBlobPath(controlPoints);
+  pathGenerator(ctx);
   ctx.closePath();
+
   if (image) {
     ctx.clip();
     let imgSize = radius * 2;
@@ -345,31 +317,165 @@ function drawWavyBlob(x, y, radius, color, timestamp, blobId, options = {}) {
           RENDER_CONFIG.BLOB.BREATHE_AMPLITUDE;
       imgSize *= breathe;
     }
-    const scaledX = x - imgSize / 2;
-    const scaledY = y - imgSize / 2;
-    ctx.drawImage(image, scaledX, scaledY, imgSize, imgSize);
+
+    ctx.drawImage(image, -imgSize / 2, -imgSize / 2, imgSize, imgSize);
+
     ctx.globalCompositeOperation = "multiply";
     ctx.fillStyle = color;
     ctx.globalAlpha = RENDER_CONFIG.BLOB.MULTIPLY_ALPHA;
     ctx.fill();
+
     ctx.globalCompositeOperation = "screen";
     ctx.fillStyle = `rgba(255, 255, 255, ${RENDER_CONFIG.BLOB.SCREEN_ALPHA})`;
     ctx.globalAlpha = 1;
     ctx.fill();
+
     ctx.globalCompositeOperation = "source-over";
   } else {
     ctx.fillStyle = color;
     ctx.fill();
   }
-  ctx.globalAlpha =
-    (Math.max(0, Math.min(visibility, 100)) / 100) *
-    RENDER_CONFIG.BLOB.BORDER_ALPHA;
-  ctx.strokeStyle = borderColor || color;
-  ctx.lineWidth = Math.max(
-    RENDER_CONFIG.BLOB.MIN_BORDER_WIDTH,
-    radius * RENDER_CONFIG.BLOB.BORDER_WIDTH_RATIO
+
+  if (borderColor) {
+    ctx.globalAlpha =
+      (Math.max(0, Math.min(visibility, 100)) / 100) *
+      RENDER_CONFIG.BLOB.BORDER_ALPHA;
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = Math.max(
+      RENDER_CONFIG.BLOB.MIN_BORDER_WIDTH,
+      radius * RENDER_CONFIG.BLOB.BORDER_WIDTH_RATIO
+    );
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
+function drawExponentialSpikyBlob(
+  x,
+  y,
+  radius,
+  color,
+  timestamp,
+  blobId,
+  options = {}
+) {
+  const {
+    minPoints = 10,
+    maxPoints = 100,
+    pointDensity = 5,
+    spikeCount: explicitSpikeCount,
+  } = options;
+
+  const spikeCount =
+    explicitSpikeCount !== undefined
+      ? explicitSpikeCount
+      : Math.max(
+          minPoints,
+          Math.min(maxPoints, Math.floor((radius * 1.2) / pointDensity))
+        );
+
+  const cachedParams = generateSpikyBlobParams(blobId, spikeCount);
+
+  const pathGenerator = (context) =>
+    createSpikyPath(context, { radius, timestamp, options, cachedParams });
+
+  drawPathBasedBlob({ x, y, radius, color, timestamp, options }, pathGenerator);
+}
+
+function drawWavyBlob(x, y, radius, color, timestamp, blobId, options = {}) {
+  const {
+    wobbleIntensity = RENDER_CONFIG.BLOB.DEFAULT_WOBBLE_INTENSITY,
+    wobbleSpeed = RENDER_CONFIG.BLOB.DEFAULT_WOBBLE_SPEED,
+    minPoints = RENDER_CONFIG.BLOB.DEFAULT_MIN_POINTS,
+    maxPoints = RENDER_CONFIG.BLOB.DEFAULT_MAX_POINTS,
+    pointDensity = RENDER_CONFIG.BLOB.DEFAULT_POINT_DENSITY,
+  } = options;
+
+  const points = Math.max(
+    minPoints,
+    Math.min(maxPoints, Math.floor(radius / pointDensity))
   );
-  ctx.stroke();
+  const wobbleAmount = radius * wobbleIntensity;
+  const controlPoints = generateWavyBlobControlPoints(blobId, points);
+
+  for (let i = 0; i < controlPoints.length; i++) {
+    const point = controlPoints[i];
+    const wobble =
+      Math.sin(timestamp * wobbleSpeed * point.wobbleFreq + point.phaseOffset) *
+      wobbleAmount;
+    const adjustedRadius = radius + wobble;
+    point.x = adjustedRadius * point.baseX;
+    point.y = adjustedRadius * point.baseY;
+  }
+
+  const pathGenerator = (context) => createWavyPath(context, controlPoints);
+
+  drawPathBasedBlob({ x, y, radius, color, timestamp, options }, pathGenerator);
+}
+
+function drawFluffyBush(x, y, radius, color, timestamp, blobId, options = {}) {
+  const {
+    visibility = 100,
+    borderColor = null,
+    wobbleIntensity = RENDER_CONFIG.BUSH_BLOB.WOBBLE_INTENSITY,
+    wobbleSpeed = RENDER_CONFIG.BUSH_BLOB.WOBBLE_SPEED,
+  } = options;
+
+  const params = generateFluffyBushParams(blobId, radius);
+
+  ctx.save();
+  const baseAlpha = Math.max(0, Math.min(visibility, 100)) / 100;
+
+  ctx.fillStyle = color;
+
+  for (const param of params) {
+    ctx.globalAlpha = baseAlpha * 0.8;
+    const wobbleAmount = param.radius * wobbleIntensity;
+    const wobble =
+      Math.sin(timestamp * wobbleSpeed * param.wobbleFreq + param.phaseOffset) *
+      wobbleAmount;
+    const currentRadius = param.radius + wobble;
+
+    ctx.beginPath();
+    ctx.arc(
+      x + param.offsetX,
+      y + param.offsetY,
+      currentRadius,
+      0,
+      Math.PI * 2
+    );
+    ctx.fill();
+  }
+
+  if (borderColor) {
+    ctx.strokeStyle = borderColor;
+    ctx.lineWidth = Math.max(
+      RENDER_CONFIG.BLOB.MIN_BORDER_WIDTH,
+      radius * RENDER_CONFIG.BLOB.BORDER_WIDTH_RATIO * 0.5
+    );
+    ctx.globalAlpha = baseAlpha * RENDER_CONFIG.BLOB.BORDER_ALPHA;
+
+    for (const param of params) {
+      const wobbleAmount = param.radius * wobbleIntensity;
+      const wobble =
+        Math.sin(
+          timestamp * wobbleSpeed * param.wobbleFreq + param.phaseOffset
+        ) * wobbleAmount;
+      const currentRadius = param.radius + wobble;
+
+      ctx.beginPath();
+      ctx.arc(
+        x + param.offsetX,
+        y + param.offsetY,
+        currentRadius,
+        0,
+        Math.PI * 2
+      );
+      ctx.stroke();
+    }
+  }
+
   ctx.restore();
 }
 
@@ -450,7 +556,7 @@ function renderBushes() {
     const visibility = gameState.bushIds?.includes(bush.id)
       ? RENDER_CONFIG.BUSH_BLOB.HIDDEN_VISIBILITY
       : RENDER_CONFIG.BUSH_BLOB.VISIBLE_VISIBILITY;
-    drawWavyBlob(
+    drawFluffyBush(
       bush.x,
       bush.y,
       bush.radius,
@@ -462,9 +568,6 @@ function renderBushes() {
         borderColor: RENDER_CONFIG.BUSH_BLOB.BORDER_COLOR,
         wobbleIntensity: RENDER_CONFIG.BUSH_BLOB.WOBBLE_INTENSITY,
         wobbleSpeed: RENDER_CONFIG.BUSH_BLOB.WOBBLE_SPEED,
-        minPoints: RENDER_CONFIG.BUSH_BLOB.MIN_POINTS,
-        maxPoints: RENDER_CONFIG.BUSH_BLOB.MAX_POINTS,
-        pointDensity: RENDER_CONFIG.BUSH_BLOB.POINT_DENSITY,
       }
     );
   }
