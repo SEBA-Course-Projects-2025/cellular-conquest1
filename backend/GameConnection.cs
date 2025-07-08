@@ -8,6 +8,8 @@ using System.Text.Json.Nodes;
 using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
+using GameConfig;
+using ColorAnalyzer;
 
 
 public partial class Game
@@ -23,7 +25,7 @@ public partial class Game
         Player? player = null;
         Random random = new Random();
 
-        byte[] buffer = new byte[4096];
+        byte[] buffer = new byte[Config.BufferSize];
         while (webSocket.State == WebSocketState.Open)
         {
             try
@@ -52,8 +54,8 @@ public partial class Game
                         bool isDeathMatch =
                             (obj?["deathMatch"]?.GetValue<bool>() ?? false)
                             || (obj?["mode"]?.ToString()?.ToLower() == "deathmatch");
-                        string? customSkin = obj?["customSkin"]?.ToString();
-                        
+                        string customSkin = obj?["customSkin"]?.ToString() ?? ""; 
+                                               
                         Guid roomId;
                         if (isDeathMatch) {
                             roomId = Guid.NewGuid();
@@ -84,14 +86,11 @@ public partial class Game
 						var roomPlayers = rooms.GetOrAdd(roomId, _ => new ConcurrentDictionary<Guid, Player>());
 
 						if (isDeathMatch) {
-        					int botCount = 5;
         					var bots = new List<Bot>();
-        					for (int i = 0; i < botCount; i++) {
-            					var bot = new Bot($"Bot {i+1}", roomId);
-            					roomPlayers[bot.Id] = bot;
-            					bots.Add(bot);
-        					}
-        					roomBots[roomId] = bots;
+    						var bot = new Bot(roomId);  
+    						roomPlayers[bot.Id] = bot;
+    						bots.Add(bot);
+    						roomBots[roomId] = bots;
     					}
 
                         player = new Player
@@ -105,11 +104,16 @@ public partial class Game
                             {
                                 new Cell
                                 {
-                                    Position = new Vector2(random.Next(0, 2000), random.Next(0, 2000)),
-                                    Radius = 20f
+                                    Position =  FindSafeSpawnPosition(roomId),
                                 }
                             }
                         };
+                         if (!string.IsNullOrEmpty(customSkin))
+                        {
+                            string? popularColor = ImageColorAnalyzer.GetMostPopularColorFromDataUrl(customSkin);
+                            Console.WriteLine($"[{player.Nickname}] Popular skin color: {popularColor}");
+                            player.PopularSkinColor = popularColor;
+                        }
 
                         Console.WriteLine($"[{player.Nickname}] Mode is {obj?["mode"]?.ToString()}");
 
@@ -139,8 +143,8 @@ public partial class Game
                             type = "playerData",
                             id = player.Id,
                             nickname = player.Nickname,
-                            width = 2000,
-                            height = 2000,
+                            width = Config.WorldWidth,
+                            height = Config.WorldHeight,
                             roomId = roomId,
                             currentImages = roomPlayers.Values
                                 .Where(p => !string.IsNullOrEmpty(p.CustomSkin))
@@ -164,27 +168,41 @@ public partial class Game
                     case "split":
                         if (player != null && player.Cells.Count < 16)
                         {
-                            Console.WriteLine($"[{player.Nickname}] Split avtivated");
+                            Console.WriteLine($"[{player.Nickname}] Split activated");
                             var newCells = new List<Cell>();
                             foreach (var cell in player.Cells)
                             {
-                                if (cell.Radius > 10f) 
+                                if (cell.Radius > Config.MinCellRadius && player.Cells.Count + newCells.Count < Config.MaxCellCount) 
                                 {
-                                    var splitRadius = cell.Radius / 1.414f; 
+                                    var splitRadius = cell.Radius / Config.SplitRadius; 
                                     var direction = Vector2.Normalize(player.Direction == Vector2.Zero ? new Vector2(1, 0) : player.Direction);
-                                    var offset = direction * (splitRadius + 2);
+                                    var offset = direction * (splitRadius + Config.CellOffset);
+                                    var newPos = cell.Position + offset;
+
+                                    if (newPos.X < 0 || newPos.X > Config.WorldWidth){
+                                        direction.X *= -1;
+                                        offset = direction * (splitRadius + Config.CellOffset);
+                                        newPos = cell.Position + offset;
+                                    }
+                                        
+                                    if (newPos.Y < 0 || newPos.Y > Config.WorldHeight){
+                                        direction.Y *= -1;
+                                        offset = direction * (splitRadius + Config.CellOffset);
+                                        newPos = cell.Position + offset;
+                                    }
 
                                     newCells.Add(new Cell
                                     {
-                                        Position = cell.Position + offset,
+                                        Position = newPos,
                                         Radius = splitRadius,
-                                        Velocity = direction * 200 
+                                        Velocity = direction * Config.CellDirection, 
+										CreatedAt = DateTime.UtcNow
+
                                     });
 
-                                    cell.Position -= offset;
                                     cell.Radius = splitRadius;
 
-                                    if (player.Cells.Count + newCells.Count == 16) break;
+                                    if (player.Cells.Count + newCells.Count >= Config.MaxCellCount) break;
                                 }
                             }
                             player.Cells.AddRange(newCells);
@@ -195,7 +213,7 @@ public partial class Game
                         if (player != null) {
                             if (player.SpeedBoostPoints > 0 )
                             {
-                                player.SpeedBoostUntil = DateTime.UtcNow.AddSeconds(5);
+                                player.SpeedBoostUntil = DateTime.UtcNow.AddSeconds(Config.SpeedSeconds);
                                 player.SpeedBoostPoints--;
                             }
                             Console.WriteLine($"[{player.Nickname}] Speed boost activated. Points: {player.SpeedBoostPoints}");
@@ -204,21 +222,40 @@ public partial class Game
                         
                     case "feed":
                         if (player != null && player.Cells.Count() > 0) {
+                            var now = DateTime.UtcNow;
+                            if ((now - player.LastFeedTime).TotalSeconds < Config.FeedDelay) {
+                                Console.WriteLine($"[{player.Nickname}] Tried to feed too soon.");
+                                break;
+                            }
+                            player.LastFeedTime = now;
                             Console.WriteLine($"[{player.Nickname}] Feed activated.");
                             var bigCell = GetBiggestCell(player);
-                            if (bigCell.Radius > 10f) {
+                            if (bigCell.Radius >= 11f) {
                                 float antiRadius = bigCell.Radius * 0.1f;
-                                bigCell.Radius *= 0.9f;
+                                bigCell.Radius *= Config.FeedSizeDecreaze;
 
                                 Vector2 direction = Vector2.Normalize(player.Direction == Vector2.Zero ? new Vector2(1, 0) : player.Direction);
-                                Vector2 offset = direction * (bigCell.Radius + antiRadius + 5); 
+                                Vector2 offset = direction * (bigCell.Radius + antiRadius + Config.AntiOffset); 
                                 Vector2 spawnPos = bigCell.Position + offset;
+
+                                if (spawnPos.X < 0 || spawnPos.X > Config.WorldWidth){
+                                    direction.X *= -1;
+                                    offset = direction * (antiRadius + Config.AntiOffset);
+                                    spawnPos = bigCell.Position + offset;
+                                }
+                                    
+                                if (spawnPos.Y < 0 || spawnPos.Y > Config.WorldHeight){
+                                    direction.Y *= -1;
+                                    offset = direction * (antiRadius + Config.AntiOffset);
+                                    spawnPos = bigCell.Position + offset;
+                                }
+
 
                                 var newAntibody = new AntiBody {
                                     Position = spawnPos,
-                                    Velocity = direction * 1500f,
+                                    Velocity = direction * Config.AntiVelocityInit,
                                     Radius = antiRadius,
-                                    CreatedAt = DateTime.UtcNow
+                                    CreatedAt = DateTime.UtcNow,
                                 };
 
                                 var roomAntiList = antibodys.GetOrAdd(player.RoomId, _ => new List<AntiBody>());
