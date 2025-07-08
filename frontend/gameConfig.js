@@ -30,6 +30,7 @@ export const UI = {
   ELEMENT_IDS: {
     PLAYER_NAME: "playerName",
     PLAYER_SCORE: "playerScore",
+    DEFEATED: "defeated",
     LEADERBOARD: "leaderboardList",
     CANCEL_EXIT: "cancelExit",
     CONFIRM_EXIT: "confirmExit",

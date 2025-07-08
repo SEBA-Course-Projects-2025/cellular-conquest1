@@ -9,6 +9,7 @@ export const playerNameElement = document.getElementById(
 export const playerScoreElement = document.getElementById(
   ELEMENT_IDS.PLAYER_SCORE
 );
+export const enemiesDefeated = document.getElementById(ELEMENT_IDS.DEFEATED);
 export const leaderboardList = document.getElementById(ELEMENT_IDS.LEADERBOARD);
 export const cancelExitBtn = document.getElementById(ELEMENT_IDS.CANCEL_EXIT);
 export const confirmExitBtn = document.getElementById(ELEMENT_IDS.CONFIRM_EXIT);

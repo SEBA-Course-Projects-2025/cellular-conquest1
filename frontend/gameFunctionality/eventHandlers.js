@@ -1,5 +1,6 @@
 import { render } from "../gameUI/gameRenderer.js";
 import {
+  enemiesDefeated,
   leaderboardList,
   playerNameElement,
   playerScoreElement,
@@ -75,6 +76,10 @@ export const handleGameState = (data) => {
 
 export const handleLeaderboard = (data) => {
   leaderboardList.innerHTML = "";
+  const rank = data.personal.rank;
+  const defeated = data.personal.killed ?? 0;
+
+  enemiesDefeated.textContent = `Defeated: ${defeated}`;
 
   const sortedPlayers = data.topPlayers;
   const maxListLen = gameState.isTouch
@@ -93,7 +98,7 @@ export const handleLeaderboard = (data) => {
     leaderboardList.appendChild(li);
   }
 
-  if (data.personal.rank > maxListLen) {
+  if (rank > maxListLen) {
     const li = document.createElement("li");
     li.textContent = `${gameState.playerName}: ${Math.floor(
       gameState.playerScore
