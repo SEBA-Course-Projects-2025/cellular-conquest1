@@ -70,11 +70,11 @@ public partial class Game
                     bushId = slime.ID;
                 }
             }
-
+            var radius = rng.Next((int)Config.MinFoodRadius, (int)Config.MaxFoodRadius);
             list.Add(new Food
             {
                 Position = food_pos,
-                Radius = isBoost ? Config.SpeedBonusRadius : Config.FoodRadius,
+                Radius = isBoost ? Config.SpeedBonusRadius : radius,
                 Color = isBoost ? Config.BoostColor : Config.FoodColor,
                 IsSpeedBoost = isBoost,
                 Bush_ID = bushId
