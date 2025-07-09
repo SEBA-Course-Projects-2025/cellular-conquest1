@@ -225,8 +225,11 @@ public partial class Game {
 
                                 float currentArea = MathF.PI * cell.Radius * cell.Radius;
                                 float antiArea = MathF.PI * anti.Radius * anti.Radius;
-                                int points = (int)(antiArea / Config.PointPerFood);
-                                player.Score += points;
+                                if (anti.OwnerId != player.Id){
+                                    int points = (int)(antiArea / Config.PointPerFood);
+                                    player.Score += points;
+                                }
+                                
                                 float newArea = currentArea + antiArea;
                                 cell.Radius = MathF.Sqrt(newArea / MathF.PI);
 

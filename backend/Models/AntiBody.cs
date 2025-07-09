@@ -11,4 +11,5 @@ public class AntiBody
     public int? Bush_ID {get; set; } = null;
     public string Color {get; set; } = "";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+    public Guid OwnerId { get; set; }
 }
