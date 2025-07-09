@@ -9,6 +9,6 @@ public class AntiBody
     public float Radius { get; set; }
     public bool IsSpeedBoost { get; set; } = false;
     public int? Bush_ID {get; set; } = null;
-
+    public string Color {get; set; } = "";
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

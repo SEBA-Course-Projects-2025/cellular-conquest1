@@ -256,6 +256,7 @@ public partial class Game
                                     Velocity = direction * Config.AntiVelocityInit,
                                     Radius = antiRadius,
                                     CreatedAt = DateTime.UtcNow,
+                                    Color = player.PopularSkinColor!
                                 };
 
                                 var roomAntiList = antibodys.GetOrAdd(player.RoomId, _ => new List<AntiBody>());
