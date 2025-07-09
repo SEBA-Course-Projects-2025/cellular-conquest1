@@ -6,16 +6,23 @@
     <title>Cellular conquest</title>
     <link rel="stylesheet" href="./gameStyles/gameStyles.css" />
     <link rel="stylesheet" href="./gameStyles/gameMobile.css" />
-    <link rel="stylesheet" href="./rulesStyles.css" />
+    <link rel="stylesheet" href="./gameStyles/popupStyles.css" />
   </head>
   <body>
     <canvas id="gameCanvas"></canvas>
-    <button id="rulesBtn" title="Game Rules">ⓘ</button>
+    <div id="topButtons">
+      <button id="playerInfoBtn" class="hidden" title="Player Info">0</button>
+      <button id="rulesBtn" title="Game Rules">ⓘ</button>
+      <button id="leaderboardBtn" class="hidden" title="Leaderboard">
+        # -
+      </button>
+    </div>
     <div id="gameInfo" class="allScreen">
       <div class="row">
         <div id="playerInfo" class="styledDiv">
           <h5 id="playerName">Nickname</h5>
           <div id="playerScore">Score: 0</div>
+          <div id="defeated">Defeated: 0</div>
           <div id="speedBarContainer">
             <div id="speedBarLabel">Speed Points:</div>
             <div id="speedBarBackground">
@@ -25,6 +32,7 @@
           <div id="roomId" class="copyable" title="Click to copy room ID">
             <span>Copy Room ID:</span
             ><svg
+              class="svg"
               width="16"
               height="16"
               viewBox="0 0 23 23"
@@ -32,9 +40,10 @@
               xmlns="http://www.w3.org/2000/svg"
             >
               <path
-                d="M17 17H19.5C20.6046 17 21.5 16.1046 21.5 15V3C21.5 1.89543 20.6046 1 19.5 1H7.5C6.39543 1 5.5 1.89543 5.5 3V6M3 22H15C16.1046 22 17 21.1046 17 20V8C17 6.89543 16.1046 6 15 6H3C1.89543 6 1 8V20C1 21.1046 1.89543 22 3 22Z"
+                d="M17 17H19.5C20.6046 17 21.5 16.1046 21.5 15V3C21.5 1.89543 20.6046 1 19.5 1H7.5C6.39543 1 5.5 1.89543 5.5 3V6M3 22H15C16.1046 22 17 21.1046 17 20V8C17 6.89543 16.1046 6 15 6H3C1.89543 6 1 6.89543 1 8V20C1 21.1046 1.89543 22 3 22Z"
                 stroke="#d5ffe9"
                 stroke-width="2"
+                class="svg"
               />
             </svg>
           </div>
@@ -171,7 +180,7 @@
         <button id="closeRules" class="btn">Close</button>
       </div>
     </div>
-    <script src="rulesPopup.js"></script>
+    <script src="./gameUI/popupManager.js"></script>
     <script type="module" src="./gameMain.js"></script>
   </body>
 </html>

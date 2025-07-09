@@ -1,6 +1,9 @@
 import { render } from "../gameUI/gameRenderer.js";
 import {
+  enemiesDefeated,
+  leaderboardBtn,
   leaderboardList,
+  playerInfoBtn,
   playerNameElement,
   playerScoreElement,
   showDeathPopup,
@@ -15,13 +18,13 @@ import {
 } from "./communication.js";
 import gameState from "./gameState.js";
 import { copyToClipboard } from "../gameUtils/copyToClipboard.js";
-import { LOCAL_STORAGE_KEYS } from "../gameConfig/localStorageKeys.js";
 import {
-  LEADERBOARD_CONFIG,
-  DEATH_POPUP_CONFIG,
+  LOCAL_STORAGE_KEYS,
+  LEADERBOARD,
   SPEEDUP_CONFIG,
-  UI_MESSAGES,
-} from "../gameConfig/gamePlayConfig.js";
+  UI,
+} from "../gameConfig.js";
+const { DEATH_POPUP, MESSAGES } = UI;
 
 export const gameLoop = () => {
   const dt = gameState.dt;
@@ -60,9 +63,9 @@ export const handleGameState = (data) => {
   const player = gameState.players.find((p) => p.id === gameState.playerId);
   if (player) {
     gameState.playerScore = player.score;
-    playerScoreElement.textContent = `Score: ${Math.floor(
-      gameState.playerScore
-    )}`;
+    const roundedScore = Math.floor(gameState.playerScore);
+    playerScoreElement.textContent = `Score: ${roundedScore}`;
+    playerInfoBtn.textContent = `${roundedScore}`;
     updateSpeedBar(player.abilities?.speed ?? 0);
     gameState.speedupAvailable = !!player.abilities?.speed;
 
@@ -75,31 +78,36 @@ export const handleGameState = (data) => {
 
 export const handleLeaderboard = (data) => {
   leaderboardList.innerHTML = "";
+  const rank = data.personal.rank;
+  const defeated = data.personal.killed ?? 0;
+
+  enemiesDefeated.textContent = `Defeated: ${defeated}`;
 
   const sortedPlayers = data.topPlayers;
   const maxListLen = gameState.isTouch
-    ? LEADERBOARD_CONFIG.MAX_LENGTH_TOUCH
-    : LEADERBOARD_CONFIG.MAX_LENGTH_DESKTOP;
+    ? LEADERBOARD.MAX_LENGTH_TOUCH
+    : LEADERBOARD.MAX_LENGTH_DESKTOP;
+  leaderboardBtn.textContent = `#${rank}`;
 
   for (let i = 0; i < Math.min(maxListLen, sortedPlayers.length); i++) {
     const player = sortedPlayers[i];
     const li = document.createElement("li");
     li.textContent = `${player.nickname}: ${Math.floor(player.score)}`;
 
-    if (i === data.personal.rank - 1) {
+    if (i === rank - 1) {
       li.classList.add("special");
     }
 
     leaderboardList.appendChild(li);
   }
 
-  if (data.personal.rank > maxListLen) {
+  if (rank > maxListLen) {
     const li = document.createElement("li");
     li.textContent = `${gameState.playerName}: ${Math.floor(
       gameState.playerScore
     )}`;
     li.classList.add("special");
-    li.value = data.personal.rank;
+    li.value = rank;
     leaderboardList.appendChild(li);
   }
 };
@@ -115,9 +123,9 @@ export const handleDeath = (data) => {
 
   showDeathPopup(data.score);
 
-  const inactivityDelay = DEATH_POPUP_CONFIG.INACTIVITY_DELAY_MS;
-  const countdownSeconds = DEATH_POPUP_CONFIG.COUNTDOWN_SECONDS;
-  const redirectUrl = DEATH_POPUP_CONFIG.REDIRECT_URL;
+  const inactivityDelay = DEATH_POPUP.INACTIVITY_DELAY_MS;
+  const countdownSeconds = DEATH_POPUP.COUNTDOWN_SECONDS;
+  const redirectUrl = DEATH_POPUP.REDIRECT_URL;
 
   let inactivityTimer = setTimeout(() => {
     const notice = document.getElementById("autoCloseNotice");
@@ -170,7 +178,7 @@ export const handleInput = (input) => {
 
 export const handleMasking = (newImage) => {
   gameState.updatePlayerSkin(gameState.playerId, newImage);
-  copyToClipboard(() => newImage, UI_MESSAGES.RESET_SKIN_HINT)();
+  copyToClipboard(() => newImage, MESSAGES.RESET_SKIN_HINT)();
 };
 
 export const handleSkinReset = () => {

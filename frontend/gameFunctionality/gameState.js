@@ -1,5 +1,5 @@
 import { MAX_PLAYER_NAME_LENGTH } from "../commonConfig.js";
-import { LOCAL_STORAGE_KEYS } from "../gameConfig/localStorageKeys.js";
+import { LOCAL_STORAGE_KEYS } from "../gameConfig.js";
 const defaultWorldSize = 2000;
 
 function trimWithEllipsis(str, maxLength) {
