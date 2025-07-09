@@ -5,7 +5,7 @@ using GameConfig;
 public class Food
 {
     public Vector2 Position { get; set; }
-    public float Radius { get; set; } = Config.FoodRadius;
+    public float Radius { get; set; }
     public string Color { get; set; } = Config.FoodColor;
     
     public bool IsSpeedBoost { get; set; } = false;

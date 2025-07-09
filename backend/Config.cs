@@ -44,7 +44,8 @@ namespace GameConfig {
         public const int NumBots = 5;
 
         public const float PosSpeedBonus = 0.1f;
-        public const float FoodRadius = 5f;
+        public const int MinFoodRadius = 5;
+        public const int MaxFoodRadius = 9;
         public const float SpeedBonusRadius = 9f;
         public const float CellRadius = 20f;
         public const float BotRadius = 45f;

@@ -225,8 +225,11 @@ public partial class Game {
 
                                 float currentArea = MathF.PI * cell.Radius * cell.Radius;
                                 float antiArea = MathF.PI * anti.Radius * anti.Radius;
-                                int points = (int)(antiArea / Config.PointPerFood);
-                                player.Score += points;
+                                if (anti.OwnerId != player.Id){
+                                    int points = (int)(antiArea / Config.PointPerFood);
+                                    player.Score += points;
+                                }
+                                
                                 float newArea = currentArea + antiArea;
                                 cell.Radius = MathF.Sqrt(newArea / MathF.PI);
 
@@ -374,7 +377,6 @@ public partial class Game {
 
             // determine what bush_ids we have
             foreach ( var player in players.Values){
-                var antiColor = player.PopularSkinColor;
                 var playerBushIds = player.Cells
                     .SelectMany(c => c.Bush_IDs)
                     .Distinct()
@@ -400,7 +402,7 @@ public partial class Game {
                             x = a.Position.X,
                             y = a.Position.Y,
                             radius = a.Radius,
-                            color = antiColor ?? ""
+                            color = a.Color 
                         }));
                 }
 
