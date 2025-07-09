@@ -70,7 +70,7 @@ public partial class Game
                     bushId = slime.ID;
                 }
             }
-            var radius = rng.Next((int)Config.MinFoodRadius, (int)Config.MaxFoodRadius);
+            var radius = rng.Next(Config.MinFoodRadius, Config.MaxFoodRadius);
             list.Add(new Food
             {
                 Position = food_pos,
