@@ -210,6 +210,7 @@ public partial class Game {
                             {
                                 eatenAnti.Add(anti);
                                 botObj.AntibodyHits++;
+                                botObj.Cells[0].Radius = Math.Max(Config.MinBotRadius, botObj.Cells[0].Radius - Config.DecreaseBotSize);
                                 if (botObj.AntibodyHits >= botObj.MaxAntibodyHits)
                                 {
 									var killer = players.Values.FirstOrDefault(p => p.Id == anti.OwnerId);

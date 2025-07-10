@@ -51,6 +51,8 @@ namespace GameConfig {
         public const float BotRadius = 45f;
         public const int MinSlimeRadius = 60;
         public const int MaxSlimeRadius = 150;
+        public const int DecreaseBotSize = 4;
+        public const int MinBotRadius = 20;
 
         public const int BufferSize = 4096;
 
