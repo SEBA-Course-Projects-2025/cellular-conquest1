@@ -23,4 +23,5 @@ public class Player
     public bool IsBot { get; set; } = false;
     public string? CustomSkin { get; set; }
     public Guid RoomId { get; set; }
+	public int kills { get; set; } = 0;
 }

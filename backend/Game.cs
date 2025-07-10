@@ -175,7 +175,8 @@ public partial class Game
                     personal = new
                     {
                         rank = rank,
-                        score = player.Score
+                        score = player.Score,
+						killed = player.kills 
                     }
                 };
 

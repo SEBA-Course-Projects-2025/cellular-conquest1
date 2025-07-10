@@ -37,7 +37,7 @@ public partial class Game {
             antibodyItems.RemoveAll(a => (now - a.CreatedAt).TotalSeconds > Config.SecForAnti);
             
             var deltaTime = 1f / 60f;
-            var eatenCells = new List<(Player victim, Cell cell)>();
+            var eatenCells = new List<(Player victim, Cell cell, Player? killer)>();
             
             var realPlayer = players.Values.FirstOrDefault(p => !p.IsBot);
 
@@ -212,7 +212,8 @@ public partial class Game {
                                 botObj.AntibodyHits++;
                                 if (botObj.AntibodyHits >= botObj.MaxAntibodyHits)
                                 {
-                                    eatenCells.Add((botObj, cell));
+									var killer = players.Values.FirstOrDefault(p => p.Id == anti.OwnerId);
+                                    eatenCells.Add((botObj, cell, killer));
                                 }
                                 break; 
                             }
@@ -317,7 +318,7 @@ public partial class Game {
                                     prey.Score = (prey.Score - points) < 0 ? 0 : prey.Score - points;
                                 }
 
-                                eatenCells.Add(new ValueTuple<Player, Cell>(prey, preyCell));
+                                eatenCells.Add((prey, preyCell, hunter));
                                 Console.WriteLine($"[{hunter.Nickname}] Ate [{prey.Nickname}].");
                             }
                         }
@@ -326,7 +327,7 @@ public partial class Game {
             }
 
             //check who ate who, remove the pray
-            foreach (var (victim, cell) in eatenCells)
+            foreach (var (victim, cell, killer) in eatenCells)
             {
                 victim.Cells.Remove(cell);
 
@@ -344,6 +345,12 @@ public partial class Game {
 
 
                     players.TryRemove(victim.Id, out _);
+					if (killer != null && !killer.IsBot && killer.Id != victim.Id)
+    				{
+        				killer.kills++;
+        				Console.WriteLine($"[{killer.Nickname}] Kills: {killer.kills}");
+    				}
+
                     Console.WriteLine($"{victim.Nickname} was eaten.");
                     
                     if (victim is Bot botVictim)
