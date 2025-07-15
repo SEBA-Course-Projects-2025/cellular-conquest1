@@ -54,7 +54,7 @@
         <h2>Choose your skin</h2>
         <div id="skinsList"></div>
         <div style="text-align: center; margin-bottom: 10px">
-          <button id="resetSkinBtn">Reset to Default Green</button>
+          <button id="resetSkinBtn">Reset to Default Blue</button>
         </div>
         <input
           type="file"
@@ -63,6 +63,185 @@
           style="margin-bottom: 8px"
         />
         <button id="addCustomSkinBtn">Add Custom Skin</button>
+      </div>
+    </div>
+
+    <div id="settingsModal" class="modal" style="display: none">
+      <div class="modal-content settings-modal">
+        <span id="closeSettingsModal" class="close">&times;</span>
+        <h2>⚙️ Game Settings</h2>
+        
+        <div class="settings-tabs">
+          <button class="tab-btn active" data-tab="graphics">🎨 Graphics</button>
+          <button class="tab-btn" data-tab="sound">🔊 Sound</button>
+          <button class="tab-btn" data-tab="controls">🎮 Controls</button>
+          <button class="tab-btn" data-tab="game">🎯 Gameplay</button>
+        </div>
+
+        <div class="settings-content">
+          <div class="tab-content active" data-tab="graphics">
+            <div class="setting-group">
+              <label class="setting-label">🌟 Visual Effects</label>
+              <div class="setting-control">
+                <input type="range" id="effectsSlider" min="0" max="3" value="2" class="setting-slider">
+                <span class="setting-value">High</span>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">🎆 Particle Effects</label>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="particlesToggle" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">💫 Screen Shake</label>
+              <div class="setting-control">
+                <input type="range" id="shakeSlider" min="0" max="100" value="50" class="setting-slider">
+                <span class="setting-value">50%</span>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">🎨 Theme</label>
+              <div class="setting-control">
+                <select id="themeSelect" class="setting-select">
+                  <option value="default">🌊 Ocean Blue</option>
+                  <option value="dark">🌙 Dark Space</option>
+                  <option value="neon">💜 Neon Cyber</option>
+                  <option value="forest">🌲 Forest Green</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-content" data-tab="sound">
+            <div class="setting-group">
+              <label class="setting-label">🎵 Master Volume</label>
+              <div class="setting-control">
+                <input type="range" id="masterVolume" min="0" max="100" value="70" class="setting-slider">
+                <span class="setting-value">70%</span>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">🎶 Music Volume</label>
+              <div class="setting-control">
+                <input type="range" id="musicVolume" min="0" max="100" value="50" class="setting-slider">
+                <span class="setting-value">50%</span>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">🔔 Sound Effects</label>
+              <div class="setting-control">
+                <input type="range" id="sfxVolume" min="0" max="100" value="80" class="setting-slider">
+                <span class="setting-value">80%</span>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">🎧 Voice Chat</label>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="voiceChatToggle">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-content" data-tab="controls">
+            <div class="setting-group">
+              <label class="setting-label">🖱️ Mouse Sensitivity</label>
+              <div class="setting-control">
+                <input type="range" id="mouseSensitivity" min="1" max="10" value="5" class="setting-slider">
+                <span class="setting-value">5</span>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">⚡ Auto Split</label>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="autoSplitToggle">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">🎮 Control Scheme</label>
+              <div class="setting-control">
+                <select id="controlScheme" class="setting-select">
+                  <option value="default">Classic (WASD + Space)</option>
+                  <option value="arrow">Arrow Keys + Enter</option>
+                  <option value="custom">Custom Controls</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">📱 Mobile Controls</label>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="mobileControlsToggle" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-content" data-tab="game">
+            <div class="setting-group">
+              <label class="setting-label">📊 Show FPS Counter</label>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="fpsToggle">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">🏆 Show Leaderboard</label>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="leaderboardToggle" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">🎯 Aim Assist</label>
+              <div class="setting-control">
+                <input type="range" id="aimAssist" min="0" max="100" value="25" class="setting-slider">
+                <span class="setting-value">25%</span>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">⚡ Speed Mode</label>
+              <div class="setting-control">
+                <select id="speedMode" class="setting-select">
+                  <option value="normal">🐌 Normal Speed</option>
+                  <option value="fast">🏃 Fast Mode</option>
+                  <option value="turbo">🚀 Turbo Mode</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-actions">
+          <button id="resetSettingsBtn" class="action-btn secondary">🔄 Reset to Default</button>
+          <button id="saveSettingsBtn" class="action-btn">💾 Save Settings</button>
+        </div>
       </div>
     </div>
 
@@ -79,7 +258,6 @@
             <button class="mode-btn active" data-mode="ffa">FFA</button>
             <button class="mode-btn" data-mode="teams">Teams</button>
             <button class="mode-btn" data-mode="deathmatch">Death Match</button>
-            <button class="mode-btn" data-mode="other">Other</button>
           </div>
         </div>
 
@@ -94,29 +272,35 @@
               id="nicknameInput"
               class="nick-input"
               placeholder="Nickname"
+              maxlength="20"
             />
-            <div class="level">Level 0</div>
+            <div id="playerLevel" class="level">Level 0</div>
+            <div id="playerXp" class="xp-info">0/1000 XP (0%)</div>
+            <div class="xp-progress-bar">
+              <div id="levelProgressBar" class="xp-progress-fill"></div>
+            </div>
           </div>
 
           <div class="panel stats-panel">
             <div class="title">Stats</div>
             <div class="stat-item">
               <span class="stat-label">Last score:</span>
-              <span id="lastScore" class="stat-value">835</span>
+              <span id="lastScore" class="stat-value">0</span>
             </div>
             <div class="stat-item">
               <span class="stat-label">Best score:</span>
-              <span id="bestScore" class="stat-value">24 543</span>
+              <span id="bestScore" class="stat-value">0</span>
             </div>
           </div>
         </div>
       </div>
 
       <div class="actions-panel">
-        <button id="settingsBtn" class="action-btn secondary">Settings</button>
-        <button id="logoutBtn" class="action-btn danger">Exit / Log Out</button>
+        <button id="settingsBtn" class="action-btn secondary">⚙️ Settings</button>
+        <button id="logoutBtn" class="action-btn danger">🚪 Exit / Log Out</button>
       </div>
     </div>
+
     <div id="rulesPopup" class="allScreen hidden">
       <div class="blur allScreen"></div>
       <div class="popupContent rulesDiv rulesContent fadeIn">

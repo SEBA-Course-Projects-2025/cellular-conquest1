@@ -1,4 +1,102 @@
 function playSound() {}
+function getBestScore() {
+  return parseInt(localStorage.getItem("bestScore") || "0");
+}
+
+function calculateLevel(totalScore) {
+  return Math.floor(totalScore / 1000);
+}
+
+function calculateTotalExperience() {
+  return parseInt(localStorage.getItem("totalExperience") || "0");
+}
+
+function getCurrentLevelProgress(bestScore) {
+  const currentLevel = calculateLevel(bestScore);
+  const currentLevelXp = currentLevel * 1000;
+  const nextLevelXp = (currentLevel + 1) * 1000;
+  const progressXp = bestScore - currentLevelXp;
+  const neededXp = nextLevelXp - currentLevelXp;
+  
+  return {
+    level: currentLevel,
+    progressXp: progressXp,
+    neededXp: neededXp,
+    percentage: Math.floor((progressXp / neededXp) * 100)
+  };
+}
+
+function updateLevel(newScore) {
+  const currentTotalXp = calculateTotalExperience();
+  const newTotalXp = currentTotalXp + parseInt(newScore);
+  
+  const oldLevel = calculateLevel(currentTotalXp);
+  const newLevel = calculateLevel(newTotalXp);
+  
+  localStorage.setItem("totalExperience", newTotalXp.toString());
+  
+  if (newLevel > oldLevel) {
+    playSound("levelup");
+    showLevelUpNotification(oldLevel, newLevel);
+    return true;
+  }
+  return false;
+}
+
+function showLevelUpNotification(oldLevel, newLevel) {
+  const notification = document.createElement('div');
+  notification.className = 'level-up-notification';
+  notification.innerHTML = `
+    <div class="level-up-content">
+      <div class="level-up-icon">🎉</div>
+      <div class="level-up-text">LEVEL UP!</div>
+      <div class="level-up-levels">${oldLevel} → ${newLevel}</div>
+    </div>
+  `;
+  
+  document.body.appendChild(notification);
+  
+  setTimeout(() => {
+    notification.classList.add('show');
+  }, 100);
+  
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => {
+      notification.remove();
+    }, 500);
+  }, 3000);
+}
+
+function showSkinSelectedNotification(skinName) {
+  console.log("📢 Showing skin notification for:", skinName); // Debug
+  
+  const notification = document.createElement('div');
+  notification.className = 'skin-selected-notification';
+  notification.innerHTML = `
+    <div class="skin-selected-content">
+      <div class="skin-selected-icon">✅</div>
+      <div class="skin-selected-text">Skin Selected!</div>
+      <div class="skin-selected-name">${skinName}</div>
+    </div>
+  `;
+  
+  document.body.appendChild(notification);
+  console.log("📢 Notification element added to DOM"); // Debug
+  
+  setTimeout(() => {
+    notification.classList.add('show');
+    console.log("📢 Notification should be visible now"); // Debug
+  }, 100);
+  
+  setTimeout(() => {
+    notification.classList.remove('show');
+    setTimeout(() => {
+      notification.remove();
+    }, 300);
+  }, 1500);
+}
+
 const API_BASE = "/api/player";
 document.addEventListener("DOMContentLoaded", function () {
   const nicknameInput = document.getElementById("nicknameInput");
@@ -92,10 +190,24 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function updateScoresDisplay(animated = false) {
     const lastScore = localStorage.getItem("lastScore") || "0";
-    const bestScore = localStorage.getItem("bestScore") || "0";
-    
+    const bestScore = getBestScore();
+    console.log("💯 Current scores - Last:", lastScore, "Best:", bestScore);
+
+    if (parseInt(lastScore) > bestScore) {
+      console.log("🔄 Updating best score to match last score");
+      localStorage.setItem("bestScore", lastScore);
+      updateBestScore(lastScore);
+      return; 
+  }
+    const levelInfo = getCurrentLevelProgress(bestScore);
+    console.log("📊 Level info:", levelInfo);
+
     const lastScoreElement = document.getElementById("lastScore");
     const bestScoreElement = document.getElementById("bestScore");
+    const levelElement = document.getElementById("playerLevel");
+    const xpElement = document.getElementById("playerXp");
+    const progressBar = document.getElementById("levelProgressBar");
+
     
     if (lastScoreElement) {
       if (animated) {
@@ -107,18 +219,42 @@ document.addEventListener("DOMContentLoaded", function () {
     if (bestScoreElement) {
       bestScoreElement.textContent = formatScore(bestScore);
     }
+    
+    if (levelElement) {
+      levelElement.textContent = `Level ${levelInfo.level}`;
+    }
+    
+    if (xpElement) {
+      xpElement.textContent = `${levelInfo.progressXp}/${levelInfo.neededXp} XP (${levelInfo.percentage}%)`;
+    }
+    
+    if (progressBar) {
+      progressBar.style.width = `${levelInfo.percentage}%`;
+    }
   }
 
   function updateBestScore(newScore) {
-    const currentBest = parseInt(localStorage.getItem("bestScore") || "0");
+    const currentBest = getBestScore();
     const score = parseInt(newScore);
     
     if (score > currentBest) {
       localStorage.setItem("bestScore", score.toString());
-      return true;
-    }
-    return false;
+
+      const bestScoreElement = document.getElementById("bestScore");
+      if(bestScoreElement){
+        bestScoreElement.textContent= formatScore(score);
+        bestScoreElement.style.color = '#FFD700';
+        bestScoreElement.style.transform = 'scale(1.1)';
+        setTimeout(() => {
+          bestScoreElement.style.color = 'white';
+          bestScoreElement.style.transform = 'scale(1)';
+        }, 1000);
+      }
+    return true;
   }
+    return false;
+}
+
 
   function generateCustomSkinId() {
     return "custom_" + Date.now() + "_" + Math.random().toString(36).substr(2, 9);
@@ -178,6 +314,7 @@ document.addEventListener("DOMContentLoaded", function () {
         localStorage.setItem("selectedSkin", skin.id);
         updateAvatar();
         renderSkins();
+        showSkinSelectedNotification(skin.name); 
       };
       
       skinContainer.appendChild(img);
@@ -231,10 +368,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
   function resetSkinsToDefault() {
     console.log("🔄 Resetting skins to default...");
-    localStorage.setItem("selectedSkin", "green");
+    localStorage.setItem("selectedSkin", "blue");
     updateAvatar();
     renderSkins();
+    showSkinSelectedNotification("Blue");
   }
+  
   function testSkinSelection() {
     const selectedSkinId = localStorage.getItem("selectedSkin");
     const skins = JSON.parse(localStorage.getItem("availableSkins") || "[]");
@@ -258,7 +397,14 @@ document.addEventListener("DOMContentLoaded", function () {
   window.testSkins = testSkinSelection;
 
   nicknameInput.addEventListener('input', function() {
-    localStorage.setItem("playerName", this.value.trim());
+    let value = this.value.trim();
+    if (value.length > 20) {
+      value = value.substring(0, 20);
+      this.value = value;
+    }
+    value = value.replace(/[^a-zA-Z0-9_-]/g, ''); 
+    this.value = value;
+    localStorage.setItem("playerName", value);
     updateAvatar();
   });
 
@@ -294,7 +440,8 @@ document.addEventListener("DOMContentLoaded", function () {
       updateAvatar();
       renderSkins();
       customSkinInput.value = "";
-      alert("Custom skin added successfully!");
+
+      showSkinSelectedNotification(fileName);
     };
     reader.readAsDataURL(file);
   });
@@ -457,28 +604,295 @@ document.addEventListener("DOMContentLoaded", function () {
     }); 
   });
   
-  document.getElementById("settingsBtn").addEventListener("click", function () { 
-    playSound("click"); 
-    alert("Settings panel will open here"); 
+  const settingsModal = document.getElementById("settingsModal");
+  const closeSettingsModal = document.getElementById("closeSettingsModal");
+  const settingsBtn = document.getElementById("settingsBtn");
+  const saveSettingsBtn = document.getElementById("saveSettingsBtn");
+  const resetSettingsBtn = document.getElementById("resetSettingsBtn");
+  const defaultSettings = {
+    graphics: {
+      effects: 2,
+      particles: true,
+      shake: 50,
+      theme: 'default'
+    },
+    sound: {
+      master: 70,
+      music: 50,
+      sfx: 80,
+      voiceChat: false
+    },
+    controls: {
+      sensitivity: 5,
+      autoSplit: false,
+      scheme: 'default',
+      mobileControls: true
+    },
+    game: {
+      fps: false,
+      leaderboard: true,
+      aimAssist: 25,
+      speedMode: 'normal'
+    }
+  };
+
+  function loadSettings() {
+    const saved = localStorage.getItem('gameSettings');
+    return saved ? JSON.parse(saved) : defaultSettings;
+  }
+
+  function saveSettings(settings) {
+    localStorage.setItem('gameSettings', JSON.stringify(settings));
+  }
+
+  function applySettingsToUI() {
+    const settings = loadSettings();
+    
+    document.getElementById('effectsSlider').value = settings.graphics.effects;
+    document.getElementById('particlesToggle').checked = settings.graphics.particles;
+    document.getElementById('shakeSlider').value = settings.graphics.shake;
+    document.getElementById('themeSelect').value = settings.graphics.theme;
+
+    document.getElementById('masterVolume').value = settings.sound.master;
+    document.getElementById('musicVolume').value = settings.sound.music;
+    document.getElementById('sfxVolume').value = settings.sound.sfx;
+    document.getElementById('voiceChatToggle').checked = settings.sound.voiceChat;
+    
+    document.getElementById('mouseSensitivity').value = settings.controls.sensitivity;
+    document.getElementById('autoSplitToggle').checked = settings.controls.autoSplit;
+    document.getElementById('controlScheme').value = settings.controls.scheme;
+    document.getElementById('mobileControlsToggle').checked = settings.controls.mobileControls;
+    
+    document.getElementById('fpsToggle').checked = settings.game.fps;
+    document.getElementById('leaderboardToggle').checked = settings.game.leaderboard;
+    document.getElementById('aimAssist').value = settings.game.aimAssist;
+    document.getElementById('speedMode').value = settings.game.speedMode;
+
+    updateAllSliderValues();
+    applyTheme(settings.graphics.theme);
+  }
+
+  function updateAllSliderValues() {
+    const sliders = document.querySelectorAll('.setting-slider');
+    sliders.forEach(slider => {
+      const valueSpan = slider.parentNode.querySelector('.setting-value');
+      if (valueSpan) {
+        updateSliderValue(slider, valueSpan);
+      }
+    });
+  }
+
+  function updateSliderValue(slider, valueSpan) {
+    const value = slider.value;
+    const max = slider.max;
+    
+    if (slider.id === 'effectsSlider') {
+      const levels = ['Off', 'Low', 'Medium', 'High'];
+      valueSpan.textContent = levels[value];
+    } else if (slider.id.includes('Volume') || slider.id === 'shakeSlider' || slider.id === 'aimAssist') {
+      valueSpan.textContent = value + '%';
+    } else {
+      valueSpan.textContent = value;
+    }
+  }
+
+  function applyTheme(theme) {
+    document.body.className = theme !== 'default' ? `theme-${theme}` : '';
+    
+    const root = document.documentElement;
+    switch(theme) {
+      case 'dark':
+        root.style.setProperty('--bg-color', '#0a0a0a');
+        root.style.setProperty('--accent', '#bb86fc');
+        break;
+      case 'neon':
+        root.style.setProperty('--bg-color', '#1a0033');
+        root.style.setProperty('--accent', '#ff00ff');
+        break;
+      case 'forest':
+        root.style.setProperty('--bg-color', '#0d2818');
+        root.style.setProperty('--accent', '#00ff88');
+        break;
+      default:
+        root.style.setProperty('--bg-color', '#0b1a2c');
+        root.style.setProperty('--accent', '#7aff99');
+    }
+  }
+
+  function setupTabs() {
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const targetTab = btn.dataset.tab;
+        
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
+        
+        btn.classList.add('active');
+        document.querySelector(`[data-tab="${targetTab}"].tab-content`).classList.add('active');
+        
+        playSound("click");
+      });
+    });
+  }
+
+  function setupSettingsListeners() {
+    document.querySelectorAll('.setting-slider').forEach(slider => {
+      const valueSpan = slider.parentNode.querySelector('.setting-value');
+      
+      slider.addEventListener('input', () => {
+        updateSliderValue(slider, valueSpan);
+      });
+    });
+
+    document.getElementById('themeSelect').addEventListener('change', (e) => {
+      applyTheme(e.target.value);
+    });
+
+    saveSettingsBtn.addEventListener('click', () => {
+      const settings = {
+        graphics: {
+          effects: parseInt(document.getElementById('effectsSlider').value),
+          particles: document.getElementById('particlesToggle').checked,
+          shake: parseInt(document.getElementById('shakeSlider').value),
+          theme: document.getElementById('themeSelect').value
+        },
+        sound: {
+          master: parseInt(document.getElementById('masterVolume').value),
+          music: parseInt(document.getElementById('musicVolume').value),
+          sfx: parseInt(document.getElementById('sfxVolume').value),
+          voiceChat: document.getElementById('voiceChatToggle').checked
+        },
+        controls: {
+          sensitivity: parseInt(document.getElementById('mouseSensitivity').value),
+          autoSplit: document.getElementById('autoSplitToggle').checked,
+          scheme: document.getElementById('controlScheme').value,
+          mobileControls: document.getElementById('mobileControlsToggle').checked
+        },
+        game: {
+          fps: document.getElementById('fpsToggle').checked,
+          leaderboard: document.getElementById('leaderboardToggle').checked,
+          aimAssist: parseInt(document.getElementById('aimAssist').value),
+          speedMode: document.getElementById('speedMode').value
+        }
+      };
+
+      saveSettings(settings);
+      
+      saveSettingsBtn.textContent = '✅ Saved!';
+      setTimeout(() => {
+        saveSettingsBtn.innerHTML = '💾 Save Settings';
+      }, 2000);
+      
+      playSound("success");
+    });
+    
+    resetSettingsBtn.addEventListener('click', () => {
+      if (confirm('Are you sure you want to reset all settings to default?')) {
+        saveSettings(defaultSettings);
+        applySettingsToUI();
+        playSound("click");
+      }
+    });
+  }
+
+  function createCharacterCounter() {
+    const counter = document.createElement('div');
+    counter.className = 'character-counter';
+    nicknameInput.parentNode.insertBefore(counter, nicknameInput.nextSibling);
+    return counter;
+  }
+
+  const characterCounter = createCharacterCounter();
+
+  nicknameInput.addEventListener('input', function() {
+    let value = this.value.trim();
+    const maxLength = 20;
+    
+    if (value.length > maxLength) {
+      value = value.substring(0, maxLength);
+      this.value = value;
+    }
+    
+    value = value.replace(/[^a-zA-Z0-9_-]/g, '');
+    this.value = value;
+    
+    characterCounter.textContent = `${value.length}/${maxLength}`;
+    
+    if (value.length >= maxLength - 3) {
+      characterCounter.classList.add('warning');
+    } else {
+      characterCounter.classList.remove('warning');
+    }
+    
+    if (value.length > 0 && value.length < 2) {
+      this.style.borderColor = '#ff4444';
+      this.title = 'Nickname must be at least 2 characters';
+    } else {
+      this.style.borderColor = 'rgba(122, 255, 153, 0.3)';
+      this.title = '';
+    }
+    
+    localStorage.setItem("playerName", value);
+    updateAvatar();
   });
-  
-  document.getElementById("logoutBtn").addEventListener("click", function () { 
-    playSound("click"); 
-    if (confirm("Are you sure you want to log out?")) { 
-      localStorage.removeItem('privateRoomId'); 
-      nicknameInput.value = ""; 
+
+  settingsBtn.addEventListener("click", function () {
+    applySettingsToUI();
+    settingsModal.style.display = "flex";
+    playSound("click");
+  });
+
+  closeSettingsModal.addEventListener("click", () => {
+    settingsModal.style.display = "none";
+  });
+
+  window.addEventListener("click", (e) => {
+    if (e.target === settingsModal) {
+      settingsModal.style.display = "none";
+    }
+  });
+
+  setupTabs();
+  setupSettingsListeners();
+  applySettingsToUI();
+
+  document.getElementById("logoutBtn").addEventListener("click", function () {
+    playSound("click");
+    if (confirm("Are you sure you want to log out? This will also reset your settings and XP.")) {
+      localStorage.removeItem('privateRoomId');
+      localStorage.removeItem('gameSettings');
+      localStorage.removeItem('totalExperience'); 
+      nicknameInput.value = "";
       localStorage.removeItem("playerName");
       updateAvatar();
-      resetModal(); 
-    } 
+      resetModal();
+      applyTheme('default');
+      updateScoresDisplay(); 
+    }
   });
 
   updateScoresDisplay();
+
+  console.log("🔍 Level System Debug:");
+  console.log("Total XP:", calculateTotalExperience());
+  console.log("Current Level:", calculateLevel(calculateTotalExperience()));
+  console.log("Level Progress:", getCurrentLevelProgress(calculateTotalExperience()));
+
+  if (calculateTotalExperience() === 0) {
+    console.log("📝 No XP found, initializing with test data...");
+    localStorage.setItem("totalExperience", "500"); 
+    updateScoresDisplay();
+  }
 
   window.addEventListener('storage', function(e) {
     if (e.key === 'lastScore') {
       updateScoresDisplay(true);
     } else if (e.key === 'bestScore') {
+      updateScoresDisplay(false);
+    } else if (e.key === 'totalExperience') {
       updateScoresDisplay(false);
     }
   });
@@ -490,6 +904,7 @@ document.addEventListener("DOMContentLoaded", function () {
   window.handleGameResult = function(finalScore) {
     localStorage.setItem("lastScore", finalScore.toString());
     const isNewRecord = updateBestScore(finalScore);
+    const isLevelUp = updateLevel(finalScore);
     
     setTimeout(() => {
       const lastScoreElement = document.getElementById("lastScore");
@@ -507,10 +922,17 @@ document.addEventListener("DOMContentLoaded", function () {
           }, 1000);
         }
       }
+      
+      updateScoresDisplay(false);
     }, 500);
     
-    return isNewRecord;
+    return { isNewRecord, isLevelUp };
   };
+
+  setTimeout(() => {
+    updateScoresDisplay();
+    console.log("🔄 Force updating display...");
+  }, 1000);
 
   updateAvatar();
 });
