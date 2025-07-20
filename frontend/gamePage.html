@@ -4,35 +4,77 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Cellular conquest</title>
-    <link rel="stylesheet" href="gameStyles.css" />
+    <link rel="stylesheet" href="./gameStyles/gameStyles.css" />
+    <link rel="stylesheet" href="./gameStyles/gameMobile.css" />
+    <link rel="stylesheet" href="./gameStyles/popupStyles.css" />
   </head>
   <body>
     <canvas id="gameCanvas"></canvas>
+    <div id="topButtons">
+      <button id="playerInfoBtn" class="hidden" title="Player Info">0</button>
+      <button id="rulesBtn" title="Game Rules">ⓘ</button>
+      <button id="leaderboardBtn" class="hidden" title="Leaderboard">
+        # -
+      </button>
+    </div>
     <div id="gameInfo" class="allScreen">
-      <div id="playerInfo" class="styledDiv">
-        <h5 id="playerName">Nickname</h5>
-        <div id="playerScore">Score: 0</div>
+      <div class="row">
+        <div id="playerInfo" class="styledDiv">
+          <h5 id="playerName">Nickname</h5>
+          <div id="playerScore">Score: 0</div>
+          <div id="defeated">Defeated: 0</div>
+          <div id="speedBarContainer">
+            <div id="speedBarLabel">Speed Points:</div>
+            <div id="speedBarBackground">
+              <div id="speedBarFill"></div>
+            </div>
+          </div>
+          <div id="roomId" class="copyable" title="Click to copy room ID">
+            <span>Copy Room ID:</span
+            ><svg
+              class="svg"
+              width="16"
+              height="16"
+              viewBox="0 0 23 23"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M17 17H19.5C20.6046 17 21.5 16.1046 21.5 15V3C21.5 1.89543 20.6046 1 19.5 1H7.5C6.39543 1 5.5 1.89543 5.5 3V6M3 22H15C16.1046 22 17 21.1046 17 20V8C17 6.89543 16.1046 6 15 6H3C1.89543 6 1 6.89543 1 8V20C1 21.1046 1.89543 22 3 22Z"
+                stroke="#d5ffe9"
+                stroke-width="2"
+                class="svg"
+              />
+            </svg>
+          </div>
+        </div>
+        <div id="leaderboard" class="styledDiv">
+          <h3>Leaderboard</h3>
+          <ol id="leaderboardList"></ol>
+        </div>
       </div>
-      <div id="leaderboard" class="styledDiv">
-        <h3>Leaderboard</h3>
-        <ol id="leaderboardList">
-          <li>Someone</li>
-          <li>Other</li>
-          <li>Another</li>
-          <li>Nick</li>
-          <li>Name</li>
-          <li>Six</li>
-          <li>Seven</li>
-          <li>Eight</li>
-          <li>Prelast</li>
-          <li>Last</li>
-
-          <li value="54" class="special">Nickname</li>
-        </ol>
+      <div class="row">
+        <div id="mobileControls" class="allScreen hidden">
+          <div id="actionButtons">
+            <button id="speedupBtn" class="actionBtn">Speed up</button>
+            <button id="splitBtn" class="actionBtn">Split</button>
+            <button id="feedBtn" class="actionBtn">Feed</button>
+          </div>
+          <div id="joystickContainer">
+            <div id="joystickBase"></div>
+            <div id="joystickHandle"></div>
+          </div>
+        </div>
       </div>
     </div>
-    <div id="exitPopup" class="allScreen hidden">
-      <div id="blur" class="allScreen"></div>
+    <div id="copyPopup" class="styledDiv popupNotice copy">
+      Copied to clipboard successfully!
+    </div>
+    <div id="errorPopup" class="styledDiv popupNotice error">
+      Something went wrong
+    </div>
+    <div id="exitPopup" class="allScreen hidden fadeIn">
+      <div class="blur allScreen"></div>
       <div class="popupContent styledDiv">
         <h2>Exit Game?</h2>
         <p>Are you sure you want to return to the main menu?</p>
@@ -42,6 +84,103 @@
         </div>
       </div>
     </div>
+    <div id="deathPopup" class="allScreen hidden">
+      <div class="blur allScreen"></div>
+      <div class="popupContent styledDiv fadeIn">
+        <h2>Game Over</h2>
+        <p>Your final score: <span id="finalScore">0</span></p>
+        <p id="autoCloseNotice" class="hidden">
+          Returning to main menu in <span id="countdown">10</span>s...
+        </p>
+        <div class="exitButtons">
+          <button id="restartGame" onclick="location.reload()" class="btn">
+            Play Again
+          </button>
+          <button
+            id="returnMenu"
+            onclick="location.href = 'web.html'"
+            class="btn"
+          >
+            Main Menu
+          </button>
+        </div>
+      </div>
+    </div>
+    <div id="rulesPopup" class="allScreen hidden">
+      <div class="blur allScreen"></div>
+      <div class="popupContent styledDiv rulesContent fadeIn">
+        <h2>Game Rules</h2>
+        <h3>🎯 Objective</h3>
+        <p>
+          Grow your cell by eating food and smaller players while avoiding being
+          eaten by larger ones.
+        </p>
+        <h3>🎮 Controls</h3>
+        <p><strong>Desktop:</strong></p>
+        <ul>
+          <li><strong>Mouse:</strong> Move your cell around the map</li>
+          <li>
+            <strong>Space:</strong> Split your cell to move faster or attack
+          </li>
+          <li>
+            <strong>W:</strong> Eject mass to feed other players or lose weight
+          </li>
+          <li>
+            <strong>Shift:</strong> Use speed boost (consumes speed points)
+          </li>
+        </ul>
+        <p><strong>Mobile:</strong></p>
+        <ul>
+          <li><strong>Joystick:</strong> Move your cell around the map</li>
+          <li>
+            <strong>Split Button:</strong> Split your cell to move faster or
+            attack
+          </li>
+          <li>
+            <strong>Feed Button:</strong> Eject mass to feed other players or
+            lose weight
+          </li>
+          <li>
+            <strong>Speed up Button:</strong> Use speed boost (consumes speed
+            points)
+          </li>
+        </ul>
+        <h3>📈 Gameplay</h3>
+        <ul>
+          <li>Eat colored dots to grow your cell</li>
+          <li>Larger cells can eat smaller cells</li>
+          <li>Split cells will automatically merge back together over time</li>
+          <li>Speed decreases as you grow larger</li>
+          <li>Use speed boost strategically to escape or catch prey</li>
+          <li>
+            Feeding ejects 10% mass <strong>only from your biggest cell</strong>
+          </li>
+        </ul>
+        <h3>💡 Tips</h3>
+        <ul>
+          <li>Stay near the edges when small to avoid larger players</li>
+          <li>Split to escape from larger cells</li>
+          <li>Team up with other players by feeding them</li>
+          <li>Watch the leaderboard to track top players</li>
+        </ul>
+        <h3>⚠️ Important Notes</h3>
+        <ul>
+          <li class="important">
+            If keyboard controls don't work, check your language settings - use
+            English keyboard layout
+          </li>
+          <li class="important">
+            Key "W" for feeding may not work with non-English keyboards (e.g.,
+            Ukrainian)
+          </li>
+          <li>
+            In some game modes, feeding acts as projectiles that can damage bots
+          </li>
+        </ul>
+        <button id="closeRules" class="btn">Close</button>
+      </div>
+    </div>
+    <script src="./gameUI/popupManager.js"></script>
     <script type="module" src="./gameMain.js"></script>
   </body>
 </html>

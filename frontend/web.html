@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cellular Conquest</title>
+    <link rel="stylesheet" href="webdesign.css" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Segoe+UI:wght@400;600&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="./rulesStyles.css" />
+  </head>
+  <body>
+    <button id="rulesBtn" title="Game Rules">ⓘ</button>
+
+    <div id="roomCodeModal" class="modal" style="display: none">
+      <div class="modal-content">
+        <span class="close" id="closeModal">&times;</span>
+        <h2>Join Teams Room</h2>
+        <div class="room-actions">
+          <div class="action-group">
+            <h3>Create New Room</h3>
+            <button id="createRoomBtn">Create Room</button>
+          </div>
+          <div class="divider">OR</div>
+          <div class="action-group">
+            <h3>Join Existing Room</h3>
+            <input
+              type="text"
+              id="roomCodeInput"
+              placeholder="Enter room code"
+            />
+            <button id="joinRoomBtn">Join Room</button>
+          </div>
+        </div>
+        <div id="createdRoomInfo" style="display: none">
+          <h3>Room Created!</h3>
+          <p>Share this code with your friends:</p>
+          <div class="room-code-display">
+            <span id="displayRoomCode"></span>
+            <button id="copyCodeBtn">Copy</button>
+          </div>
+          <button id="startGameBtn">Start Game</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="skinModal" class="modal" style="display: none">
+      <div class="modal-content">
+        <span id="closeSkinModal" class="close">&times;</span>
+        <h2>Choose your skin</h2>
+        <div id="skinsList"></div>
+        <div style="text-align: center; margin-bottom: 10px">
+          <button id="resetSkinBtn">Reset to Default Blue</button>
+        </div>
+        <input
+          type="file"
+          id="customSkinInput"
+          accept="image/*"
+          style="margin-bottom: 8px"
+        />
+        <button id="addCustomSkinBtn">Add Custom Skin</button>
+      </div>
+    </div>
+
+    <div id="settingsModal" class="modal" style="display: none">
+      <div class="modal-content settings-modal">
+        <span id="closeSettingsModal" class="close">&times;</span>
+        <h2>⚙️ Game Settings</h2>
+        
+        <div class="settings-tabs">
+          <button class="tab-btn active" data-tab="graphics">🎨 Graphics</button>
+          <button class="tab-btn" data-tab="sound">🔊 Sound</button>
+          <button class="tab-btn" data-tab="controls">🎮 Controls</button>
+          <button class="tab-btn" data-tab="game">🎯 Gameplay</button>
+        </div>
+
+        <div class="settings-content">
+          <div class="tab-content active" data-tab="graphics">
+            <div class="setting-group">
+              <label class="setting-label">🌟 Visual Effects</label>
+              <div class="setting-control">
+                <input type="range" id="effectsSlider" min="0" max="3" value="2" class="setting-slider">
+                <span class="setting-value">High</span>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">🎆 Particle Effects</label>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="particlesToggle" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">💫 Screen Shake</label>
+              <div class="setting-control">
+                <input type="range" id="shakeSlider" min="0" max="100" value="50" class="setting-slider">
+                <span class="setting-value">50%</span>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">🎨 Theme</label>
+              <div class="setting-control">
+                <select id="themeSelect" class="setting-select">
+                  <option value="default">🌊 Ocean Blue</option>
+                  <option value="dark">🌙 Dark Space</option>
+                  <option value="neon">💜 Neon Cyber</option>
+                  <option value="forest">🌲 Forest Green</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-content" data-tab="sound">
+            <div class="setting-group">
+              <label class="setting-label">🎵 Master Volume</label>
+              <div class="setting-control">
+                <input type="range" id="masterVolume" min="0" max="100" value="70" class="setting-slider">
+                <span class="setting-value">70%</span>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">🎶 Music Volume</label>
+              <div class="setting-control">
+                <input type="range" id="musicVolume" min="0" max="100" value="50" class="setting-slider">
+                <span class="setting-value">50%</span>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">🔔 Sound Effects</label>
+              <div class="setting-control">
+                <input type="range" id="sfxVolume" min="0" max="100" value="80" class="setting-slider">
+                <span class="setting-value">80%</span>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">🎧 Voice Chat</label>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="voiceChatToggle">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-content" data-tab="controls">
+            <div class="setting-group">
+              <label class="setting-label">🖱️ Mouse Sensitivity</label>
+              <div class="setting-control">
+                <input type="range" id="mouseSensitivity" min="1" max="10" value="5" class="setting-slider">
+                <span class="setting-value">5</span>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">⚡ Auto Split</label>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="autoSplitToggle">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">🎮 Control Scheme</label>
+              <div class="setting-control">
+                <select id="controlScheme" class="setting-select">
+                  <option value="default">Classic (WASD + Space)</option>
+                  <option value="arrow">Arrow Keys + Enter</option>
+                  <option value="custom">Custom Controls</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">📱 Mobile Controls</label>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="mobileControlsToggle" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <div class="tab-content" data-tab="game">
+            <div class="setting-group">
+              <label class="setting-label">📊 Show FPS Counter</label>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="fpsToggle">
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">🏆 Show Leaderboard</label>
+              <div class="setting-control">
+                <label class="toggle-switch">
+                  <input type="checkbox" id="leaderboardToggle" checked>
+                  <span class="toggle-slider"></span>
+                </label>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">🎯 Aim Assist</label>
+              <div class="setting-control">
+                <input type="range" id="aimAssist" min="0" max="100" value="25" class="setting-slider">
+                <span class="setting-value">25%</span>
+              </div>
+            </div>
+
+            <div class="setting-group">
+              <label class="setting-label">⚡ Speed Mode</label>
+              <div class="setting-control">
+                <select id="speedMode" class="setting-select">
+                  <option value="normal">🐌 Normal Speed</option>
+                  <option value="fast">🏃 Fast Mode</option>
+                  <option value="turbo">🚀 Turbo Mode</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-actions">
+          <button id="resetSettingsBtn" class="action-btn secondary">🔄 Reset to Default</button>
+          <button id="saveSettingsBtn" class="action-btn">💾 Save Settings</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="wrapper">
+      <div class="header">
+        <h1>Cellular Conquest</h1>
+        <h2>Grow. Survive. Conquer.</h2>
+      </div>
+
+      <div class="main-content">
+        <div class="panel play-panel main-panel">
+          <div class="title">Play</div>
+          <div class="modes">
+            <button class="mode-btn active" data-mode="ffa">FFA</button>
+            <button class="mode-btn" data-mode="teams">Teams</button>
+            <button class="mode-btn" data-mode="deathmatch">Death Match</button>
+          </div>
+        </div>
+
+        <div class="side-panels">
+          <div class="panel profile-panel">
+            <div class="profile-header">
+              <button id="skinsBtn" class="skins-btn">Skins</button>
+            </div>
+            <div class="avatar"></div>
+            <input
+              type="text"
+              id="nicknameInput"
+              class="nick-input"
+              placeholder="Nickname"
+              maxlength="20"
+            />
+            <div id="playerLevel" class="level">Level 0</div>
+            <div id="playerXp" class="xp-info">0/1000 XP (0%)</div>
+            <div class="xp-progress-bar">
+              <div id="levelProgressBar" class="xp-progress-fill"></div>
+            </div>
+          </div>
+
+          <div class="panel stats-panel">
+            <div class="title">Stats</div>
+            <div class="stat-item">
+              <span class="stat-label">Last score:</span>
+              <span id="lastScore" class="stat-value">0</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Best score:</span>
+              <span id="bestScore" class="stat-value">0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="actions-panel">
+        <button id="settingsBtn" class="action-btn secondary">⚙️ Settings</button>
+        <button id="logoutBtn" class="action-btn danger">🚪 Exit / Log Out</button>
+      </div>
+    </div>
+
+    <div id="rulesPopup" class="allScreen hidden">
+      <div class="blur allScreen"></div>
+      <div class="popupContent rulesDiv rulesContent fadeIn">
+        <h2>Game Rules</h2>
+
+        <h3>🎯 Objective</h3>
+        <p>
+          Grow your cell by eating food and smaller players while avoiding being
+          eaten by larger ones.
+        </p>
+
+        <h3>🎮 Controls</h3>
+        <p><strong>Desktop:</strong></p>
+        <ul>
+          <li><strong>Mouse:</strong> Move your cell around the map</li>
+          <li>
+            <strong>Space:</strong> Split your cell to move faster or attack
+          </li>
+          <li>
+            <strong>W:</strong> Eject mass to feed other players or lose weight
+          </li>
+          <li>
+            <strong>Shift:</strong> Use speed boost (consumes speed points)
+          </li>
+        </ul>
+        <p><strong>Mobile:</strong></p>
+        <ul>
+          <li><strong>Joystick:</strong> Move your cell around the map</li>
+          <li>
+            <strong>Split Button:</strong> Split your cell to move faster or
+            attack
+          </li>
+          <li>
+            <strong>Feed Button:</strong> Eject mass to feed other players or
+            lose weight
+          </li>
+          <li>
+            <strong>Speed up Button:</strong> Use speed boost (consumes speed
+            points)
+          </li>
+        </ul>
+
+        <h3>📈 Gameplay</h3>
+        <ul>
+          <li>Eat colored dots to grow your cell</li>
+          <li>Larger cells can eat smaller cells</li>
+          <li>Split cells will automatically merge back together over time</li>
+          <li>Speed decreases as you grow larger</li>
+          <li>Use speed boost strategically to escape or catch prey</li>
+          <li>
+            Feeding ejects 10% mass <strong>only from your biggest cell</strong>
+          </li>
+        </ul>
+
+        <h3>💡 Tips</h3>
+        <ul>
+          <li>Stay near the edges when small to avoid larger players</li>
+          <li>Split to escape from larger cells</li>
+          <li>Team up with other players by feeding them</li>
+          <li>Watch the leaderboard to track top players</li>
+        </ul>
+
+        <h3>⚠️ Important Notes</h3>
+        <ul>
+          <li class="important">
+            If keyboard controls don't work, check your language settings - use
+            English keyboard layout
+          </li>
+          <li class="important">
+            Key "W" for feeding may not work with non-English keyboards (e.g.,
+            Ukrainian)
+          </li>
+          <li>
+            In some game modes, feeding acts as projectiles that can damage bots
+          </li>
+        </ul>
+
+        <button id="closeRules" class="mode-btn">Close</button>
+      </div>
+    </div>
+
+    <script src="rulesPopup.js"></script>
+    <script type="module" src="webMain.js"></script>
+  </body>
+</html>

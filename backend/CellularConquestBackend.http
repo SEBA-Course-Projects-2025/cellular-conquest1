@@ -1,0 +1,6 @@
+@CellularConquestBackend_HostAddress = http://localhost:5029
+
+GET {{CellularConquestBackend_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
