@@ -61,7 +61,7 @@ public partial class Game
             bool isBoost = rng.NextDouble() < Config.PosSpeedBonus;
 
             var food_pos = new Vector2(rng.Next(0, Config.WorldWidth), rng.Next(0, Config.WorldHeight));
-            int? bushId = null;
+            Guid? bushId = null;
             foreach (var slime in slimes)
             {
                 float distance = Vector2.Distance(food_pos, slime.Position);
@@ -92,7 +92,7 @@ public partial class Game
             var slime = new Slime {
                 Radius = radius,
                 Position = new Vector2(x, y),
-                ID = i
+                ID = Guid.NewGuid()
             };
             slimes.Add(slime);
         }
