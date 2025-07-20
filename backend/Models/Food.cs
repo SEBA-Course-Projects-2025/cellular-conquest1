@@ -9,6 +9,6 @@ public class Food
     public string Color { get; set; } = Config.FoodColor;
     
     public bool IsSpeedBoost { get; set; } = false;
-    public int? Bush_ID {get; set; } = null;
+    public Guid? Bush_ID {get; set; } = null;
 
 }

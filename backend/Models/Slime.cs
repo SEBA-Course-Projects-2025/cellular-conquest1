@@ -7,6 +7,6 @@ public class Slime
     public Vector2 Position { get; set; }   // Center
     public float Radius { get; set; }
     public string Color { get; set; } = Config.SlimeColor;
-    public int ID {get; set; }
+    public Guid ID {get; set; }
 
 }

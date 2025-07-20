@@ -12,7 +12,7 @@ using GameConfig;
 
 
 public partial class Game {
-    bool SharesBush(List<int> a, List<int> b)
+    bool SharesBush(List<Guid> a, List<Guid> b)
     {
         if (!a.Any() && !b.Any()) return true;
         return a.Intersect(b).Any();
@@ -130,7 +130,7 @@ public partial class Game {
             }
 
             // move antibodys
-            foreach (var antibody in antibodyItems)
+            foreach (var antibody in antibodyItems.ToList())
             {
                 antibody.Position += antibody.Velocity * deltaTime;
                 antibody.Position = Vector2.Clamp(antibody.Position, Vector2.Zero, new Vector2(Config.WorldWidth, Config.WorldHeight));
@@ -156,7 +156,7 @@ public partial class Game {
 
                 foreach (var cell in player.Cells)
                 {
-                    foreach (var food in foodItems)
+                    foreach (var food in foodItems.ToList())
                     {
                         if (Vector2.Distance(cell.Position, food.Position) < cell.Radius && (!food.Bush_ID.HasValue || cell.Bush_IDs.Contains(food.Bush_ID.Value)))
                         {
